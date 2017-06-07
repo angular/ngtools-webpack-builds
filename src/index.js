@@ -33,4 +33,4 @@ var loader_1 = require("./loader");
 exports.default = loader_1.ngcLoader;
 var paths_plugin_1 = require("./paths-plugin");
 exports.PathsPlugin = paths_plugin_1.PathsPlugin;
-//# sourceMappingURL=/tmp/angular-cli-builds11756-6272-uix5qo.mmnh77gb9/angular-cli/src/index.js.map
+//# sourceMappingURL=/users/hansl/sources/angular-cli/src/index.js.map
