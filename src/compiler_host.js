@@ -241,4 +241,4 @@ class WebpackCompilerHost {
     }
 }
 exports.WebpackCompilerHost = WebpackCompilerHost;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/compiler_host.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/compiler_host.js.map

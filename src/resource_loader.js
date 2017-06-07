@@ -97,4 +97,4 @@ class WebpackResourceLoader {
     }
 }
 exports.WebpackResourceLoader = WebpackResourceLoader;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/resource_loader.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/resource_loader.js.map

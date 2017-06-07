@@ -404,4 +404,4 @@ function ngcLoader() {
     }
 }
 exports.ngcLoader = ngcLoader;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/loader.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/loader.js.map

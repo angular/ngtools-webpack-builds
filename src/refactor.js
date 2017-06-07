@@ -198,4 +198,4 @@ class TypeScriptFileRefactor {
     }
 }
 exports.TypeScriptFileRefactor = TypeScriptFileRefactor;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/refactor.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/refactor.js.map

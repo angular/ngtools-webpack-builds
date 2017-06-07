@@ -130,4 +130,4 @@ function resolveEntryModuleFromMain(mainPath, host, program) {
         + 'to the plugins options.');
 }
 exports.resolveEntryModuleFromMain = resolveEntryModuleFromMain;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/entry_resolver.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/entry_resolver.js.map

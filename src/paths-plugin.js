@@ -116,4 +116,4 @@ class PathsPlugin {
     }
 }
 exports.PathsPlugin = PathsPlugin;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/paths-plugin.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/paths-plugin.js.map

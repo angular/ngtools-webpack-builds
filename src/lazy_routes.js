@@ -50,4 +50,4 @@ function findLazyRoutes(filePath, program, host) {
     }, {});
 }
 exports.findLazyRoutes = findLazyRoutes;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/lazy_routes.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/lazy_routes.js.map

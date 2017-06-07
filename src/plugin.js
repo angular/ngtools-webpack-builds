@@ -411,4 +411,4 @@ class AotPlugin {
     }
 }
 exports.AotPlugin = AotPlugin;
-//# sourceMappingURL=/users/hansl/sources/angular-cli/src/plugin.js.map
+//# sourceMappingURL=/home/travis/build/angular/angular-cli/src/plugin.js.map
