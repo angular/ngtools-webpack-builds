@@ -159,11 +159,7 @@ function _removeDecorators(refactor) {
             .forEach(() => refactor.removeNode(node));
     });
 }
-function _replaceBootstrap(plugin, refactor) {
-    // If bootstrapModule can't be found, bail out early.
-    if (!refactor.sourceMatch(/\bbootstrapModule\b/)) {
-        return;
-    }
+function _getNgFactoryPath(plugin, refactor) {
     // Calculate the base path.
     const basePath = path.normalize(plugin.basePath);
     const genDir = path.normalize(plugin.genDir);
@@ -173,48 +169,81 @@ function _replaceBootstrap(plugin, refactor) {
     const relativeEntryModulePath = path.relative(basePath, entryModuleFileName);
     const fullEntryModulePath = path.resolve(genDir, relativeEntryModulePath);
     const relativeNgFactoryPath = path.relative(dirName, fullEntryModulePath);
-    const ngFactoryPath = './' + relativeNgFactoryPath.replace(/\\/g, '/');
-    const allCalls = refactor.findAstNodes(refactor.sourceFile, ts.SyntaxKind.CallExpression, true);
-    const bootstraps = allCalls
-        .filter(call => call.expression.kind == ts.SyntaxKind.PropertyAccessExpression)
-        .map(call => call.expression)
-        .filter(access => {
-        return access.name.kind == ts.SyntaxKind.Identifier
-            && access.name.text == 'bootstrapModule';
-    });
-    const calls = bootstraps
-        .reduce((previous, access) => {
-        const expressions = refactor.findAstNodes(access, ts.SyntaxKind.CallExpression, true);
-        return previous.concat(expressions);
-    }, [])
-        .filter((call) => call.expression.kind == ts.SyntaxKind.Identifier)
-        .filter((call) => {
-        // Find if the expression matches one of the replacement targets
-        return !!changeMap[call.expression.text];
-    });
-    if (calls.length == 0) {
-        // Didn't find any dynamic bootstrapping going on.
-        return;
-    }
-    // Create the changes we need.
-    allCalls
-        .filter(call => bootstraps.some(bs => bs == call.expression))
-        .forEach((call) => {
-        refactor.replaceNode(call.arguments[0], entryModule.className + 'NgFactory');
-    });
-    calls.forEach(call => {
+    return './' + relativeNgFactoryPath.replace(/\\/g, '/');
+}
+function _replacePlatform(refactor, bootstrapCall) {
+    const platforms = refactor.findAstNodes(bootstrapCall, ts.SyntaxKind.CallExpression, true)
+        .filter(call => {
+        return call.expression.kind == ts.SyntaxKind.Identifier;
+    })
+        .filter(call => !!changeMap[call.expression.text]);
+    platforms.forEach(call => {
         const platform = changeMap[call.expression.text];
         // Replace with mapped replacement
         refactor.replaceNode(call.expression, platform.name);
         // Add the appropriate import
         refactor.insertImport(platform.name, platform.importLocation);
     });
-    bootstraps
-        .forEach((bs) => {
-        // This changes the call.
-        refactor.replaceNode(bs.name, 'bootstrapModuleFactory');
+}
+function _replaceBootstrapOrRender(refactor, call) {
+    // If neither bootstrapModule or renderModule can't be found, bail out early.
+    let replacementTarget;
+    let identifier;
+    if (call.getText().includes('bootstrapModule')) {
+        if (call.expression.kind != ts.SyntaxKind.PropertyAccessExpression) {
+            return;
+        }
+        replacementTarget = 'bootstrapModule';
+        const access = call.expression;
+        identifier = access.name;
+        _replacePlatform(refactor, access);
+    }
+    else if (call.getText().includes('renderModule')) {
+        if (call.expression.kind != ts.SyntaxKind.Identifier) {
+            return;
+        }
+        replacementTarget = 'renderModule';
+        identifier = call.expression;
+        refactor.insertImport('renderModuleFactory', '@angular/platform-server');
+    }
+    if (identifier && identifier.text === replacementTarget) {
+        refactor.replaceNode(identifier, replacementTarget + 'Factory');
+    }
+}
+function _getCaller(node) {
+    while (node = node.parent) {
+        if (node.kind === ts.SyntaxKind.CallExpression) {
+            return node;
+        }
+    }
+    return null;
+}
+function _replaceEntryModule(plugin, refactor) {
+    const modules = refactor.findAstNodes(refactor.sourceFile, ts.SyntaxKind.Identifier, true)
+        .filter(identifier => identifier.getText() === plugin.entryModule.className)
+        .filter(identifier => identifier.parent.kind === ts.SyntaxKind.CallExpression ||
+        identifier.parent.kind === ts.SyntaxKind.PropertyAssignment)
+        .filter(node => !!_getCaller(node));
+    if (modules.length == 0) {
+        return;
+    }
+    const factoryClassName = plugin.entryModule.className + 'NgFactory';
+    refactor.insertImport(factoryClassName, _getNgFactoryPath(plugin, refactor));
+    modules
+        .forEach(reference => {
+        refactor.replaceNode(reference, factoryClassName);
+        const caller = _getCaller(reference);
+        _replaceBootstrapOrRender(refactor, caller);
     });
-    refactor.insertImport(entryModule.className + 'NgFactory', ngFactoryPath);
+}
+function _refactorBootstrap(plugin, refactor) {
+    const genDir = path.normalize(plugin.genDir);
+    const dirName = path.normalize(path.dirname(refactor.fileName));
+    // Bail if in the generated directory
+    if (dirName.startsWith(genDir)) {
+        return;
+    }
+    _replaceEntryModule(plugin, refactor);
 }
 function removeModuleIdOnlyForTesting(refactor) {
     _removeModuleId(refactor);
@@ -343,7 +372,7 @@ function ngcLoader() {
             if (!plugin.skipCodeGeneration) {
                 return Promise.resolve()
                     .then(() => _removeDecorators(refactor))
-                    .then(() => _replaceBootstrap(plugin, refactor));
+                    .then(() => _refactorBootstrap(plugin, refactor));
             }
             else {
                 return Promise.resolve()
