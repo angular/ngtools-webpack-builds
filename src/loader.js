@@ -185,29 +185,17 @@ function _replacePlatform(refactor, bootstrapCall) {
         refactor.insertImport(platform.name, platform.importLocation);
     });
 }
-function _replaceBootstrapOrRender(refactor, call) {
-    // If neither bootstrapModule or renderModule can't be found, bail out early.
-    let replacementTarget;
-    let identifier;
-    if (call.getText().includes('bootstrapModule')) {
-        if (call.expression.kind != ts.SyntaxKind.PropertyAccessExpression) {
-            return;
-        }
-        replacementTarget = 'bootstrapModule';
+function _replaceBootstrap(refactor, call) {
+    // If bootstrapModule can't be found, bail out early.
+    if (!call.getText().includes('bootstrapModule')) {
+        return;
+    }
+    if (call.expression.kind == ts.SyntaxKind.PropertyAccessExpression) {
         const access = call.expression;
-        identifier = access.name;
-        _replacePlatform(refactor, access);
-    }
-    else if (call.getText().includes('renderModule')) {
-        if (call.expression.kind != ts.SyntaxKind.Identifier) {
-            return;
+        if (access.name.text === 'bootstrapModule') {
+            _replacePlatform(refactor, access);
+            refactor.replaceNode(access.name, 'bootstrapModuleFactory');
         }
-        replacementTarget = 'renderModule';
-        identifier = call.expression;
-        refactor.insertImport('renderModuleFactory', '@angular/platform-server');
-    }
-    if (identifier && identifier.text === replacementTarget) {
-        refactor.replaceNode(identifier, replacementTarget + 'Factory');
     }
 }
 function _getCaller(node) {
@@ -232,8 +220,7 @@ function _replaceEntryModule(plugin, refactor) {
     modules
         .forEach(reference => {
         refactor.replaceNode(reference, factoryClassName);
-        const caller = _getCaller(reference);
-        _replaceBootstrapOrRender(refactor, caller);
+        _replaceBootstrap(refactor, _getCaller(reference));
     });
 }
 function _refactorBootstrap(plugin, refactor) {
