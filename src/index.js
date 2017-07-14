@@ -11,7 +11,7 @@ try {
     version = require('@angular/compiler-cli').VERSION;
 }
 catch (e) {
-    throw new Error('The "@angular/compiler-cli" package was not properly installed.');
+    throw new Error('The "@angular/compiler-cli" package was not properly installed. Error: ' + e);
 }
 // Check that Angular is also not part of this module's node_modules (it should be the project's).
 const compilerCliPath = require.resolve('@angular/compiler-cli');
