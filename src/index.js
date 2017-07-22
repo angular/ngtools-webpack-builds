@@ -19,8 +19,9 @@ if (compilerCliPath.startsWith(path.dirname(__dirname))) {
     throw new Error('The @ngtools/webpack plugin now relies on the project @angular/compiler-cli. '
         + 'Please clean your node_modules and reinstall.');
 }
-// Throw if we're neither 2.3.1 or more, nor 4.x.y.
-if (!(version.major == '4'
+// Throw if we're neither 2.3.1 or more, nor 4.x.y, nor 5.x.y.
+if (!(version.major == '5'
+    || version.major == '4'
     || (version.major == '2'
         && (version.minor == '4'
             || version.minor == '3' && version.patch == '1')))) {

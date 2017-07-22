@@ -20,6 +20,7 @@ class AotPlugin {
         this._compilation = null;
         this._typeCheck = true;
         this._skipCodeGeneration = false;
+        this._replaceExport = false;
         this._diagnoseFiles = {};
         this._firstRun = true;
         this._options = Object.assign({}, options);
@@ -40,11 +41,14 @@ class AotPlugin {
     get genDir() { return this._genDir; }
     get program() { return this._program; }
     get skipCodeGeneration() { return this._skipCodeGeneration; }
+    get replaceExport() { return this._replaceExport; }
     get typeCheck() { return this._typeCheck; }
     get i18nFile() { return this._i18nFile; }
     get i18nFormat() { return this._i18nFormat; }
     get locale() { return this._locale; }
     get firstRun() { return this._firstRun; }
+    get lazyRoutes() { return this._lazyRoutes; }
+    get discoveredLazyRoutes() { return this._discoveredLazyRoutes; }
     _setupOptions(options) {
         // Fill in the missing options.
         if (!options.hasOwnProperty('tsConfigPath')) {
@@ -150,6 +154,9 @@ class AotPlugin {
         }
         if (options.hasOwnProperty('locale')) {
             this._locale = options.locale;
+        }
+        if (options.hasOwnProperty('replaceExport')) {
+            this._replaceExport = options.replaceExport || this._replaceExport;
         }
     }
     _findLazyRoutesInAst() {
@@ -393,13 +400,13 @@ class AotPlugin {
             .then(() => {
             // We need to run the `listLazyRoutes` the first time because it also navigates libraries
             // and other things that we might miss using the findLazyRoutesInAst.
-            let discoveredLazyRoutes = this.firstRun
+            this._discoveredLazyRoutes = this.firstRun
                 ? this._getLazyRoutesFromNgtools()
                 : this._findLazyRoutesInAst();
             // Process the lazy routes discovered.
-            Object.keys(discoveredLazyRoutes)
+            Object.keys(this.discoveredLazyRoutes)
                 .forEach(k => {
-                const lazyRoute = discoveredLazyRoutes[k];
+                const lazyRoute = this.discoveredLazyRoutes[k];
                 k = k.split('#')[0];
                 if (lazyRoute === null) {
                     return;

@@ -359,6 +359,66 @@ function _diagnoseDeps(reasons, plugin, checked) {
         _diagnoseDeps(reason.module.reasons, plugin, checked);
     });
 }
+function _getModuleExports(plugin, refactor) {
+    const exports = refactor
+        .findAstNodes(refactor.sourceFile, ts.SyntaxKind.ExportDeclaration, true);
+    return exports
+        .filter(node => {
+        const identifiers = refactor.findAstNodes(node, ts.SyntaxKind.Identifier, false);
+        identifiers
+            .filter(node => node.getText() === plugin.entryModule.className);
+        return identifiers.length > 0;
+    });
+}
+exports._getModuleExports = _getModuleExports;
+function _replaceExport(plugin, refactor) {
+    if (!plugin.replaceExport) {
+        return;
+    }
+    _getModuleExports(plugin, refactor)
+        .forEach(node => {
+        const factoryPath = _getNgFactoryPath(plugin, refactor);
+        const factoryClassName = plugin.entryModule.className + 'NgFactory';
+        const exportStatement = `export \{ ${factoryClassName} \} from '${factoryPath}'`;
+        refactor.appendAfter(node, exportStatement);
+    });
+}
+exports._replaceExport = _replaceExport;
+function _exportModuleMap(plugin, refactor) {
+    if (!plugin.replaceExport) {
+        return;
+    }
+    const dirName = path.normalize(path.dirname(refactor.fileName));
+    const classNameAppend = plugin.skipCodeGeneration ? '' : 'NgFactory';
+    const modulePathAppend = plugin.skipCodeGeneration ? '' : '.ngfactory';
+    _getModuleExports(plugin, refactor)
+        .forEach(node => {
+        const modules = Object.keys(plugin.discoveredLazyRoutes)
+            .map((loadChildrenString) => {
+            let [lazyRouteKey, moduleName] = loadChildrenString.split('#');
+            if (!lazyRouteKey || !moduleName) {
+                throw new Error(`${loadChildrenString} was not a proper loadChildren string`);
+            }
+            moduleName += classNameAppend;
+            lazyRouteKey += modulePathAppend;
+            const modulePath = plugin.lazyRoutes[lazyRouteKey];
+            return {
+                modulePath,
+                moduleName,
+                loadChildrenString
+            };
+        });
+        modules.forEach((module, index) => {
+            const relativePath = path.relative(dirName, module.modulePath).replace(/\\/g, '/');
+            refactor.prependBefore(node, `import * as __lazy_${index}__ from './${relativePath}'`);
+        });
+        const jsonContent = modules
+            .map((module, index) => `"${module.loadChildrenString}": __lazy_${index}__.${module.moduleName}`)
+            .join();
+        refactor.appendAfter(node, `export const LAZY_MODULE_MAP = {${jsonContent}};`);
+    });
+}
+exports._exportModuleMap = _exportModuleMap;
 // Super simple TS transpiler loader for testing / isolated usage. does not type check!
 function ngcLoader(source) {
     const cb = this.async();
@@ -383,12 +443,15 @@ function ngcLoader(source) {
             if (!plugin.skipCodeGeneration) {
                 return Promise.resolve()
                     .then(() => _removeDecorators(refactor))
-                    .then(() => _refactorBootstrap(plugin, refactor));
+                    .then(() => _refactorBootstrap(plugin, refactor))
+                    .then(() => _replaceExport(plugin, refactor))
+                    .then(() => _exportModuleMap(plugin, refactor));
             }
             else {
                 return Promise.resolve()
                     .then(() => _replaceResources(refactor))
-                    .then(() => _removeModuleId(refactor));
+                    .then(() => _removeModuleId(refactor))
+                    .then(() => _exportModuleMap(plugin, refactor));
             }
         })
             .then(() => {
