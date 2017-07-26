@@ -364,8 +364,7 @@ function _getModuleExports(plugin, refactor) {
         .findAstNodes(refactor.sourceFile, ts.SyntaxKind.ExportDeclaration, true);
     return exports
         .filter(node => {
-        const identifiers = refactor.findAstNodes(node, ts.SyntaxKind.Identifier, false);
-        identifiers
+        const identifiers = refactor.findAstNodes(node, ts.SyntaxKind.Identifier, false)
             .filter(node => node.getText() === plugin.entryModule.className);
         return identifiers.length > 0;
     });
