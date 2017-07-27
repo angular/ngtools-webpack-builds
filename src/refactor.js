@@ -155,7 +155,7 @@ class TypeScriptFileRefactor {
     }
     replaceNode(node, replacement) {
         let replaceSymbolName = node.kind === ts.SyntaxKind.Identifier;
-        this._sourceString.overwrite(node.getStart(this._sourceFile), node.getEnd(), replacement, replaceSymbolName);
+        this._sourceString.overwrite(node.getStart(this._sourceFile), node.getEnd(), replacement, { storeName: replaceSymbolName });
         this._changed = true;
     }
     sourceMatch(re) {
