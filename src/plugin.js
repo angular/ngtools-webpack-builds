@@ -68,9 +68,14 @@ class AotPlugin {
         const configResult = ts.readConfigFile(this._tsConfigPath, ts.sys.readFile);
         if (configResult.error) {
             const diagnostic = configResult.error;
-            const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
             const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-            throw new Error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message})`);
+            if (diagnostic.file) {
+                const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+                throw new Error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message})`);
+            }
+            else {
+                throw new Error(message);
+            }
         }
         const tsConfigJson = configResult.config;
         if (options.hasOwnProperty('compilerOptions')) {
@@ -318,11 +323,17 @@ class AotPlugin {
             ? this._program.getDeclarationDiagnostics(sourceFile) : [], this._program.getSyntacticDiagnostics(sourceFile), this._program.getSemanticDiagnostics(sourceFile));
         if (diagnostics.length > 0) {
             diagnostics.forEach(diagnostic => {
-                const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-                const sourceText = diagnostic.file.getFullText();
-                let { line, character, fileName } = this._translateSourceMap(sourceText, diagnostic.file.fileName, position);
                 const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                const message = `${fileName} (${line + 1},${character + 1}): ${messageText}`;
+                let message;
+                if (diagnostic.file) {
+                    const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+                    const sourceText = diagnostic.file.getFullText();
+                    let { line, character, fileName } = this._translateSourceMap(sourceText, diagnostic.file.fileName, position);
+                    message = `${fileName} (${line + 1},${character + 1}): ${messageText}`;
+                }
+                else {
+                    message = messageText;
+                }
                 switch (diagnostic.category) {
                     case ts.DiagnosticCategory.Error:
                         this._compilation.errors.push(message);
@@ -384,9 +395,14 @@ class AotPlugin {
                 if (diagnostics.length > 0) {
                     const message = diagnostics
                         .map(diagnostic => {
-                        const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
                         const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                        return `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message})`;
+                        if (diagnostic.file) {
+                            const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+                            return `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message})`;
+                        }
+                        else {
+                            return message;
+                        }
                     })
                         .join('\n');
                     throw new Error(message);

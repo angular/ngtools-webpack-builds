@@ -477,11 +477,16 @@ function ngcLoader(source) {
                 if (diagnostics.length) {
                     let message = '';
                     diagnostics.forEach(diagnostic => {
-                        const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-                        const fileName = diagnostic.file.fileName;
-                        const { line, character } = position;
                         const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                        message += `${fileName} (${line + 1},${character + 1}): ${messageText}\n`;
+                        if (diagnostic.file) {
+                            const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+                            const fileName = diagnostic.file.fileName;
+                            const { line, character } = position;
+                            message += `${fileName} (${line + 1},${character + 1}): ${messageText}\n`;
+                        }
+                        else {
+                            message += `${messageText}\n`;
+                        }
                     });
                     throw new Error(message);
                 }
