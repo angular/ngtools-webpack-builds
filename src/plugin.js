@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const ts = require("typescript");
 const SourceMap = require("source-map");
-const { __NGTOOLS_PRIVATE_API_2 } = require('@angular/compiler-cli');
+const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
 const resource_loader_1 = require("./resource_loader");
 const compiler_host_1 = require("./compiler_host");
@@ -46,6 +46,7 @@ class AotPlugin {
     get i18nFile() { return this._i18nFile; }
     get i18nFormat() { return this._i18nFormat; }
     get locale() { return this._locale; }
+    get missingTranslation() { return this._missingTranslation; }
     get firstRun() { return this._firstRun; }
     get lazyRoutes() { return this._lazyRoutes; }
     get discoveredLazyRoutes() { return this._discoveredLazyRoutes; }
@@ -162,6 +163,15 @@ class AotPlugin {
         }
         if (options.hasOwnProperty('replaceExport')) {
             this._replaceExport = options.replaceExport || this._replaceExport;
+        }
+        if (options.hasOwnProperty('missingTranslation')) {
+            const [MAJOR, MINOR, PATCH] = VERSION.full.split('.').map((x) => parseInt(x, 10));
+            if (MAJOR < 4 || (MINOR == 2 && PATCH < 2)) {
+                console.warn((`The --missing-translation parameter will be ignored because it is only `
+                    + `compatible with Angular version 4.2.0 or higher. If you want to use it, please `
+                    + `upgrade your Angular version.\n`));
+            }
+            this._missingTranslation = options.missingTranslation;
         }
     }
     _findLazyRoutesInAst() {
@@ -368,6 +378,7 @@ class AotPlugin {
                 i18nFile: this.i18nFile,
                 i18nFormat: this.i18nFormat,
                 locale: this.locale,
+                missingTranslation: this.missingTranslation,
                 readResource: (path) => this._resourceLoader.get(path)
             });
         })

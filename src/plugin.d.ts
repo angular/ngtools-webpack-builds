@@ -22,6 +22,7 @@ export interface AotPluginOptions {
     i18nFile?: string;
     i18nFormat?: string;
     locale?: string;
+    missingTranslation?: string;
     exclude?: string | string[];
     compilerOptions?: ts.CompilerOptions;
 }
@@ -48,6 +49,7 @@ export declare class AotPlugin implements Tapable {
     private _i18nFile;
     private _i18nFormat;
     private _locale;
+    private _missingTranslation;
     private _diagnoseFiles;
     private _firstRun;
     constructor(options: AotPluginOptions);
@@ -69,6 +71,7 @@ export declare class AotPlugin implements Tapable {
     readonly i18nFile: string;
     readonly i18nFormat: string;
     readonly locale: string;
+    readonly missingTranslation: string;
     readonly firstRun: boolean;
     readonly lazyRoutes: LazyRouteMap;
     readonly discoveredLazyRoutes: LazyRouteMap;
