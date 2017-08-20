@@ -46,10 +46,10 @@ export declare class AotPlugin implements Tapable {
     private _replaceExport;
     private _basePath;
     private _genDir;
-    private _i18nFile;
-    private _i18nFormat;
-    private _locale;
-    private _missingTranslation;
+    private _i18nFile?;
+    private _i18nFormat?;
+    private _locale?;
+    private _missingTranslation?;
     private _diagnoseFiles;
     private _firstRun;
     constructor(options: AotPluginOptions);

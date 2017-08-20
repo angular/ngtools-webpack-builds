@@ -194,7 +194,8 @@ class WebpackCompilerHost {
     }
     readFile(fileName) {
         fileName = this._resolve(fileName);
-        if (this._files[fileName] == null) {
+        const stats = this._files[fileName];
+        if (stats == null) {
             const result = this._delegate.readFile(fileName);
             if (result !== undefined && this._cache) {
                 this._setFileContent(fileName, result);
@@ -204,12 +205,13 @@ class WebpackCompilerHost {
                 return result;
             }
         }
-        return this._files[fileName].content;
+        return stats.content;
     }
     directoryExists(directoryName) {
         directoryName = this._resolve(directoryName);
         return (this._directories[directoryName] != null)
-            || this._delegate.directoryExists(directoryName);
+            || (this._delegate.directoryExists != undefined
+                && this._delegate.directoryExists(directoryName));
     }
     getFiles(path) {
         path = this._resolve(path);
@@ -233,7 +235,8 @@ class WebpackCompilerHost {
     }
     getSourceFile(fileName, languageVersion, _onError) {
         fileName = this._resolve(fileName);
-        if (this._files[fileName] == null) {
+        const stats = this._files[fileName];
+        if (stats == null) {
             const content = this.readFile(fileName);
             if (!this._cache) {
                 return ts.createSourceFile(fileName, content, languageVersion, this._setParentNodes);

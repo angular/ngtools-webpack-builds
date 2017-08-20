@@ -100,7 +100,7 @@ class AotPlugin {
             // Join our custom excludes with the existing ones.
             tsConfigJson.exclude = tsConfigJson.exclude.concat(options.exclude);
         }
-        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, null, this._tsConfigPath);
+        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, undefined, this._tsConfigPath);
         let fileNames = tsConfig.fileNames;
         this._rootFilePath = fileNames;
         // Check the genDir. We generate a default gendir that's under basepath; it will generate
@@ -115,21 +115,21 @@ class AotPlugin {
         }
         this._basePath = basePath;
         this._genDir = genDir;
-        if (options.hasOwnProperty('typeChecking')) {
+        if (options.typeChecking !== undefined) {
             this._typeCheck = options.typeChecking;
         }
-        if (options.hasOwnProperty('skipCodeGeneration')) {
+        if (options.skipCodeGeneration !== undefined) {
             this._skipCodeGeneration = options.skipCodeGeneration;
         }
         this._compilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath);
         // Override some files in the FileSystem.
-        if (options.hasOwnProperty('hostOverrideFileSystem')) {
+        if (options.hostOverrideFileSystem) {
             for (const filePath of Object.keys(options.hostOverrideFileSystem)) {
                 this._compilerHost.writeFile(filePath, options.hostOverrideFileSystem[filePath], false);
             }
         }
         // Override some files in the FileSystem with paths from the actual file system.
-        if (options.hasOwnProperty('hostReplacementPaths')) {
+        if (options.hostReplacementPaths) {
             for (const filePath of Object.keys(options.hostReplacementPaths)) {
                 const replacementFilePath = options.hostReplacementPaths[filePath];
                 const content = this._compilerHost.readFile(replacementFilePath);
@@ -330,9 +330,12 @@ class AotPlugin {
         if (!sourceFile) {
             return;
         }
-        const diagnostics = []
-            .concat(this._program.getCompilerOptions().declaration
-            ? this._program.getDeclarationDiagnostics(sourceFile) : [], this._program.getSyntacticDiagnostics(sourceFile), this._program.getSemanticDiagnostics(sourceFile));
+        const diagnostics = [
+            ...(this._program.getCompilerOptions().declaration
+                ? this._program.getDeclarationDiagnostics(sourceFile) : []),
+            ...this._program.getSyntacticDiagnostics(sourceFile),
+            ...this._program.getSemanticDiagnostics(sourceFile)
+        ];
         if (diagnostics.length > 0) {
             diagnostics.forEach(diagnostic => {
                 const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
