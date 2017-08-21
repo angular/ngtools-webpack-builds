@@ -459,7 +459,7 @@ class AotPlugin {
             }
             cb();
         }, (err) => {
-            compilation.errors.push(err);
+            compilation.errors.push(err.stack);
             cb();
         });
     }
