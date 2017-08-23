@@ -114,6 +114,66 @@ class WebpackCompilerHost {
     enableCaching() {
         this._cache = true;
     }
+    populateWebpackResolver(resolver) {
+        const fs = resolver.fileSystem;
+        if (!this.dirty) {
+            return;
+        }
+        /**
+         * storageDataSetter is a temporary hack to address these two issues:
+         * - https://github.com/angular/angular-cli/issues/7113
+         * - https://github.com/angular/angular-cli/issues/7136
+         *
+         * This way we set values correctly in both a Map (enhanced-resove>=3.4.0) and
+         * object (enhanced-resolve >= 3.1.0 <3.4.0).
+         *
+         * The right solution is to create a virtual filesystem by decorating the filesystem,
+         * instead of injecting data into the private cache of the filesystem.
+         *
+         * Doing it the right way should fix other related bugs, but meanwhile we hack it since:
+         * - it's affecting a lot of users.
+         * - the real solution is non-trivial.
+         */
+        function storageDataSetter(data, k, v) {
+            if (data instanceof Map) {
+                data.set(k, v);
+            }
+            else {
+                data[k] = v;
+            }
+        }
+        const isWindows = process.platform.startsWith('win');
+        for (const fileName of this.getChangedFilePaths()) {
+            const stats = this._files[fileName];
+            if (stats) {
+                // If we're on windows, we need to populate with the proper path separator.
+                const path = isWindows ? fileName.replace(/\//g, '\\') : fileName;
+                // fs._statStorage.data[path] = [null, stats];
+                // fs._readFileStorage.data[path] = [null, stats.content];
+                storageDataSetter(fs._statStorage.data, path, [null, stats]);
+                storageDataSetter(fs._readFileStorage.data, path, [null, stats.content]);
+            }
+            else {
+                // Support removing files as well.
+                const path = isWindows ? fileName.replace(/\//g, '\\') : fileName;
+                // fs._statStorage.data[path] = [new Error(), null];
+                // fs._readFileStorage.data[path] = [new Error(), null];
+                storageDataSetter(fs._statStorage.data, path, [new Error(), null]);
+                storageDataSetter(fs._readFileStorage.data, path, [new Error(), null]);
+            }
+        }
+        for (const dirName of Object.keys(this._changedDirs)) {
+            const stats = this._directories[dirName];
+            const dirs = this.getDirectories(dirName);
+            const files = this.getFiles(dirName);
+            // If we're on windows, we need to populate with the proper path separator.
+            const path = isWindows ? dirName.replace(/\//g, '\\') : dirName;
+            // fs._statStorage.data[path] = [null, stats];
+            // fs._readdirStorage.data[path] = [null, files.concat(dirs)];
+            storageDataSetter(fs._statStorage.data, path, [null, stats]);
+            storageDataSetter(fs._readFileStorage.data, path, [null, files.concat(dirs)]);
+        }
+    }
     resetChangedFileTracker() {
         this._changedFiles = Object.create(null);
         this._changedDirs = Object.create(null);
@@ -128,14 +188,13 @@ class WebpackCompilerHost {
             this._changedFiles[fileName] = true;
         }
     }
-    fileExists(fileName, delegate = true) {
+    fileExists(fileName) {
         fileName = this._resolve(fileName);
-        return this._files[fileName] != null || (delegate && this._delegate.fileExists(fileName));
+        return this._files[fileName] != null || this._delegate.fileExists(fileName);
     }
     readFile(fileName) {
         fileName = this._resolve(fileName);
-        const stats = this._files[fileName];
-        if (stats == null) {
+        if (this._files[fileName] == null) {
             const result = this._delegate.readFile(fileName);
             if (result !== undefined && this._cache) {
                 this._setFileContent(fileName, result);
@@ -145,19 +204,12 @@ class WebpackCompilerHost {
                 return result;
             }
         }
-        return stats.content;
+        return this._files[fileName].content;
     }
-    // Does not delegate, use with `fileExists/directoryExists()`.
-    stat(path) {
-        path = this._resolve(path);
-        return this._files[path] || this._directories[path];
-    }
-    directoryExists(directoryName, delegate = true) {
+    directoryExists(directoryName) {
         directoryName = this._resolve(directoryName);
         return (this._directories[directoryName] != null)
-            || (delegate
-                && this._delegate.directoryExists != undefined
-                && this._delegate.directoryExists(directoryName));
+            || this._delegate.directoryExists(directoryName);
     }
     getFiles(path) {
         path = this._resolve(path);
@@ -181,8 +233,7 @@ class WebpackCompilerHost {
     }
     getSourceFile(fileName, languageVersion, _onError) {
         fileName = this._resolve(fileName);
-        const stats = this._files[fileName];
-        if (stats == null) {
+        if (this._files[fileName] == null) {
             const content = this.readFile(fileName);
             if (!this._cache) {
                 return ts.createSourceFile(fileName, content, languageVersion, this._setParentNodes);
