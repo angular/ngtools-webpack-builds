@@ -5,15 +5,13 @@ const fs = require("fs");
 const path = require("path");
 const ts = require("typescript");
 const SourceMap = require("source-map");
-const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
+const { __NGTOOLS_PRIVATE_API_2 } = require('@angular/compiler-cli');
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
-const NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
 const resource_loader_1 = require("./resource_loader");
 const compiler_host_1 = require("./compiler_host");
 const entry_resolver_1 = require("./entry_resolver");
 const paths_plugin_1 = require("./paths-plugin");
 const lazy_routes_1 = require("./lazy_routes");
-const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
 const inlineSourceMapRe = /\/\/# sourceMappingURL=data:application\/json;base64,([\s\S]+)$/;
 class AotPlugin {
     constructor(options) {
@@ -48,7 +46,6 @@ class AotPlugin {
     get i18nFile() { return this._i18nFile; }
     get i18nFormat() { return this._i18nFormat; }
     get locale() { return this._locale; }
-    get missingTranslation() { return this._missingTranslation; }
     get firstRun() { return this._firstRun; }
     get lazyRoutes() { return this._lazyRoutes; }
     get discoveredLazyRoutes() { return this._discoveredLazyRoutes; }
@@ -102,7 +99,7 @@ class AotPlugin {
             // Join our custom excludes with the existing ones.
             tsConfigJson.exclude = tsConfigJson.exclude.concat(options.exclude);
         }
-        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, undefined, this._tsConfigPath);
+        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, null, this._tsConfigPath);
         let fileNames = tsConfig.fileNames;
         this._rootFilePath = fileNames;
         // Check the genDir. We generate a default gendir that's under basepath; it will generate
@@ -117,21 +114,21 @@ class AotPlugin {
         }
         this._basePath = basePath;
         this._genDir = genDir;
-        if (options.typeChecking !== undefined) {
+        if (options.hasOwnProperty('typeChecking')) {
             this._typeCheck = options.typeChecking;
         }
-        if (options.skipCodeGeneration !== undefined) {
+        if (options.hasOwnProperty('skipCodeGeneration')) {
             this._skipCodeGeneration = options.skipCodeGeneration;
         }
         this._compilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath);
         // Override some files in the FileSystem.
-        if (options.hostOverrideFileSystem) {
+        if (options.hasOwnProperty('hostOverrideFileSystem')) {
             for (const filePath of Object.keys(options.hostOverrideFileSystem)) {
                 this._compilerHost.writeFile(filePath, options.hostOverrideFileSystem[filePath], false);
             }
         }
         // Override some files in the FileSystem with paths from the actual file system.
-        if (options.hostReplacementPaths) {
+        if (options.hasOwnProperty('hostReplacementPaths')) {
             for (const filePath of Object.keys(options.hostReplacementPaths)) {
                 const replacementFilePath = options.hostReplacementPaths[filePath];
                 const content = this._compilerHost.readFile(replacementFilePath);
@@ -165,15 +162,6 @@ class AotPlugin {
         }
         if (options.hasOwnProperty('replaceExport')) {
             this._replaceExport = options.replaceExport || this._replaceExport;
-        }
-        if (options.hasOwnProperty('missingTranslation')) {
-            const [MAJOR, MINOR, PATCH] = VERSION.full.split('.').map((x) => parseInt(x, 10));
-            if (MAJOR < 4 || (MINOR == 2 && PATCH < 2)) {
-                console.warn((`The --missing-translation parameter will be ignored because it is only `
-                    + `compatible with Angular version 4.2.0 or higher. If you want to use it, please `
-                    + `upgrade your Angular version.\n`));
-            }
-            this._missingTranslation = options.missingTranslation;
         }
     }
     _findLazyRoutesInAst() {
@@ -223,16 +211,15 @@ class AotPlugin {
     // registration hook for webpack plugin
     apply(compiler) {
         this._compiler = compiler;
-        // Decorate inputFileSystem to serve contents of CompilerHost.
-        // Use decorated inputFileSystem in watchFileSystem.
-        compiler.plugin('environment', () => {
-            compiler.inputFileSystem = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compiler.inputFileSystem, this._compilerHost);
-            compiler.watchFileSystem = new NodeWatchFileSystem(compiler.inputFileSystem);
-        });
         compiler.plugin('invalid', () => {
             // Turn this off as soon as a file becomes invalid and we're about to start a rebuild.
             this._firstRun = false;
             this._diagnoseFiles = {};
+            if (compiler.watchFileSystem.watcher) {
+                compiler.watchFileSystem.watcher.once('aggregated', (changes) => {
+                    changes.forEach((fileName) => this._compilerHost.invalidate(fileName));
+                });
+            }
         });
         // Add lazy modules to the context module for @angular/core/src/linker
         compiler.plugin('context-module-factory', (cmf) => {
@@ -286,11 +273,8 @@ class AotPlugin {
         });
         compiler.plugin('after-resolvers', (compiler) => {
             // Virtual file system.
-            // Wait for the plugin to be done when requesting `.ts` files directly (entry points), or
-            // when the issuer is a `.ts` file.
             compiler.resolvers.normal.plugin('before-resolve', (request, cb) => {
-                if (request.request.endsWith('.ts')
-                    || (request.context.issuer && request.context.issuer.endsWith('.ts'))) {
+                if (request.request.match(/\.ts$/)) {
                     this.done.then(() => cb(), () => cb());
                 }
                 else {
@@ -336,12 +320,9 @@ class AotPlugin {
         if (!sourceFile) {
             return;
         }
-        const diagnostics = [
-            ...(this._program.getCompilerOptions().declaration
-                ? this._program.getDeclarationDiagnostics(sourceFile) : []),
-            ...this._program.getSyntacticDiagnostics(sourceFile),
-            ...this._program.getSemanticDiagnostics(sourceFile)
-        ];
+        const diagnostics = []
+            .concat(this._program.getCompilerOptions().declaration
+            ? this._program.getDeclarationDiagnostics(sourceFile) : [], this._program.getSyntacticDiagnostics(sourceFile), this._program.getSemanticDiagnostics(sourceFile));
         if (diagnostics.length > 0) {
             diagnostics.forEach(diagnostic => {
                 const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
@@ -387,7 +368,6 @@ class AotPlugin {
                 i18nFile: this.i18nFile,
                 i18nFormat: this.i18nFormat,
                 locale: this.locale,
-                missingTranslation: this.missingTranslation,
                 readResource: (path) => this._resourceLoader.get(path)
             });
         })
@@ -432,6 +412,10 @@ class AotPlugin {
             }
         })
             .then(() => {
+            // Populate the file system cache with the virtual module.
+            this._compilerHost.populateWebpackResolver(this._compiler.resolvers.normal);
+        })
+            .then(() => {
             // We need to run the `listLazyRoutes` the first time because it also navigates libraries
             // and other things that we might miss using the findLazyRoutesInAst.
             this._discoveredLazyRoutes = this.firstRun
@@ -461,7 +445,7 @@ class AotPlugin {
             }
             cb();
         }, (err) => {
-            compilation.errors.push(err.stack);
+            compilation.errors.push(err);
             cb();
         });
     }

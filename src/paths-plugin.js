@@ -27,13 +27,13 @@ class PathsPlugin {
             throw new Error('tsConfigPath option is mandatory.');
         }
         this._tsConfigPath = options.tsConfigPath;
-        if (options.compilerOptions) {
-            this._compilerOptions = options.compilerOptions;
+        if (options.hasOwnProperty('compilerOptions')) {
+            this._compilerOptions = Object.assign({}, options.compilerOptions);
         }
         else {
-            this._compilerOptions = PathsPlugin._loadOptionsFromTsConfig(this._tsConfigPath);
+            this._compilerOptions = PathsPlugin._loadOptionsFromTsConfig(this._tsConfigPath, null);
         }
-        if (options.compilerHost) {
+        if (options.hasOwnProperty('compilerHost')) {
             this._host = options.compilerHost;
         }
         else {

@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "1.7.0-beta.1-cff3270",
+  "version": "1.6.1-11723e9",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -26,11 +26,11 @@
   },
   "dependencies": {
     "loader-utils": "^1.0.2",
-    "enhanced-resolve": "^3.1.0",
     "magic-string": "^0.22.3",
     "source-map": "^0.5.6"
   },
   "peerDependencies": {
+    "enhanced-resolve": "^3.1.0",
     "typescript": "^2.0.2",
     "webpack": "^2.2.0 || ^3.0.0"
   }
