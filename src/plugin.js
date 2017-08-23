@@ -7,11 +7,13 @@ const ts = require("typescript");
 const SourceMap = require("source-map");
 const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
+const NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
 const resource_loader_1 = require("./resource_loader");
 const compiler_host_1 = require("./compiler_host");
 const entry_resolver_1 = require("./entry_resolver");
 const paths_plugin_1 = require("./paths-plugin");
 const lazy_routes_1 = require("./lazy_routes");
+const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
 const inlineSourceMapRe = /\/\/# sourceMappingURL=data:application\/json;base64,([\s\S]+)$/;
 class AotPlugin {
     constructor(options) {
@@ -221,15 +223,16 @@ class AotPlugin {
     // registration hook for webpack plugin
     apply(compiler) {
         this._compiler = compiler;
+        // Decorate inputFileSystem to serve contents of CompilerHost.
+        // Use decorated inputFileSystem in watchFileSystem.
+        compiler.plugin('environment', () => {
+            compiler.inputFileSystem = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compiler.inputFileSystem, this._compilerHost);
+            compiler.watchFileSystem = new NodeWatchFileSystem(compiler.inputFileSystem);
+        });
         compiler.plugin('invalid', () => {
             // Turn this off as soon as a file becomes invalid and we're about to start a rebuild.
             this._firstRun = false;
             this._diagnoseFiles = {};
-            if (compiler.watchFileSystem.watcher) {
-                compiler.watchFileSystem.watcher.once('aggregated', (changes) => {
-                    changes.forEach((fileName) => this._compilerHost.invalidate(fileName));
-                });
-            }
         });
         // Add lazy modules to the context module for @angular/core/src/linker
         compiler.plugin('context-module-factory', (cmf) => {
@@ -424,10 +427,6 @@ class AotPlugin {
                     throw new Error(message);
                 }
             }
-        })
-            .then(() => {
-            // Populate the file system cache with the virtual module.
-            this._compilerHost.populateWebpackResolver(this._compiler.resolvers.normal);
         })
             .then(() => {
             // We need to run the `listLazyRoutes` the first time because it also navigates libraries
