@@ -27,13 +27,13 @@ class PathsPlugin {
             throw new Error('tsConfigPath option is mandatory.');
         }
         this._tsConfigPath = options.tsConfigPath;
-        if (options.compilerOptions) {
-            this._compilerOptions = options.compilerOptions;
+        if (options.hasOwnProperty('compilerOptions')) {
+            this._compilerOptions = Object.assign({}, options.compilerOptions);
         }
         else {
-            this._compilerOptions = PathsPlugin._loadOptionsFromTsConfig(this._tsConfigPath);
+            this._compilerOptions = PathsPlugin._loadOptionsFromTsConfig(this._tsConfigPath, null);
         }
-        if (options.compilerHost) {
+        if (options.hasOwnProperty('compilerHost')) {
             this._host = options.compilerHost;
         }
         else {
@@ -73,10 +73,6 @@ class PathsPlugin {
             resolver.apply(new ModulesInRootPlugin('module', this._absoluteBaseUrl, 'resolve'));
         }
         this._nmf.plugin('before-resolve', (request, callback) => {
-            // Only work on TypeScript issuers.
-            if (!request.contextInfo.issuer || !request.contextInfo.issuer.endsWith('.ts')) {
-                return callback(null, request);
-            }
             for (let mapping of this._mappings) {
                 const match = request.request.match(mapping.aliasPattern);
                 if (!match) {
@@ -86,19 +82,13 @@ class PathsPlugin {
                 if (!mapping.onlyModule) {
                     newRequestStr = newRequestStr.replace('*', match[1]);
                 }
-                const moduleResolver = ts.resolveModuleName(request.request, request.contextInfo.issuer, this._compilerOptions, this._host);
-                let moduleFilePath = moduleResolver.resolvedModule
-                    && moduleResolver.resolvedModule.resolvedFileName;
-                // If TypeScript gives us a .d.ts it's probably a node module and we need to let webpack
-                // do the resolution.
-                if (moduleFilePath && moduleFilePath.endsWith('.d.ts')) {
-                    moduleFilePath = moduleFilePath.replace(/\.d\.ts$/, '.js');
-                    if (!this._host.fileExists(moduleFilePath)) {
-                        continue;
-                    }
-                }
+                const moduleResolver = ts.nodeModuleNameResolver(newRequestStr, this._absoluteBaseUrl, this._compilerOptions, this._host);
+                const moduleFilePath = moduleResolver.resolvedModule ?
+                    moduleResolver.resolvedModule.resolvedFileName : '';
                 if (moduleFilePath) {
-                    return callback(null, Object.assign({}, request, { request: moduleFilePath }));
+                    return callback(null, Object.assign({}, request, {
+                        request: moduleFilePath.includes('.d.ts') ? newRequestStr : moduleFilePath
+                    }));
                 }
             }
             return callback(null, request);

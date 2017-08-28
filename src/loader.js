@@ -67,7 +67,6 @@ function _angularImportsFromNode(node, _sourceFile) {
         // This is of the form `import 'path';`. Nothing to do.
         return [];
     }
-    return [];
 }
 function _ctorParameterFromTypeReference(paramNode, angularImports, refactor) {
     let typeName = 'undefined';
@@ -212,8 +211,7 @@ function _replaceBootstrapOrRender(refactor, call) {
     }
 }
 function _getCaller(node) {
-    while (node.parent) {
-        node = node.parent;
+    while (node = node.parent) {
         if (node.kind === ts.SyntaxKind.CallExpression) {
             return node;
         }
@@ -223,9 +221,8 @@ function _getCaller(node) {
 function _replaceEntryModule(plugin, refactor) {
     const modules = refactor.findAstNodes(refactor.sourceFile, ts.SyntaxKind.Identifier, true)
         .filter(identifier => identifier.getText() === plugin.entryModule.className)
-        .filter(identifier => identifier.parent &&
-        (identifier.parent.kind === ts.SyntaxKind.CallExpression ||
-            identifier.parent.kind === ts.SyntaxKind.PropertyAssignment))
+        .filter(identifier => identifier.parent.kind === ts.SyntaxKind.CallExpression ||
+        identifier.parent.kind === ts.SyntaxKind.PropertyAssignment)
         .filter(node => !!_getCaller(node));
     if (modules.length == 0) {
         return;
@@ -236,9 +233,7 @@ function _replaceEntryModule(plugin, refactor) {
         .forEach(reference => {
         refactor.replaceNode(reference, factoryClassName);
         const caller = _getCaller(reference);
-        if (caller) {
-            _replaceBootstrapOrRender(refactor, caller);
-        }
+        _replaceBootstrapOrRender(refactor, caller);
     });
 }
 function _refactorBootstrap(plugin, refactor) {
@@ -259,7 +254,7 @@ function _removeModuleId(refactor) {
     refactor.findAstNodes(sourceFile, ts.SyntaxKind.Decorator, true)
         .reduce((acc, node) => {
         return acc.concat(refactor.findAstNodes(node, ts.SyntaxKind.ObjectLiteralExpression, true));
-    }, new Array())
+    }, [])
         .filter((node) => {
         return node.properties.some(prop => {
             return prop.kind == ts.SyntaxKind.PropertyAssignment
