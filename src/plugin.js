@@ -20,6 +20,7 @@ class AotPlugin {
         this._lazyRoutes = Object.create(null);
         this._compiler = null;
         this._compilation = null;
+        this._failedCompilation = false;
         this._typeCheck = true;
         this._skipCodeGeneration = false;
         this._replaceExport = false;
@@ -34,6 +35,7 @@ class AotPlugin {
     get compilerHost() { return this._compilerHost; }
     get compilerOptions() { return this._compilerOptions; }
     get done() { return this._donePromise; }
+    get failedCompilation() { return this._failedCompilation; }
     get entryModule() {
         const splitted = this._entryModule.split('#');
         const path = splitted[0];
@@ -279,10 +281,13 @@ class AotPlugin {
         });
         compiler.plugin('make', (compilation, cb) => this._make(compilation, cb));
         compiler.plugin('after-emit', (compilation, cb) => {
-            this._donePromise = null;
-            this._compilation = null;
             compilation._ngToolsWebpackPluginInstance = null;
             cb();
+        });
+        compiler.plugin('done', () => {
+            this._donePromise = null;
+            this._compilation = null;
+            this._failedCompilation = false;
         });
         compiler.plugin('after-resolvers', (compiler) => {
             // Virtual file system.
@@ -459,8 +464,12 @@ class AotPlugin {
             if (this._compilation.errors == 0) {
                 this._compilerHost.resetChangedFileTracker();
             }
+            else {
+                this._failedCompilation = true;
+            }
             cb();
         }, (err) => {
+            this._failedCompilation = true;
             compilation.errors.push(err.stack);
             cb();
         });

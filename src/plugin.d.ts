@@ -41,6 +41,7 @@ export declare class AotPlugin implements Tapable {
     private _donePromise;
     private _compiler;
     private _compilation;
+    private _failedCompilation;
     private _typeCheck;
     private _skipCodeGeneration;
     private _replaceExport;
@@ -59,6 +60,7 @@ export declare class AotPlugin implements Tapable {
     readonly compilerHost: WebpackCompilerHost;
     readonly compilerOptions: ts.CompilerOptions;
     readonly done: Promise<void>;
+    readonly failedCompilation: boolean;
     readonly entryModule: {
         path: string;
         className: string;
