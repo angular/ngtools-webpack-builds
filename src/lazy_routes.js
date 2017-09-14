@@ -14,7 +14,7 @@ function _getContentOfKeyLiteral(_source, node) {
         return null;
     }
 }
-function findLazyRoutes(filePath, host, program, compilerOptions) {
+function findLazyRoutes(filePath, program, host) {
     const refactor = new refactor_1.TypeScriptFileRefactor(filePath, host, program);
     return refactor
         .findAstNodes(null, ts.SyntaxKind.ObjectLiteralExpression, true)
@@ -30,12 +30,11 @@ function findLazyRoutes(filePath, host, program, compilerOptions) {
         .map((node) => node.initializer.text)
         .map((routePath) => {
         const moduleName = routePath.split('#')[0];
-        const compOptions = program ? program.getCompilerOptions() : compilerOptions;
         const resolvedModuleName = moduleName[0] == '.'
             ? {
                 resolvedModule: { resolvedFileName: path_1.join(path_1.dirname(filePath), moduleName) + '.ts' }
             }
-            : ts.resolveModuleName(moduleName, filePath, compOptions, host);
+            : ts.resolveModuleName(moduleName, filePath, program.getCompilerOptions(), host);
         if (resolvedModuleName.resolvedModule
             && resolvedModuleName.resolvedModule.resolvedFileName
             && host.fileExists(resolvedModuleName.resolvedModule.resolvedFileName)) {
