@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const ts = require("typescript");
 const plugin_1 = require("./plugin");
+const angular_compiler_plugin_1 = require("./angular_compiler_plugin");
 const refactor_1 = require("./refactor");
 const loaderUtils = require('loader-utils');
 const NormalModule = require('webpack/lib/NormalModule');
@@ -186,6 +187,9 @@ function _replacePlatform(refactor, bootstrapCall) {
         refactor.insertImport(platform.name, platform.importLocation);
     });
 }
+// TODO: remove platform server bootstrap replacement.
+// It doesn't seem to be used anymore according to tests/e2e/tests/build/platform-server.ts and
+// https://github.com/angular/angular-cli/wiki/stories-universal-rendering.
 function _replaceBootstrapOrRender(refactor, call) {
     // If neither bootstrapModule or renderModule can't be found, bail out early.
     let replacementTarget;
@@ -429,90 +433,107 @@ function ngcLoader(source) {
     const sourceFileName = this.resourcePath;
     const plugin = this._compilation._ngToolsWebpackPluginInstance;
     if (plugin) {
-        // We must verify that AotPlugin is an instance of the right class.
+        // We must verify that the plugin is an instance of the right class.
         // Throw an error if it isn't, that often means multiple @ngtools/webpack installs.
-        if (!(plugin instanceof plugin_1.AotPlugin)) {
-            throw new Error('AotPlugin was detected but it was an instance of the wrong class.\n'
+        if (!(plugin instanceof plugin_1.AotPlugin) && !(plugin instanceof angular_compiler_plugin_1.AngularCompilerPlugin)) {
+            throw new Error('Angular Compiler was detected but it was an instance of the wrong class.\n'
                 + 'This likely means you have several @ngtools/webpack packages installed. '
                 + 'You can check this with `npm ls @ngtools/webpack`, and then remove the extra copies.');
         }
-        if (plugin.compilerHost.readFile(sourceFileName) == source) {
-            // In the case where the source is the same as the one in compilerHost, we don't have
-            // extra TS loaders and there's no need to do any trickery.
-            source = null;
+        if (plugin instanceof angular_compiler_plugin_1.AngularCompilerPlugin) {
+            plugin.done
+                .then(() => {
+                const result = plugin.getFile(sourceFileName);
+                if (plugin.failedCompilation) {
+                    // Return an empty string if there is no result to prevent extra loader errors.
+                    // Plugin errors were already pushed to the compilation errors.
+                    cb(null, result.outputText || '', result.sourceMap);
+                }
+                else {
+                    cb(null, result.outputText, result.sourceMap);
+                }
+            })
+                .catch(err => cb(err));
         }
-        const refactor = new refactor_1.TypeScriptFileRefactor(sourceFileName, plugin.compilerHost, plugin.program, source);
-        Promise.resolve()
-            .then(() => {
-            if (!plugin.skipCodeGeneration) {
-                return Promise.resolve()
-                    .then(() => _removeDecorators(refactor))
-                    .then(() => _refactorBootstrap(plugin, refactor))
-                    .then(() => _replaceExport(plugin, refactor))
-                    .then(() => _exportModuleMap(plugin, refactor));
+        else if (plugin instanceof plugin_1.AotPlugin) {
+            if (plugin.compilerHost.readFile(sourceFileName) == source) {
+                // In the case where the source is the same as the one in compilerHost, we don't have
+                // extra TS loaders and there's no need to do any trickery.
+                source = null;
             }
-            else {
-                return Promise.resolve()
-                    .then(() => _replaceResources(refactor))
-                    .then(() => _removeModuleId(refactor))
-                    .then(() => _exportModuleMap(plugin, refactor));
-            }
-        })
-            .then(() => {
-            if (plugin.typeCheck) {
-                // Check all diagnostics from this and reverse dependencies also.
-                if (!plugin.firstRun) {
-                    _diagnoseDeps(this._module.reasons, plugin, new Set());
+            const refactor = new refactor_1.TypeScriptFileRefactor(sourceFileName, plugin.compilerHost, plugin.program, source);
+            Promise.resolve()
+                .then(() => {
+                if (!plugin.skipCodeGeneration) {
+                    return Promise.resolve()
+                        .then(() => _removeDecorators(refactor))
+                        .then(() => _refactorBootstrap(plugin, refactor))
+                        .then(() => _replaceExport(plugin, refactor))
+                        .then(() => _exportModuleMap(plugin, refactor));
                 }
-                // We do this here because it will throw on error, resulting in rebuilding this file
-                // the next time around if it changes.
-                plugin.diagnose(sourceFileName);
-            }
-        })
-            .then(() => {
-            // Add resources as dependencies.
-            _getResourcesUrls(refactor).forEach((url) => {
-                this.addDependency(path.resolve(path.dirname(sourceFileName), url));
-            });
-        })
-            .then(() => {
-            if (source) {
-                // We need to validate diagnostics. We ignore type checking though, to save time.
-                const diagnostics = refactor.getDiagnostics(false);
-                if (diagnostics.length) {
-                    let message = '';
-                    diagnostics.forEach(diagnostic => {
-                        const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                        if (diagnostic.file) {
-                            const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-                            const fileName = diagnostic.file.fileName;
-                            const { line, character } = position;
-                            message += `${fileName} (${line + 1},${character + 1}): ${messageText}\n`;
-                        }
-                        else {
-                            message += `${messageText}\n`;
-                        }
-                    });
-                    throw new Error(message);
+                else {
+                    return Promise.resolve()
+                        .then(() => _replaceResources(refactor))
+                        .then(() => _removeModuleId(refactor))
+                        .then(() => _exportModuleMap(plugin, refactor));
                 }
-            }
-            // Force a few compiler options to make sure we get the result we want.
-            const compilerOptions = Object.assign({}, plugin.compilerOptions, {
-                inlineSources: true,
-                inlineSourceMap: false,
-                sourceRoot: plugin.basePath
-            });
-            const result = refactor.transpile(compilerOptions);
-            if (plugin.failedCompilation) {
-                // Return an empty string to prevent extra loader errors (missing imports etc).
-                // Plugin errors were already pushed to the compilation errors.
-                cb(null, '');
-            }
-            else {
-                cb(null, result.outputText, result.sourceMap);
-            }
-        })
-            .catch(err => cb(err));
+            })
+                .then(() => {
+                if (plugin.typeCheck) {
+                    // Check all diagnostics from this and reverse dependencies also.
+                    if (!plugin.firstRun) {
+                        _diagnoseDeps(this._module.reasons, plugin, new Set());
+                    }
+                    // We do this here because it will throw on error, resulting in rebuilding this file
+                    // the next time around if it changes.
+                    plugin.diagnose(sourceFileName);
+                }
+            })
+                .then(() => {
+                // Add resources as dependencies.
+                _getResourcesUrls(refactor).forEach((url) => {
+                    this.addDependency(path.resolve(path.dirname(sourceFileName), url));
+                });
+            })
+                .then(() => {
+                if (source) {
+                    // We need to validate diagnostics. We ignore type checking though, to save time.
+                    const diagnostics = refactor.getDiagnostics(false);
+                    if (diagnostics.length) {
+                        let message = '';
+                        diagnostics.forEach(diagnostic => {
+                            const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+                            if (diagnostic.file) {
+                                const position = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+                                const fileName = diagnostic.file.fileName;
+                                const { line, character } = position;
+                                message += `${fileName} (${line + 1},${character + 1}): ${messageText}\n`;
+                            }
+                            else {
+                                message += `${messageText}\n`;
+                            }
+                        });
+                        throw new Error(message);
+                    }
+                }
+                // Force a few compiler options to make sure we get the result we want.
+                const compilerOptions = Object.assign({}, plugin.compilerOptions, {
+                    inlineSources: true,
+                    inlineSourceMap: false,
+                    sourceRoot: plugin.basePath
+                });
+                const result = refactor.transpile(compilerOptions);
+                if (plugin.failedCompilation) {
+                    // Return an empty string to prevent extra loader errors (missing imports etc).
+                    // Plugin errors were already pushed to the compilation errors.
+                    cb(null, '');
+                }
+                else {
+                    cb(null, result.outputText, result.sourceMap);
+                }
+            })
+                .catch(err => cb(err));
+        }
     }
     else {
         const options = loaderUtils.getOptions(this) || {};

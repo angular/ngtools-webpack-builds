@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const ts = require("typescript");
 const source_map_1 = require("source-map");
+const transformers_1 = require("./transformers");
 const MagicString = require('magic-string');
 function resolve(filePath, _host, program) {
     if (path.isAbsolute(filePath)) {
@@ -63,36 +64,7 @@ class TypeScriptFileRefactor {
      * @return all nodes of kind, or [] if none is found
      */
     findAstNodes(node, kind, recursive = false, max = Infinity) {
-        if (max == 0) {
-            return [];
-        }
-        if (!node) {
-            node = this._sourceFile;
-        }
-        let arr = [];
-        if (node.kind === kind) {
-            // If we're not recursively looking for children, stop here.
-            if (!recursive) {
-                return [node];
-            }
-            arr.push(node);
-            max--;
-        }
-        if (max > 0) {
-            for (const child of node.getChildren(this._sourceFile)) {
-                this.findAstNodes(child, kind, recursive, max)
-                    .forEach((node) => {
-                    if (max > 0) {
-                        arr.push(node);
-                    }
-                    max--;
-                });
-                if (max <= 0) {
-                    break;
-                }
-            }
-        }
-        return arr;
+        return transformers_1.findAstNodes(node, this._sourceFile, kind, recursive, max);
     }
     findFirstAstNode(node, kind) {
         return this.findAstNodes(node, kind, false, 1)[0] || null;

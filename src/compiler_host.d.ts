@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
+import { WebpackResourceLoader } from './resource_loader';
 export interface OnErrorFn {
     (message: string): void;
 }
@@ -62,6 +63,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _basePath;
     private _setParentNodes;
     private _cache;
+    private _resourceLoader?;
     constructor(_options: ts.CompilerOptions, basePath: string);
     private _normalizePath(path);
     private _resolve(path);
@@ -85,4 +87,6 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     getCanonicalFileName(fileName: string): string;
     useCaseSensitiveFileNames(): boolean;
     getNewLine(): string;
+    setResourceLoader(resourceLoader: WebpackResourceLoader): void;
+    readResource(fileName: string): string | Promise<string>;
 }

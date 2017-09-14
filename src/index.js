@@ -29,6 +29,7 @@ if (!(version.major == '5'
         + `Current version is "${version.full}".`);
 }
 __export(require("./plugin"));
+__export(require("./angular_compiler_plugin"));
 __export(require("./extract_i18n_plugin"));
 var loader_1 = require("./loader");
 exports.default = loader_1.ngcLoader;

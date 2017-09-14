@@ -6,6 +6,7 @@ import { LazyRouteMap } from './lazy_routes';
  * Option Constants
  */
 export interface AotPluginOptions {
+    sourceMap?: boolean;
     tsConfigPath: string;
     basePath?: string;
     entryModule?: string;
