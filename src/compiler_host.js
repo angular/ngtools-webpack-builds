@@ -217,6 +217,19 @@ class WebpackCompilerHost {
     getNewLine() {
         return this._delegate.getNewLine();
     }
+    setResourceLoader(resourceLoader) {
+        this._resourceLoader = resourceLoader;
+    }
+    readResource(fileName) {
+        if (this._resourceLoader) {
+            // We still read it to add it to the compiler host file list.
+            this.readFile(fileName);
+            return this._resourceLoader.get(fileName);
+        }
+        else {
+            return this.readFile(fileName);
+        }
+    }
 }
 exports.WebpackCompilerHost = WebpackCompilerHost;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/compiler_host.js.map

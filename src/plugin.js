@@ -112,6 +112,24 @@ class AotPlugin {
         // resolve to that directory but the real `node_modules`.
         let genDir = path.join(basePath, '$$_gendir');
         this._compilerOptions = tsConfig.options;
+        // Default plugin sourceMap to compiler options setting.
+        if (!options.hasOwnProperty('sourceMap')) {
+            options.sourceMap = this._compilerOptions.sourceMap || false;
+        }
+        // Force the right sourcemap options.
+        if (options.sourceMap) {
+            this._compilerOptions.sourceMap = true;
+            this._compilerOptions.inlineSources = true;
+            this._compilerOptions.inlineSourceMap = false;
+            this._compilerOptions.sourceRoot = basePath;
+        }
+        else {
+            this._compilerOptions.sourceMap = false;
+            this._compilerOptions.sourceRoot = undefined;
+            this._compilerOptions.inlineSources = undefined;
+            this._compilerOptions.inlineSourceMap = undefined;
+        }
+        // Compose Angular Compiler Options.
         this._angularCompilerOptions = Object.assign({ genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });
         if (this._angularCompilerOptions.hasOwnProperty('genDir')) {
             genDir = path.resolve(basePath, this._angularCompilerOptions.genDir);
@@ -182,7 +200,7 @@ class AotPlugin {
         const result = Object.create(null);
         const changedFilePaths = this._compilerHost.getChangedFilePaths();
         for (const filePath of changedFilePaths) {
-            const fileLazyRoutes = lazy_routes_1.findLazyRoutes(filePath, this._program, this._compilerHost);
+            const fileLazyRoutes = lazy_routes_1.findLazyRoutes(filePath, this._compilerHost, this._program);
             for (const routeKey of Object.keys(fileLazyRoutes)) {
                 const route = fileLazyRoutes[routeKey];
                 if (routeKey in this._lazyRoutes) {
