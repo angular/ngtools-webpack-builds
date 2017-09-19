@@ -266,12 +266,19 @@ class AngularCompilerPlugin {
             // a linked @angular/core or cli which would not be under the same path as the project
             // being built.
             const angularCoreModuleDir = path.dirname(angularCoreModulePath).split(/node_modules/).pop();
+            // Also support the es2015 in Angular versions that have it.
+            let angularCoreEs2015Dir;
+            if (angularCorePackageJson['es2015']) {
+                const angularCoreEs2015Path = path.resolve(path.dirname(angularCorePackagePath), angularCorePackageJson['es2015']);
+                angularCoreEs2015Dir = path.dirname(angularCoreEs2015Path).split(/node_modules/).pop();
+            }
             cmf.plugin('after-resolve', (result, callback) => {
                 if (!result) {
                     return callback();
                 }
                 // Alter only request from Angular.
-                if (angularCoreModuleDir && !result.resource.endsWith(angularCoreModuleDir)) {
+                if (!(angularCoreModuleDir && result.resource.endsWith(angularCoreModuleDir))
+                    && !(angularCoreEs2015Dir && result.resource.endsWith(angularCoreEs2015Dir))) {
                     return callback(null, result);
                 }
                 this.done.then(() => {
