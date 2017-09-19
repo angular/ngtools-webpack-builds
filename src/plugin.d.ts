@@ -6,7 +6,6 @@ import { LazyRouteMap } from './lazy_routes';
  * Option Constants
  */
 export interface AotPluginOptions {
-    sourceMap?: boolean;
     tsConfigPath: string;
     basePath?: string;
     entryModule?: string;
@@ -42,16 +41,15 @@ export declare class AotPlugin implements Tapable {
     private _donePromise;
     private _compiler;
     private _compilation;
-    private _failedCompilation;
     private _typeCheck;
     private _skipCodeGeneration;
     private _replaceExport;
     private _basePath;
     private _genDir;
-    private _i18nFile?;
-    private _i18nFormat?;
-    private _locale?;
-    private _missingTranslation?;
+    private _i18nFile;
+    private _i18nFormat;
+    private _locale;
+    private _missingTranslation;
     private _diagnoseFiles;
     private _firstRun;
     constructor(options: AotPluginOptions);
@@ -61,7 +59,6 @@ export declare class AotPlugin implements Tapable {
     readonly compilerHost: WebpackCompilerHost;
     readonly compilerOptions: ts.CompilerOptions;
     readonly done: Promise<void>;
-    readonly failedCompilation: boolean;
     readonly entryModule: {
         path: string;
         className: string;

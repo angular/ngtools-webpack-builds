@@ -36,7 +36,7 @@ class ExtractI18nPlugin {
         catch (err) {
             throw new Error(`An error happened while parsing ${this._tsConfigPath} JSON: ${err}.`);
         }
-        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, undefined, this._tsConfigPath);
+        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, null, this._tsConfigPath);
         let fileNames = tsConfig.fileNames;
         if (options.hasOwnProperty('exclude')) {
             let exclude = typeof options.exclude == 'string'
@@ -64,9 +64,7 @@ class ExtractI18nPlugin {
             genDir = path.resolve(process.cwd(), options.genDir);
         }
         this._compilerOptions = tsConfig.options;
-        this._angularCompilerOptions = Object.assign(
-        // kept for compatibility with Angular <v5.0.0-beta.7+
-        { genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath, outDir: genDir });
+        this._angularCompilerOptions = Object.assign({ genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });
         this._basePath = basePath;
         this._genDir = genDir;
         // this._compilerHost = new WebpackCompilerHost(this._compilerOptions, this._basePath);
