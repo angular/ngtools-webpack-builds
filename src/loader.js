@@ -523,7 +523,7 @@ function ngcLoader(source) {
                     sourceRoot: plugin.basePath
                 });
                 const result = refactor.transpile(compilerOptions);
-                if (plugin.failedCompilation) {
+                if (plugin.failedCompilation && plugin.compilerOptions.noEmitOnError) {
                     // Return an empty string to prevent extra loader errors (missing imports etc).
                     // Plugin errors were already pushed to the compilation errors.
                     cb(null, '');

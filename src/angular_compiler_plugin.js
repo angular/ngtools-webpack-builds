@@ -138,6 +138,7 @@ class AngularCompilerPlugin {
             this._compilerOptions.sourceRoot = undefined;
             this._compilerOptions.inlineSources = undefined;
             this._compilerOptions.inlineSourceMap = undefined;
+            this._compilerOptions.mapRoot = undefined;
         }
         // Compose Angular Compiler Options.
         this._angularCompilerOptions = Object.assign(this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });

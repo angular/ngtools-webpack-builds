@@ -128,6 +128,11 @@ class AotPlugin {
             this._compilerOptions.sourceRoot = undefined;
             this._compilerOptions.inlineSources = undefined;
             this._compilerOptions.inlineSourceMap = undefined;
+            this._compilerOptions.mapRoot = undefined;
+        }
+        // Default noEmitOnError to true
+        if (this._compilerOptions.noEmitOnError !== false) {
+            this._compilerOptions.noEmitOnError = true;
         }
         // Compose Angular Compiler Options.
         this._angularCompilerOptions = Object.assign({ genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });
