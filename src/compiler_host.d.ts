@@ -66,7 +66,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _resourceLoader?;
     constructor(_options: ts.CompilerOptions, basePath: string);
     private _normalizePath(path);
-    private _resolve(path);
+    resolve(path: string): string;
     private _setFileContent(fileName, content);
     readonly dirty: boolean;
     enableCaching(): void;

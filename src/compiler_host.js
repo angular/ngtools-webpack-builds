@@ -86,7 +86,7 @@ class WebpackCompilerHost {
     _normalizePath(path) {
         return path.replace(/\\/g, '/');
     }
-    _resolve(path) {
+    resolve(path) {
         path = this._normalizePath(path);
         if (path[0] == '.') {
             return this._normalizePath(path_1.join(this.getCurrentDirectory(), path));
@@ -122,18 +122,18 @@ class WebpackCompilerHost {
         return Object.keys(this._changedFiles);
     }
     invalidate(fileName) {
-        fileName = this._resolve(fileName);
+        fileName = this.resolve(fileName);
         if (fileName in this._files) {
             this._files[fileName] = null;
             this._changedFiles[fileName] = true;
         }
     }
     fileExists(fileName, delegate = true) {
-        fileName = this._resolve(fileName);
+        fileName = this.resolve(fileName);
         return this._files[fileName] != null || (delegate && this._delegate.fileExists(fileName));
     }
     readFile(fileName) {
-        fileName = this._resolve(fileName);
+        fileName = this.resolve(fileName);
         const stats = this._files[fileName];
         if (stats == null) {
             const result = this._delegate.readFile(fileName);
@@ -149,24 +149,24 @@ class WebpackCompilerHost {
     }
     // Does not delegate, use with `fileExists/directoryExists()`.
     stat(path) {
-        path = this._resolve(path);
+        path = this.resolve(path);
         return this._files[path] || this._directories[path];
     }
     directoryExists(directoryName, delegate = true) {
-        directoryName = this._resolve(directoryName);
+        directoryName = this.resolve(directoryName);
         return (this._directories[directoryName] != null)
             || (delegate
                 && this._delegate.directoryExists != undefined
                 && this._delegate.directoryExists(directoryName));
     }
     getFiles(path) {
-        path = this._resolve(path);
+        path = this.resolve(path);
         return Object.keys(this._files)
             .filter(fileName => path_1.dirname(fileName) == path)
             .map(path => path_1.basename(path));
     }
     getDirectories(path) {
-        path = this._resolve(path);
+        path = this.resolve(path);
         const subdirs = Object.keys(this._directories)
             .filter(fileName => path_1.dirname(fileName) == path)
             .map(path => path_1.basename(path));
@@ -180,12 +180,18 @@ class WebpackCompilerHost {
         return delegated.concat(subdirs);
     }
     getSourceFile(fileName, languageVersion, _onError) {
-        fileName = this._resolve(fileName);
+        fileName = this.resolve(fileName);
         const stats = this._files[fileName];
         if (stats == null) {
             const content = this.readFile(fileName);
             if (!this._cache) {
                 return ts.createSourceFile(fileName, content, languageVersion, this._setParentNodes);
+            }
+            else if (!this._files[fileName]) {
+                // If cache is turned on and the file exists, the readFile call will have populated stats.
+                // Empty stats at this point mean the file doesn't exist at and so we should return
+                // undefined.
+                return undefined;
             }
         }
         return this._files[fileName].getSourceFile(languageVersion, this._setParentNodes);
@@ -200,7 +206,7 @@ class WebpackCompilerHost {
     // typings in WebStorm.
     get writeFile() {
         return (fileName, data, _writeByteOrderMark, _onError, _sourceFiles) => {
-            fileName = this._resolve(fileName);
+            fileName = this.resolve(fileName);
             this._setFileContent(fileName, data);
         };
     }
@@ -208,7 +214,7 @@ class WebpackCompilerHost {
         return this._basePath !== null ? this._basePath : this._delegate.getCurrentDirectory();
     }
     getCanonicalFileName(fileName) {
-        fileName = this._resolve(fileName);
+        fileName = this.resolve(fileName);
         return this._delegate.getCanonicalFileName(fileName);
     }
     useCaseSensitiveFileNames() {

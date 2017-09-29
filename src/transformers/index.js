@@ -11,4 +11,5 @@ __export(require("./replace_bootstrap"));
 __export(require("./export_ngfactory"));
 __export(require("./export_lazy_module_map"));
 __export(require("./register_locale_data"));
+__export(require("./replace_resources"));
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/transformers/index.js.map

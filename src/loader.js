@@ -5,6 +5,7 @@ const ts = require("typescript");
 const plugin_1 = require("./plugin");
 const angular_compiler_plugin_1 = require("./angular_compiler_plugin");
 const refactor_1 = require("./refactor");
+const benchmark_1 = require("./benchmark");
 const loaderUtils = require('loader-utils');
 const NormalModule = require('webpack/lib/NormalModule');
 // This is a map of changes which need to be made
@@ -431,6 +432,8 @@ exports._exportModuleMap = _exportModuleMap;
 function ngcLoader(source) {
     const cb = this.async();
     const sourceFileName = this.resourcePath;
+    const timeLabel = `ngcLoader+${sourceFileName}+`;
+    benchmark_1.time(timeLabel);
     const plugin = this._compilation._ngToolsWebpackPluginInstance;
     if (plugin) {
         // We must verify that the plugin is an instance of the right class.
@@ -441,21 +444,29 @@ function ngcLoader(source) {
                 + 'You can check this with `npm ls @ngtools/webpack`, and then remove the extra copies.');
         }
         if (plugin instanceof angular_compiler_plugin_1.AngularCompilerPlugin) {
+            benchmark_1.time(timeLabel + '.ngcLoader.AngularCompilerPlugin');
             plugin.done
                 .then(() => {
+                benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
                 const result = plugin.getFile(sourceFileName);
                 if (plugin.failedCompilation) {
                     // Return an empty string if there is no result to prevent extra loader errors.
                     // Plugin errors were already pushed to the compilation errors.
+                    benchmark_1.timeEnd(timeLabel);
                     cb(null, result.outputText || '', result.sourceMap);
                 }
                 else {
+                    benchmark_1.timeEnd(timeLabel);
                     cb(null, result.outputText, result.sourceMap);
                 }
             })
-                .catch(err => cb(err));
+                .catch(err => {
+                benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
+                cb(err);
+            });
         }
         else if (plugin instanceof plugin_1.AotPlugin) {
+            benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin');
             if (plugin.compilerHost.readFile(sourceFileName) == source) {
                 // In the case where the source is the same as the one in compilerHost, we don't have
                 // extra TS loaders and there's no need to do any trickery.
@@ -464,22 +475,26 @@ function ngcLoader(source) {
             const refactor = new refactor_1.TypeScriptFileRefactor(sourceFileName, plugin.compilerHost, plugin.program, source);
             Promise.resolve()
                 .then(() => {
+                benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.refactor');
+                let promise;
                 if (!plugin.skipCodeGeneration) {
-                    return Promise.resolve()
+                    promise = Promise.resolve()
                         .then(() => _removeDecorators(refactor))
                         .then(() => _refactorBootstrap(plugin, refactor))
                         .then(() => _replaceExport(plugin, refactor))
                         .then(() => _exportModuleMap(plugin, refactor));
                 }
                 else {
-                    return Promise.resolve()
+                    promise = Promise.resolve()
                         .then(() => _replaceResources(refactor))
                         .then(() => _removeModuleId(refactor))
                         .then(() => _exportModuleMap(plugin, refactor));
                 }
+                return promise.then(() => benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.refactor'));
             })
                 .then(() => {
                 if (plugin.typeCheck) {
+                    benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.typeCheck');
                     // Check all diagnostics from this and reverse dependencies also.
                     if (!plugin.firstRun) {
                         _diagnoseDeps(this._module.reasons, plugin, new Set());
@@ -487,16 +502,20 @@ function ngcLoader(source) {
                     // We do this here because it will throw on error, resulting in rebuilding this file
                     // the next time around if it changes.
                     plugin.diagnose(sourceFileName);
+                    benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.typeCheck');
                 }
             })
                 .then(() => {
+                benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.addDependency');
                 // Add resources as dependencies.
                 _getResourcesUrls(refactor).forEach((url) => {
                     this.addDependency(path.resolve(path.dirname(sourceFileName), url));
                 });
+                benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.addDependency');
             })
                 .then(() => {
                 if (source) {
+                    benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.getDiagnostics');
                     // We need to validate diagnostics. We ignore type checking though, to save time.
                     const diagnostics = refactor.getDiagnostics(false);
                     if (diagnostics.length) {
@@ -515,6 +534,7 @@ function ngcLoader(source) {
                         });
                         throw new Error(message);
                     }
+                    benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.getDiagnostics');
                 }
                 // Force a few compiler options to make sure we get the result we want.
                 const compilerOptions = Object.assign({}, plugin.compilerOptions, {
@@ -522,13 +542,18 @@ function ngcLoader(source) {
                     inlineSourceMap: false,
                     sourceRoot: plugin.basePath
                 });
+                benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.transpile');
                 const result = refactor.transpile(compilerOptions);
+                benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.transpile');
+                benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin');
                 if (plugin.failedCompilation && plugin.compilerOptions.noEmitOnError) {
                     // Return an empty string to prevent extra loader errors (missing imports etc).
                     // Plugin errors were already pushed to the compilation errors.
+                    benchmark_1.timeEnd(timeLabel);
                     cb(null, '');
                 }
                 else {
+                    benchmark_1.timeEnd(timeLabel);
                     cb(null, result.outputText, result.sourceMap);
                 }
             })
@@ -559,6 +584,7 @@ function ngcLoader(source) {
         const result = refactor.transpile(compilerOptions);
         // Webpack is going to take care of this.
         result.outputText = result.outputText.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '');
+        benchmark_1.timeEnd(timeLabel);
         cb(null, result.outputText, result.sourceMap);
     }
 }

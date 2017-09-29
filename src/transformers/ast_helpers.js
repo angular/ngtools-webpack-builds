@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
+const compiler_host_1 = require("../compiler_host");
+const make_transform_1 = require("./make_transform");
 /**
  * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
  * @param node The root node to check, or null if the whole tree should be searched.
@@ -61,4 +63,37 @@ function getLastNode(sourceFile) {
     return null;
 }
 exports.getLastNode = getLastNode;
+function transformTypescript(content, transformOpsCb) {
+    // Set compiler options.
+    const compilerOptions = {
+        noEmitOnError: false,
+        allowJs: true,
+        newLine: ts.NewLineKind.LineFeed,
+        target: ts.ScriptTarget.ESNext,
+        skipLibCheck: true,
+        sourceMap: false,
+        importHelpers: true
+    };
+    // Create compiler host.
+    const basePath = '/project/src/';
+    const compilerHost = new compiler_host_1.WebpackCompilerHost(compilerOptions, basePath);
+    // Add a dummy file to host content.
+    const fileName = basePath + 'test-file.ts';
+    compilerHost.writeFile(fileName, content, false);
+    // Create the TypeScript program.
+    const program = ts.createProgram([fileName], compilerOptions, compilerHost);
+    // Get the transform operations.
+    const sourceFile = program.getSourceFile(fileName);
+    const transformOps = transformOpsCb(sourceFile);
+    // Emit.
+    const { emitSkipped, diagnostics } = program.emit(undefined, undefined, undefined, undefined, { before: [make_transform_1.makeTransform(transformOps)] });
+    // Log diagnostics if emit wasn't successfull.
+    if (emitSkipped) {
+        console.log(diagnostics);
+        return null;
+    }
+    // Return the transpiled js.
+    return compilerHost.readFile(fileName.replace(/\.ts$/, '.js'));
+}
+exports.transformTypescript = transformTypescript;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/transformers/ast_helpers.js.map
