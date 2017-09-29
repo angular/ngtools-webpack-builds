@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
+const semver_1 = require("semver");
+// Typescript below 2.5.0 needs a workaround.
+const visitEachChild = semver_1.satisfies(ts.version, '^2.5.0')
+    ? ts.visitEachChild
+    : visitEachChildWorkaround;
 var OPERATION_KIND;
 (function (OPERATION_KIND) {
     OPERATION_KIND[OPERATION_KIND["Remove"] = 0] = "Remove";
@@ -36,8 +41,6 @@ class ReplaceNodeOperation extends TransformOperation {
     }
 }
 exports.ReplaceNodeOperation = ReplaceNodeOperation;
-// TODO: add symbol workaround for https://github.com/Microsoft/TypeScript/issues/17551 and
-// https://github.com/Microsoft/TypeScript/issues/17384
 function makeTransform(ops) {
     const sourceFiles = ops.reduce((prev, curr) => prev.includes(curr.sourceFile) ? prev : prev.concat(curr.sourceFile), []);
     const removeOps = ops.filter((op) => op.kind === OPERATION_KIND.Remove);
@@ -76,7 +79,7 @@ function makeTransform(ops) {
                 }
                 else {
                     // Otherwise return node as is and visit children.
-                    return ts.visitEachChild(node, visitor, context);
+                    return visitEachChild(node, visitor, context);
                 }
             };
             // Only visit source files we have ops for.
@@ -86,4 +89,30 @@ function makeTransform(ops) {
     };
 }
 exports.makeTransform = makeTransform;
+/**
+ * This is a version of `ts.visitEachChild` that works that calls our version
+ * of `updateSourceFileNode`, so that typescript doesn't lose type information
+ * for property decorators.
+ * See https://github.com/Microsoft/TypeScript/issues/17384 and
+ * https://github.com/Microsoft/TypeScript/issues/17551, fixed by
+ * https://github.com/Microsoft/TypeScript/pull/18051 and released on TS 2.5.0.
+ *
+ * @param sf
+ * @param statements
+ */
+function visitEachChildWorkaround(node, visitor, context) {
+    if (node.kind === ts.SyntaxKind.SourceFile) {
+        const sf = node;
+        const statements = ts.visitLexicalEnvironment(sf.statements, visitor, context);
+        if (statements === sf.statements) {
+            return sf;
+        }
+        // Note: Need to clone the original file (and not use `ts.updateSourceFileNode`)
+        // as otherwise TS fails when resolving types for decorators.
+        const sfClone = ts.getMutableClone(sf);
+        sfClone.statements = statements;
+        return sfClone;
+    }
+    return ts.visitEachChild(node, visitor, context);
+}
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/transformers/make_transform.js.map

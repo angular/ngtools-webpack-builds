@@ -9,21 +9,27 @@ export interface AngularCompilerPluginOptions {
     basePath?: string;
     entryModule?: string;
     mainPath?: string;
-    typeChecking?: boolean;
+    skipCodeGeneration?: boolean;
     hostOverrideFileSystem?: {
         [path: string]: string;
     };
     hostReplacementPaths?: {
         [path: string]: string;
     };
-    i18nFile?: string;
-    i18nFormat?: string;
+    i18nInFile?: string;
+    i18nInFormat?: string;
+    i18nOutFile?: string;
+    i18nOutFormat?: string;
     locale?: string;
     missingTranslation?: string;
-    replaceExport?: boolean;
+    platform?: PLATFORM;
     exclude?: string | string[];
     include?: string[];
     compilerOptions?: ts.CompilerOptions;
+}
+export declare enum PLATFORM {
+    Browser = 0,
+    Server = 1,
 }
 export declare class AngularCompilerPlugin implements Tapable {
     private _options;
@@ -39,11 +45,14 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _basePath;
     private _transformMap;
     private _platform;
+    private _JitMode;
     private _firstRun;
     private _donePromise;
     private _compiler;
     private _compilation;
     private _failedCompilation;
+    private _forkTypeChecker;
+    private _typeCheckerProcess;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
     readonly done: Promise<void>;
@@ -54,15 +63,22 @@ export declare class AngularCompilerPlugin implements Tapable {
     };
     static isSupported(): boolean;
     private _setupOptions(options);
-    private _findLazyRoutesInAst(changedFilePaths);
+    private _getTsProgram();
+    private _getChangedTsFiles();
+    private _createOrUpdateProgram();
     private _getLazyRoutesFromNgtools();
+    private _findLazyRoutesInAst(changedFilePaths);
     private _processLazyRoutes(discoveredLazyRoutes);
+    private _createForkedTypeChecker();
+    private _updateForkedTypeChecker(changedTsFiles);
     apply(compiler: any): void;
     private _make(compilation, cb);
     private _update();
+    writeI18nOutFile(): void;
     getFile(fileName: string): {
         outputText: string;
         sourceMap: string;
     };
-    private _emit(program, customTransformers);
+    private _emit(sourceFiles, customTransformers);
+    private _validateLocale(locale);
 }

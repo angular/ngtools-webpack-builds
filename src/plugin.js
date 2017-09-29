@@ -14,6 +14,7 @@ const entry_resolver_1 = require("./entry_resolver");
 const paths_plugin_1 = require("./paths-plugin");
 const lazy_routes_1 = require("./lazy_routes");
 const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
+const benchmark_1 = require("./benchmark");
 const inlineSourceMapRe = /\/\/# sourceMappingURL=data:application\/json;base64,([\s\S]+)$/;
 class AotPlugin {
     constructor(options) {
@@ -55,6 +56,7 @@ class AotPlugin {
     get lazyRoutes() { return this._lazyRoutes; }
     get discoveredLazyRoutes() { return this._discoveredLazyRoutes; }
     _setupOptions(options) {
+        benchmark_1.time('AotPlugin._setupOptions');
         // Fill in the missing options.
         if (!options.hasOwnProperty('tsConfigPath')) {
             throw new Error('Must specify "tsConfigPath" in the configuration of @ngtools/webpack.');
@@ -200,8 +202,10 @@ class AotPlugin {
             }
             this._missingTranslation = options.missingTranslation;
         }
+        benchmark_1.timeEnd('AotPlugin._setupOptions');
     }
     _findLazyRoutesInAst() {
+        benchmark_1.time('AotPlugin._findLazyRoutesInAst');
         const result = Object.create(null);
         const changedFilePaths = this._compilerHost.getChangedFilePaths();
         for (const filePath of changedFilePaths) {
@@ -223,16 +227,20 @@ class AotPlugin {
                 }
             }
         }
+        benchmark_1.timeEnd('AotPlugin._findLazyRoutesInAst');
         return result;
     }
     _getLazyRoutesFromNgtools() {
         try {
-            return __NGTOOLS_PRIVATE_API_2.listLazyRoutes({
+            benchmark_1.time('AotPlugin._getLazyRoutesFromNgtools');
+            const result = __NGTOOLS_PRIVATE_API_2.listLazyRoutes({
                 program: this._program,
                 host: this._compilerHost,
                 angularCompilerOptions: this._angularCompilerOptions,
                 entryModule: this._entryModule
             });
+            benchmark_1.timeEnd('AotPlugin._getLazyRoutesFromNgtools');
+            return result;
         }
         catch (err) {
             // We silence the error that the @angular/router could not be found. In that case, there is
@@ -401,6 +409,7 @@ class AotPlugin {
         }
     }
     _make(compilation, cb) {
+        benchmark_1.time('AotPlugin._make');
         this._compilation = compilation;
         if (this._compilation._ngToolsWebpackPluginInstance) {
             return cb(new Error('An @ngtools/webpack plugin already exist for this compilation.'));
@@ -412,6 +421,7 @@ class AotPlugin {
             if (this._skipCodeGeneration) {
                 return;
             }
+            benchmark_1.time('AotPlugin._make.codeGen');
             // Create the Code Generator.
             return __NGTOOLS_PRIVATE_API_2.codeGen({
                 basePath: this._basePath,
@@ -424,7 +434,8 @@ class AotPlugin {
                 locale: this.locale,
                 missingTranslation: this.missingTranslation,
                 readResource: (path) => this._resourceLoader.get(path)
-            });
+            })
+                .then(() => benchmark_1.timeEnd('AotPlugin._make.codeGen'));
         })
             .then(() => {
             // Get the ngfactory that were created by the previous step, and add them to the root
@@ -439,15 +450,20 @@ class AotPlugin {
             // transitive modules, which include files that might just have been generated.
             // This needs to happen after the code generator has been created for generated files
             // to be properly resolved.
+            benchmark_1.time('AotPlugin._make.createProgram');
             this._program = ts.createProgram(this._rootFilePath, this._compilerOptions, this._compilerHost, this._program);
+            benchmark_1.timeEnd('AotPlugin._make.createProgram');
         })
             .then(() => {
             // Re-diagnose changed files.
+            benchmark_1.time('AotPlugin._make.diagnose');
             const changedFilePaths = this._compilerHost.getChangedFilePaths();
             changedFilePaths.forEach(filePath => this.diagnose(filePath));
+            benchmark_1.timeEnd('AotPlugin._make.diagnose');
         })
             .then(() => {
             if (this._typeCheck) {
+                benchmark_1.time('AotPlugin._make._typeCheck');
                 const diagnostics = this._program.getGlobalDiagnostics();
                 if (diagnostics.length > 0) {
                     const message = diagnostics
@@ -464,11 +480,13 @@ class AotPlugin {
                         .join('\n');
                     throw new Error(message);
                 }
+                benchmark_1.timeEnd('AotPlugin._make._typeCheck');
             }
         })
             .then(() => {
             // We need to run the `listLazyRoutes` the first time because it also navigates libraries
             // and other things that we might miss using the findLazyRoutesInAst.
+            benchmark_1.time('AotPlugin._make._discoveredLazyRoutes');
             this._discoveredLazyRoutes = this.firstRun
                 ? this._getLazyRoutesFromNgtools()
                 : this._findLazyRoutesInAst();
@@ -489,6 +507,7 @@ class AotPlugin {
                     this._lazyRoutes[k + '.ngfactory'] = path.join(this.genDir, lr);
                 }
             });
+            benchmark_1.timeEnd('AotPlugin._make._discoveredLazyRoutes');
         })
             .then(() => {
             if (this._compilation.errors == 0) {
@@ -497,10 +516,12 @@ class AotPlugin {
             else {
                 this._failedCompilation = true;
             }
+            benchmark_1.timeEnd('AotPlugin._make');
             cb();
         }, (err) => {
             this._failedCompilation = true;
             compilation.errors.push(err.stack);
+            benchmark_1.timeEnd('AotPlugin._make');
             cb();
         });
     }

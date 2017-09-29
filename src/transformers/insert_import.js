@@ -34,7 +34,7 @@ function insertImport(sourceFile, symbolName, modulePath) {
             });
         });
         if (hasImportAlready) {
-            return;
+            return ops;
         }
         // Just pick the first one and insert at the end of its identifier list.
         ops.push(new make_transform_1.AddNodeOperation(sourceFile, maybeImports[0].elements[maybeImports[0].elements.length - 1], undefined, ts.createImportSpecifier(undefined, ts.createIdentifier(symbolName))));

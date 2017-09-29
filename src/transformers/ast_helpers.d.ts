@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import { TransformOperation } from './make_transform';
 /**
  * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
  * @param node The root node to check, or null if the whole tree should be searched.
@@ -11,3 +12,4 @@ import * as ts from 'typescript';
 export declare function findAstNodes<T extends ts.Node>(node: ts.Node | null, sourceFile: ts.SourceFile, kind: ts.SyntaxKind, recursive?: boolean, max?: number): T[];
 export declare function getFirstNode(sourceFile: ts.SourceFile): ts.Node | null;
 export declare function getLastNode(sourceFile: ts.SourceFile): ts.Node | null;
+export declare function transformTypescript(content: string, transformOpsCb: (SourceFile: ts.SourceFile) => TransformOperation[]): string;
