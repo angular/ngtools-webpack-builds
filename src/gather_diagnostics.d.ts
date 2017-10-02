@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { Program, Diagnostics } from './ngtools_api2';
+import { Program, Diagnostics } from './ngtools_api';
 export declare class CancellationToken implements ts.CancellationToken {
     private _isCancelled;
     requestCancellation(): void;

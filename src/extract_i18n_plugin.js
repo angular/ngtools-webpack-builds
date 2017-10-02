@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// @ignoreDep @angular/compiler-cli
 const ts = require("typescript");
 const path = require("path");
 const fs = require("fs");
-const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
+const ngtools_api_1 = require("./ngtools_api");
 const resource_loader_1 = require("./resource_loader");
 class ExtractI18nPlugin {
     constructor(options) {
@@ -76,14 +75,14 @@ class ExtractI18nPlugin {
             this._i18nFormat = options.i18nFormat;
         }
         if (options.hasOwnProperty('locale')) {
-            if (VERSION.major === '2') {
+            if (ngtools_api_1.VERSION.major === '2') {
                 console.warn("The option '--locale' is only available on the xi18n command"
                     + ' starting from Angular v4, please update to a newer version.', '\n\n');
             }
             this._locale = options.locale;
         }
         if (options.hasOwnProperty('outFile')) {
-            if (VERSION.major === '2') {
+            if (ngtools_api_1.VERSION.major === '2') {
                 console.warn("The option '--out-file' is only available on the xi18n command"
                     + ' starting from Angular v4, please update to a newer version.', '\n\n');
             }
@@ -114,7 +113,7 @@ class ExtractI18nPlugin {
         this._resourceLoader = new resource_loader_1.WebpackResourceLoader(compilation);
         this._donePromise = Promise.resolve()
             .then(() => {
-            return __NGTOOLS_PRIVATE_API_2.extractI18n({
+            return ngtools_api_1.__NGTOOLS_PRIVATE_API_2.extractI18n({
                 basePath: this._basePath,
                 compilerOptions: this._compilerOptions,
                 program: this._program,

@@ -1,7 +1,3 @@
-/**
- * This is a copy of types in @compiler-cli/src/ngtools_api.d.ts file,
- * together with a safe import to support cases where Angular versions is below 5.
- */
 import * as ts from 'typescript';
 export declare const DEFAULT_ERROR_CODE = 100;
 export declare const UNKNOWN_ERROR_CODE = 500;
@@ -94,6 +90,9 @@ export interface CreateCompilerHostInterface {
 export interface FormatDiagnosticsInterface {
     (options: CompilerOptions, diags: Diagnostics): string;
 }
+export declare function CompilerCliIsSupported(): void;
+export declare const VERSION: any;
+export declare const __NGTOOLS_PRIVATE_API_2: any;
 export declare const createProgram: CreateProgramInterface;
 export declare const createCompilerHost: CreateCompilerHostInterface;
 export declare const formatDiagnostics: FormatDiagnosticsInterface;

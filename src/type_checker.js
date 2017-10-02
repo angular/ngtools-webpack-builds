@@ -1,13 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// @ignoreDep @angular/compiler-cli
 const process = require("process");
 const ts = require("typescript");
 const chalk = require("chalk");
 const compiler_host_1 = require("./compiler_host");
 const benchmark_1 = require("./benchmark");
 const gather_diagnostics_1 = require("./gather_diagnostics");
-const ngtools_api2_1 = require("./ngtools_api2");
+const ngtools_api_1 = require("./ngtools_api");
 // Force basic color support on terminals with no color support.
 // Chalk typings don't have the correct constructor parameters.
 const chalkCtx = new chalk.constructor(chalk.supportsColor ? {} : { level: 1 });
@@ -75,7 +74,7 @@ class TypeChecker {
         benchmark_1.time('TypeChecker.constructor');
         const compilerHost = new compiler_host_1.WebpackCompilerHost(_angularCompilerOptions, _basePath);
         compilerHost.enableCaching();
-        this._angularCompilerHost = ngtools_api2_1.createCompilerHost({
+        this._angularCompilerHost = ngtools_api_1.createCompilerHost({
             options: this._angularCompilerOptions,
             tsHost: compilerHost
         });
@@ -102,7 +101,7 @@ class TypeChecker {
         else {
             benchmark_1.time('TypeChecker._createOrUpdateProgram.ng.createProgram');
             // Create the Angular program.
-            this._program = ngtools_api2_1.createProgram({
+            this._program = ngtools_api_1.createProgram({
                 rootNames: this._tsFilenames,
                 options: this._angularCompilerOptions,
                 host: this._angularCompilerHost,
@@ -118,11 +117,11 @@ class TypeChecker {
             const errors = allDiagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error);
             const warnings = allDiagnostics.filter((d) => d.category === ts.DiagnosticCategory.Warning);
             if (errors.length > 0) {
-                const message = ngtools_api2_1.formatDiagnostics(this._angularCompilerOptions, errors);
+                const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, errors);
                 console.error(bold(red('ERROR in ' + message)));
             }
             if (warnings.length > 0) {
-                const message = ngtools_api2_1.formatDiagnostics(this._angularCompilerOptions, warnings);
+                const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, warnings);
                 console.log(bold(yellow('WARNING in ' + message)));
             }
         }

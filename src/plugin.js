@@ -1,13 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// @ignoreDep @angular/compiler-cli
 const fs = require("fs");
 const path = require("path");
 const ts = require("typescript");
 const SourceMap = require("source-map");
-const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
 const NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
+const ngtools_api_1 = require("./ngtools_api");
 const resource_loader_1 = require("./resource_loader");
 const compiler_host_1 = require("./compiler_host");
 const entry_resolver_1 = require("./entry_resolver");
@@ -27,6 +26,7 @@ class AotPlugin {
         this._replaceExport = false;
         this._diagnoseFiles = {};
         this._firstRun = true;
+        ngtools_api_1.CompilerCliIsSupported();
         this._options = Object.assign({}, options);
         this._setupOptions(this._options);
     }
@@ -194,7 +194,7 @@ class AotPlugin {
             this._replaceExport = options.replaceExport || this._replaceExport;
         }
         if (options.hasOwnProperty('missingTranslation')) {
-            const [MAJOR, MINOR, PATCH] = VERSION.full.split('.').map((x) => parseInt(x, 10));
+            const [MAJOR, MINOR, PATCH] = ngtools_api_1.VERSION.full.split('.').map((x) => parseInt(x, 10));
             if (MAJOR < 4 || (MINOR == 2 && PATCH < 2)) {
                 console.warn((`The --missing-translation parameter will be ignored because it is only `
                     + `compatible with Angular version 4.2.0 or higher. If you want to use it, please `
@@ -233,7 +233,7 @@ class AotPlugin {
     _getLazyRoutesFromNgtools() {
         try {
             benchmark_1.time('AotPlugin._getLazyRoutesFromNgtools');
-            const result = __NGTOOLS_PRIVATE_API_2.listLazyRoutes({
+            const result = ngtools_api_1.__NGTOOLS_PRIVATE_API_2.listLazyRoutes({
                 program: this._program,
                 host: this._compilerHost,
                 angularCompilerOptions: this._angularCompilerOptions,
@@ -423,7 +423,7 @@ class AotPlugin {
             }
             benchmark_1.time('AotPlugin._make.codeGen');
             // Create the Code Generator.
-            return __NGTOOLS_PRIVATE_API_2.codeGen({
+            return ngtools_api_1.__NGTOOLS_PRIVATE_API_2.codeGen({
                 basePath: this._basePath,
                 compilerOptions: this._compilerOptions,
                 program: this._program,

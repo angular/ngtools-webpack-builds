@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// @ignoreDep @angular/compiler-cli
 const fs = require("fs");
 const child_process_1 = require("child_process");
 const path = require("path");
 const ts = require("typescript");
-const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
 const NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
 const treeKill = require('tree-kill');
@@ -19,7 +17,7 @@ const transformers_1 = require("./transformers");
 const benchmark_1 = require("./benchmark");
 const type_checker_1 = require("./type_checker");
 const gather_diagnostics_1 = require("./gather_diagnostics");
-const ngtools_api2_1 = require("./ngtools_api2");
+const ngtools_api_1 = require("./ngtools_api");
 var PLATFORM;
 (function (PLATFORM) {
     PLATFORM[PLATFORM["Browser"] = 0] = "Browser";
@@ -38,6 +36,7 @@ class AngularCompilerPlugin {
         this._failedCompilation = false;
         // TypeChecker process.
         this._forkTypeChecker = true;
+        ngtools_api_1.CompilerCliIsSupported();
         this._options = Object.assign({}, options);
         this._setupOptions(this._options);
     }
@@ -51,7 +50,7 @@ class AngularCompilerPlugin {
         return { path, className };
     }
     static isSupported() {
-        return parseInt(VERSION.major) >= 5;
+        return ngtools_api_1.VERSION && parseInt(ngtools_api_1.VERSION.major) >= 5;
     }
     _setupOptions(options) {
         benchmark_1.time('AngularCompilerPlugin._setupOptions');
@@ -215,7 +214,7 @@ class AngularCompilerPlugin {
         else {
             benchmark_1.time('AngularCompilerPlugin._createOrUpdateProgram.ng.createProgram');
             // Create the Angular program.
-            this._program = ngtools_api2_1.createProgram({
+            this._program = ngtools_api_1.createProgram({
                 rootNames: this._tsFilenames,
                 options: this._angularCompilerOptions,
                 host: this._angularCompilerHost,
@@ -229,7 +228,7 @@ class AngularCompilerPlugin {
     _getLazyRoutesFromNgtools() {
         try {
             benchmark_1.time('AngularCompilerPlugin._getLazyRoutesFromNgtools');
-            const result = __NGTOOLS_PRIVATE_API_2.listLazyRoutes({
+            const result = ngtools_api_1.__NGTOOLS_PRIVATE_API_2.listLazyRoutes({
                 program: this._getTsProgram(),
                 host: this._compilerHost,
                 angularCompilerOptions: Object.assign({}, this._angularCompilerOptions, {
@@ -311,7 +310,10 @@ class AngularCompilerPlugin {
         this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile));
         this._typeCheckerProcess.send(new type_checker_1.InitMessage(this._compilerOptions, this._basePath, this._JitMode, this._tsFilenames));
         // Cleanup.
-        const killTypeCheckerProcess = () => treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
+        const killTypeCheckerProcess = () => {
+            treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
+            process.exit();
+        };
         process.on('exit', killTypeCheckerProcess);
         process.on('SIGINT', killTypeCheckerProcess);
         process.on('uncaughtException', killTypeCheckerProcess);
@@ -429,14 +431,14 @@ class AngularCompilerPlugin {
         this._donePromise = Promise.resolve()
             .then(() => {
             // Create a new process for the type checker.
-            if (!this._firstRun && !this._typeCheckerProcess) {
+            if (this._forkTypeChecker && !this._firstRun && !this._typeCheckerProcess) {
                 this._createForkedTypeChecker();
             }
         })
             .then(() => {
             if (this._firstRun) {
                 // Use the WebpackResourceLoader with a resource loader to create an AngularCompilerHost.
-                this._angularCompilerHost = ngtools_api2_1.createCompilerHost({
+                this._angularCompilerHost = ngtools_api_1.createCompilerHost({
                     options: this._angularCompilerOptions,
                     tsHost: this._compilerHost
                 });
@@ -552,11 +554,11 @@ class AngularCompilerPlugin {
                 const warnings = diagnostics
                     .filter((diag) => diag.category === ts.DiagnosticCategory.Warning);
                 if (errors.length > 0) {
-                    const message = ngtools_api2_1.formatDiagnostics(this._angularCompilerOptions, errors);
+                    const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, errors);
                     this._compilation.errors.push(message);
                 }
                 if (warnings.length > 0) {
-                    const message = ngtools_api2_1.formatDiagnostics(this._angularCompilerOptions, warnings);
+                    const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, warnings);
                     this._compilation.warnings.push(message);
                 }
                 // Reset changed files on successful compilation.
@@ -613,7 +615,7 @@ class AngularCompilerPlugin {
                     benchmark_1.timeEnd('AngularCompilerPlugin._emit.ts.getOptionsDiagnostics');
                 }
                 if (this._firstRun || !this._forkTypeChecker) {
-                    allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'AngularCompilerPluginOptions'));
+                    allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'AngularCompilerPlugin._emit.ts'));
                 }
                 if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
                     sourceFiles.forEach((sf) => {
@@ -638,12 +640,12 @@ class AngularCompilerPlugin {
                     benchmark_1.timeEnd('AngularCompilerPlugin._emit.ng.getNgOptionDiagnostics');
                 }
                 if (this._firstRun || !this._forkTypeChecker) {
-                    allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'AngularCompilerPluginOptions'));
+                    allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'AngularCompilerPlugin._emit.ng'));
                 }
                 if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
                     benchmark_1.time('AngularCompilerPlugin._emit.ng.emit');
                     const extractI18n = !!this._angularCompilerOptions.i18nOutFile;
-                    const emitFlags = extractI18n ? ngtools_api2_1.EmitFlags.I18nBundle : ngtools_api2_1.EmitFlags.Default;
+                    const emitFlags = extractI18n ? ngtools_api_1.EmitFlags.I18nBundle : ngtools_api_1.EmitFlags.Default;
                     emitResult = angularProgram.emit({ emitFlags, customTransformers });
                     allDiagnostics.push(...emitResult.diagnostics);
                     if (extractI18n) {
@@ -665,15 +667,15 @@ class AngularCompilerPlugin {
             if (isSyntaxError(e)) {
                 // don't report the stack for syntax errors as they are well known errors.
                 errMsg = e.message;
-                code = ngtools_api2_1.DEFAULT_ERROR_CODE;
+                code = ngtools_api_1.DEFAULT_ERROR_CODE;
             }
             else {
                 errMsg = e.stack;
                 // It is not a syntax error we might have a program with unknown state, discard it.
                 this._program = undefined;
-                code = ngtools_api2_1.UNKNOWN_ERROR_CODE;
+                code = ngtools_api_1.UNKNOWN_ERROR_CODE;
             }
-            allDiagnostics.push({ category: ts.DiagnosticCategory.Error, messageText: errMsg, code, source: ngtools_api2_1.SOURCE });
+            allDiagnostics.push({ category: ts.DiagnosticCategory.Error, messageText: errMsg, code, source: ngtools_api_1.SOURCE });
             benchmark_1.timeEnd('AngularCompilerPlugin._emit.catch');
         }
         benchmark_1.timeEnd('AngularCompilerPlugin._emit');
