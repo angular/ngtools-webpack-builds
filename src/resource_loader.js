@@ -1,19 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = require("fs");
 const vm = require("vm");
 const path = require("path");
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LoaderTargetPlugin = require('webpack/lib/LoaderTargetPlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
+const loaderUtils = require('loader-utils');
 class WebpackResourceLoader {
-    constructor(_parentCompilation) {
-        this._parentCompilation = _parentCompilation;
+    constructor() {
         this._uniqueId = 0;
-        this._context = _parentCompilation.context;
+        this._cache = new Map();
     }
-    _compile(filePath, _content) {
+    update(parentCompilation) {
+        this._parentCompilation = parentCompilation;
+        this._context = parentCompilation.context;
+        this._uniqueId = 0;
+    }
+    _compile(filePath) {
+        if (!this._parentCompilation) {
+            throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
+        }
         const compilerName = `compiler(${this._uniqueId++})`;
         const outputOptions = { filename: filePath };
         const relativePath = path.relative(this._context || '', filePath);
@@ -63,37 +70,54 @@ class WebpackResourceLoader {
                             this._parentCompilation.assets[fileName] = childCompilation.assets[fileName];
                         }
                     });
+                    const source = childCompilation.assets[outputName].source();
                     resolve({
-                        // Hash of the template entry point.
-                        hash: entries[0].hash,
+                        // Hash of the source.
+                        hash: loaderUtils.getHashDigest(source),
                         // Output name.
-                        outputName: outputName,
+                        outputName,
                         // Compiled code.
-                        content: childCompilation.assets[outputName].source()
+                        source
                     });
                 }
             });
         });
     }
-    _evaluate(fileName, source) {
+    _evaluate(output) {
         try {
             const vmContext = vm.createContext(Object.assign({ require: require }, global));
-            const vmScript = new vm.Script(source, { filename: fileName });
+            const vmScript = new vm.Script(output.source, { filename: output.outputName });
             // Evaluate code and cast to string
             let newSource;
             newSource = vmScript.runInContext(vmContext);
             if (typeof newSource == 'string') {
+                this._cache.set(output.outputName, Object.assign({}, output, { newSource }));
                 return Promise.resolve(newSource);
             }
-            return Promise.reject('The loader "' + fileName + '" didn\'t return a string.');
+            return Promise.reject('The loader "' + output.outputName + '" didn\'t return a string.');
         }
         catch (e) {
             return Promise.reject(e);
         }
     }
     get(filePath) {
-        return this._compile(filePath, fs_1.readFileSync(filePath, 'utf8'))
-            .then((result) => this._evaluate(result.outputName, result.content));
+        return this._compile(filePath)
+            .then((result) => {
+            // Check cache.
+            const outputName = result.outputName;
+            const output = this._cache.get(outputName);
+            if (output) {
+                if (output.hash === result.hash && output.newSource) {
+                    // Return cached newSource.
+                    return Promise.resolve(output.newSource);
+                }
+                else {
+                    // Delete cache entry.
+                    this._cache.delete(outputName);
+                }
+            }
+            return this._evaluate(result);
+        });
     }
 }
 exports.WebpackResourceLoader = WebpackResourceLoader;
