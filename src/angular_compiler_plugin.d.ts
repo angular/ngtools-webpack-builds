@@ -39,6 +39,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _program;
     private _compilerHost;
     private _angularCompilerHost;
+    private _resourceLoader;
     private _lazyRoutes;
     private _tsConfigPath;
     private _entryModule;

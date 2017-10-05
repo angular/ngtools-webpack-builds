@@ -167,6 +167,9 @@ class AngularCompilerPlugin {
         // Create the webpack compiler host.
         this._compilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath);
         this._compilerHost.enableCaching();
+        // Create and set a new WebpackResourceLoader.
+        this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
+        this._compilerHost.setResourceLoader(this._resourceLoader);
         // Override some files in the FileSystem.
         if (this._options.hostOverrideFileSystem) {
             for (const filePath of Object.keys(this._options.hostOverrideFileSystem)) {
@@ -181,6 +184,7 @@ class AngularCompilerPlugin {
                 this._compilerHost.writeFile(filePath, content, false);
             }
         }
+        // Set platform.
         this._platform = options.platform || PLATFORM.Browser;
         benchmark_1.timeEnd('AngularCompilerPlugin._setupOptions');
     }
@@ -422,12 +426,10 @@ class AngularCompilerPlugin {
         if (this._compilation._ngToolsWebpackPluginInstance) {
             return cb(new Error('An @ngtools/webpack plugin already exist for this compilation.'));
         }
+        // Set a private variable for this plugin instance.
         this._compilation._ngToolsWebpackPluginInstance = this;
-        // Create the resource loader with the webpack compilation.
-        benchmark_1.time('AngularCompilerPlugin._make.setResourceLoader');
-        const resourceLoader = new resource_loader_1.WebpackResourceLoader(compilation);
-        this._compilerHost.setResourceLoader(resourceLoader);
-        benchmark_1.timeEnd('AngularCompilerPlugin._make.setResourceLoader');
+        // Update the resource loader with the new webpack compilation.
+        this._resourceLoader.update(compilation);
         this._donePromise = Promise.resolve()
             .then(() => {
             // Create a new process for the type checker.
