@@ -88,6 +88,7 @@ class ExtractI18nPlugin {
             }
             this._outFile = options.outFile;
         }
+        this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
     }
     apply(compiler) {
         this._compiler = compiler;
@@ -110,7 +111,7 @@ class ExtractI18nPlugin {
                 'for this compilation'));
         }
         this._compilation._ngToolsWebpackXi18nPluginInstance = this;
-        this._resourceLoader = new resource_loader_1.WebpackResourceLoader(compilation);
+        this._resourceLoader.update(compilation);
         this._donePromise = Promise.resolve()
             .then(() => {
             return ngtools_api_1.__NGTOOLS_PRIVATE_API_2.extractI18n({

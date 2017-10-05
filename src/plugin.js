@@ -169,6 +169,7 @@ class AotPlugin {
         // We enable caching of the filesystem in compilerHost _after_ the program has been created,
         // because we don't want SourceFile instances to be cached past this point.
         this._compilerHost.enableCaching();
+        this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
         if (options.entryModule) {
             this._entryModule = options.entryModule;
         }
@@ -415,7 +416,7 @@ class AotPlugin {
             return cb(new Error('An @ngtools/webpack plugin already exist for this compilation.'));
         }
         this._compilation._ngToolsWebpackPluginInstance = this;
-        this._resourceLoader = new resource_loader_1.WebpackResourceLoader(compilation);
+        this._resourceLoader.update(compilation);
         this._donePromise = Promise.resolve()
             .then(() => {
             if (this._skipCodeGeneration) {
