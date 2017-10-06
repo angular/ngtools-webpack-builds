@@ -8,6 +8,7 @@ const refactor_1 = require("./refactor");
 const benchmark_1 = require("./benchmark");
 const loaderUtils = require('loader-utils');
 const NormalModule = require('webpack/lib/NormalModule');
+const sourceMappingUrlRe = /^\/\/# sourceMappingURL=[^\r\n]*/gm;
 // This is a map of changes which need to be made
 const changeMap = {
     platformBrowserDynamic: {
@@ -449,6 +450,15 @@ function ngcLoader(source) {
                 .then(() => {
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
                 const result = plugin.getFile(sourceFileName);
+                if (result.sourceMap) {
+                    // Process sourcemaps for Webpack.
+                    // Remove the sourceMappingURL.
+                    result.outputText = result.outputText.replace(sourceMappingUrlRe, '');
+                    // Set the map source to use the full path of the file.
+                    const sourceMap = JSON.parse(result.sourceMap);
+                    sourceMap.sources[0] = sourceFileName;
+                    result.sourceMap = JSON.stringify(sourceMap);
+                }
                 if (plugin.failedCompilation) {
                     // Return an empty string if there is no result to prevent extra loader errors.
                     // Plugin errors were already pushed to the compilation errors.
@@ -583,7 +593,7 @@ function ngcLoader(source) {
         _replaceResources(refactor);
         const result = refactor.transpile(compilerOptions);
         // Webpack is going to take care of this.
-        result.outputText = result.outputText.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '');
+        result.outputText = result.outputText.replace(sourceMappingUrlRe, '');
         benchmark_1.timeEnd(timeLabel);
         cb(null, result.outputText, result.sourceMap);
     }
