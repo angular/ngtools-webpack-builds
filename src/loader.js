@@ -459,16 +459,11 @@ function ngcLoader(source) {
                     sourceMap.sources[0] = sourceFileName;
                     result.sourceMap = JSON.stringify(sourceMap);
                 }
-                if (plugin.failedCompilation) {
-                    // Return an empty string if there is no result to prevent extra loader errors.
-                    // Plugin errors were already pushed to the compilation errors.
-                    benchmark_1.timeEnd(timeLabel);
-                    cb(null, result.outputText || '', result.sourceMap);
+                benchmark_1.timeEnd(timeLabel);
+                if (result.outputText === undefined) {
+                    throw new Error('TypeScript compilation failed.');
                 }
-                else {
-                    benchmark_1.timeEnd(timeLabel);
-                    cb(null, result.outputText, result.sourceMap);
-                }
+                cb(null, result.outputText, result.sourceMap);
             })
                 .catch(err => {
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
@@ -556,16 +551,11 @@ function ngcLoader(source) {
                 const result = refactor.transpile(compilerOptions);
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.transpile');
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin');
-                if (plugin.failedCompilation && plugin.compilerOptions.noEmitOnError) {
-                    // Return an empty string to prevent extra loader errors (missing imports etc).
-                    // Plugin errors were already pushed to the compilation errors.
-                    benchmark_1.timeEnd(timeLabel);
-                    cb(null, '');
+                benchmark_1.timeEnd(timeLabel);
+                if (result.outputText === undefined) {
+                    throw new Error('TypeScript compilation failed.');
                 }
-                else {
-                    benchmark_1.timeEnd(timeLabel);
-                    cb(null, result.outputText, result.sourceMap);
-                }
+                cb(null, result.outputText, result.sourceMap);
             })
                 .catch(err => cb(err));
         }
