@@ -33,7 +33,6 @@ class AngularCompilerPlugin {
         this._firstRun = true;
         this._compiler = null;
         this._compilation = null;
-        this._failedCompilation = false;
         // TypeChecker process.
         this._forkTypeChecker = true;
         ngtools_api_1.CompilerCliIsSupported();
@@ -42,7 +41,6 @@ class AngularCompilerPlugin {
     }
     get options() { return this._options; }
     get done() { return this._donePromise; }
-    get failedCompilation() { return this._failedCompilation; }
     get entryModule() {
         const splitted = this._entryModule.split('#');
         const path = splitted[0];
@@ -217,10 +215,13 @@ class AngularCompilerPlugin {
         if (this._forkTypeChecker && !this._firstRun) {
             this._updateForkedTypeChecker(changedTsFiles);
         }
+        // We want to allow emitting with errors on the first run so that imports can be added
+        // to the webpack dependency tree and rebuilds triggered by file edits.
+        const compilerOptions = Object.assign({}, this._angularCompilerOptions, { noEmitOnError: !this._firstRun });
         if (this._JitMode) {
             // Create the TypeScript program.
             benchmark_1.time('AngularCompilerPlugin._createOrUpdateProgram.ts.createProgram');
-            this._program = ts.createProgram(this._tsFilenames, this._angularCompilerOptions, this._angularCompilerHost, this._program);
+            this._program = ts.createProgram(this._tsFilenames, compilerOptions, this._angularCompilerHost, this._program);
             benchmark_1.timeEnd('AngularCompilerPlugin._createOrUpdateProgram.ts.createProgram');
             return Promise.resolve();
         }
@@ -229,7 +230,7 @@ class AngularCompilerPlugin {
             // Create the Angular program.
             this._program = ngtools_api_1.createProgram({
                 rootNames: this._tsFilenames,
-                options: this._angularCompilerOptions,
+                options: compilerOptions,
                 host: this._angularCompilerHost,
                 oldProgram: this._program
             });
@@ -402,7 +403,6 @@ class AngularCompilerPlugin {
         compiler.plugin('done', () => {
             this._donePromise = null;
             this._compilation = null;
-            this._failedCompilation = false;
         });
         // TODO: consider if it's better to remove this plugin and instead make it wait on the
         // VirtualFileSystemDecorator.
@@ -470,7 +470,6 @@ class AngularCompilerPlugin {
             benchmark_1.timeEnd('AngularCompilerPlugin._make');
             cb();
         }, (err) => {
-            this._failedCompilation = true;
             compilation.errors.push(err.stack);
             benchmark_1.timeEnd('AngularCompilerPlugin._make');
             cb();
@@ -576,9 +575,6 @@ class AngularCompilerPlugin {
                 if (emitResult && !emitResult.emitSkipped && this._compilation.errors.length === 0) {
                     this._compilerHost.resetChangedFileTracker();
                 }
-                else {
-                    this._failedCompilation = true;
-                }
             }
             benchmark_1.timeEnd('AngularCompilerPlugin._update');
         });
@@ -628,7 +624,9 @@ class AngularCompilerPlugin {
                 if (this._firstRun || !this._forkTypeChecker) {
                     allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'AngularCompilerPlugin._emit.ts'));
                 }
-                if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
+                // Always emit on the first run, so that imports are processed by webpack and the user
+                // can trigger a rebuild by editing any file.
+                if (!gather_diagnostics_1.hasErrors(allDiagnostics) || this._firstRun) {
                     sourceFiles.forEach((sf) => {
                         const timeLabel = `AngularCompilerPlugin._emit.ts+${sf.fileName}+.emit`;
                         benchmark_1.time(timeLabel);
@@ -653,7 +651,9 @@ class AngularCompilerPlugin {
                 if (this._firstRun || !this._forkTypeChecker) {
                     allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'AngularCompilerPlugin._emit.ng'));
                 }
-                if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
+                // Always emit on the first run, so that imports are processed by webpack and the user
+                // can trigger a rebuild by editing any file.
+                if (!gather_diagnostics_1.hasErrors(allDiagnostics) || this._firstRun) {
                     benchmark_1.time('AngularCompilerPlugin._emit.ng.emit');
                     const extractI18n = !!this._angularCompilerOptions.i18nOutFile;
                     const emitFlags = extractI18n ? ngtools_api_1.EmitFlags.I18nBundle : ngtools_api_1.EmitFlags.Default;

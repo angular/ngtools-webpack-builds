@@ -51,13 +51,11 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _donePromise;
     private _compiler;
     private _compilation;
-    private _failedCompilation;
     private _forkTypeChecker;
     private _typeCheckerProcess;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
     readonly done: Promise<void>;
-    readonly failedCompilation: boolean;
     readonly entryModule: {
         path: string;
         className: string;
