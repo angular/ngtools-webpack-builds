@@ -106,6 +106,11 @@ class AngularCompilerPlugin {
             // Join our custom excludes with the existing ones.
             tsConfigJson.exclude = tsConfigJson.exclude.concat(options.exclude);
         }
+        // Add extra includes.
+        if (options.hasOwnProperty('include') && Array.isArray(options.include)) {
+            tsConfigJson.include = tsConfigJson.include || [];
+            tsConfigJson.include.push(...options.include);
+        }
         // Parse the tsconfig contents.
         const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, undefined, this._tsConfigPath);
         this._tsFilenames = tsConfig.fileNames;
@@ -121,7 +126,10 @@ class AngularCompilerPlugin {
             this._compilerOptions.sourceMap = true;
             this._compilerOptions.inlineSources = true;
             this._compilerOptions.inlineSourceMap = false;
-            this._compilerOptions.sourceRoot = basePath;
+            this._compilerOptions.mapRoot = undefined;
+            // We will set the source to the full path of the file in the loader, so we don't
+            // need sourceRoot here.
+            this._compilerOptions.sourceRoot = undefined;
         }
         else {
             this._compilerOptions.sourceMap = false;
@@ -129,6 +137,7 @@ class AngularCompilerPlugin {
             this._compilerOptions.inlineSources = undefined;
             this._compilerOptions.inlineSourceMap = undefined;
             this._compilerOptions.mapRoot = undefined;
+            this._compilerOptions.sourceRoot = undefined;
         }
         // Compose Angular Compiler Options.
         this._angularCompilerOptions = Object.assign(this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });
