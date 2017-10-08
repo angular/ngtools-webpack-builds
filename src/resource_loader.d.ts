@@ -2,10 +2,8 @@ export declare class WebpackResourceLoader {
     private _parentCompilation;
     private _context;
     private _uniqueId;
-    private _cache;
-    constructor();
-    update(parentCompilation: any): void;
-    private _compile(filePath);
-    private _evaluate(output);
+    constructor(_parentCompilation: any);
+    private _compile(filePath, _content);
+    private _evaluate(fileName, source);
     get(filePath: string): Promise<string>;
 }

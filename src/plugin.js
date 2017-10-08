@@ -1,19 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// @ignoreDep @angular/compiler-cli
 const fs = require("fs");
 const path = require("path");
 const ts = require("typescript");
 const SourceMap = require("source-map");
+const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
-const NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
-const ngtools_api_1 = require("./ngtools_api");
 const resource_loader_1 = require("./resource_loader");
 const compiler_host_1 = require("./compiler_host");
 const entry_resolver_1 = require("./entry_resolver");
 const paths_plugin_1 = require("./paths-plugin");
 const lazy_routes_1 = require("./lazy_routes");
-const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
-const benchmark_1 = require("./benchmark");
 const inlineSourceMapRe = /\/\/# sourceMappingURL=data:application\/json;base64,([\s\S]+)$/;
 class AotPlugin {
     constructor(options) {
@@ -25,7 +23,6 @@ class AotPlugin {
         this._replaceExport = false;
         this._diagnoseFiles = {};
         this._firstRun = true;
-        ngtools_api_1.CompilerCliIsSupported();
         this._options = Object.assign({}, options);
         this._setupOptions(this._options);
     }
@@ -54,7 +51,6 @@ class AotPlugin {
     get lazyRoutes() { return this._lazyRoutes; }
     get discoveredLazyRoutes() { return this._discoveredLazyRoutes; }
     _setupOptions(options) {
-        benchmark_1.time('AotPlugin._setupOptions');
         // Fill in the missing options.
         if (!options.hasOwnProperty('tsConfigPath')) {
             throw new Error('Must specify "tsConfigPath" in the configuration of @ngtools/webpack.');
@@ -104,7 +100,7 @@ class AotPlugin {
             // Join our custom excludes with the existing ones.
             tsConfigJson.exclude = tsConfigJson.exclude.concat(options.exclude);
         }
-        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, undefined, this._tsConfigPath);
+        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, null, this._tsConfigPath);
         let fileNames = tsConfig.fileNames;
         this._rootFilePath = fileNames;
         // Check the genDir. We generate a default gendir that's under basepath; it will generate
@@ -112,29 +108,6 @@ class AotPlugin {
         // resolve to that directory but the real `node_modules`.
         let genDir = path.join(basePath, '$$_gendir');
         this._compilerOptions = tsConfig.options;
-        // Default plugin sourceMap to compiler options setting.
-        if (!options.hasOwnProperty('sourceMap')) {
-            options.sourceMap = this._compilerOptions.sourceMap || false;
-        }
-        // Force the right sourcemap options.
-        if (options.sourceMap) {
-            this._compilerOptions.sourceMap = true;
-            this._compilerOptions.inlineSources = true;
-            this._compilerOptions.inlineSourceMap = false;
-            this._compilerOptions.sourceRoot = basePath;
-        }
-        else {
-            this._compilerOptions.sourceMap = false;
-            this._compilerOptions.sourceRoot = undefined;
-            this._compilerOptions.inlineSources = undefined;
-            this._compilerOptions.inlineSourceMap = undefined;
-            this._compilerOptions.mapRoot = undefined;
-        }
-        // Default noEmitOnError to true
-        if (this._compilerOptions.noEmitOnError !== false) {
-            this._compilerOptions.noEmitOnError = true;
-        }
-        // Compose Angular Compiler Options.
         this._angularCompilerOptions = Object.assign({ genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });
         if (this._angularCompilerOptions.hasOwnProperty('genDir')) {
             genDir = path.resolve(basePath, this._angularCompilerOptions.genDir);
@@ -142,21 +115,21 @@ class AotPlugin {
         }
         this._basePath = basePath;
         this._genDir = genDir;
-        if (options.typeChecking !== undefined) {
+        if (options.hasOwnProperty('typeChecking')) {
             this._typeCheck = options.typeChecking;
         }
-        if (options.skipCodeGeneration !== undefined) {
+        if (options.hasOwnProperty('skipCodeGeneration')) {
             this._skipCodeGeneration = options.skipCodeGeneration;
         }
         this._compilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath);
         // Override some files in the FileSystem.
-        if (options.hostOverrideFileSystem) {
+        if (options.hasOwnProperty('hostOverrideFileSystem')) {
             for (const filePath of Object.keys(options.hostOverrideFileSystem)) {
                 this._compilerHost.writeFile(filePath, options.hostOverrideFileSystem[filePath], false);
             }
         }
         // Override some files in the FileSystem with paths from the actual file system.
-        if (options.hostReplacementPaths) {
+        if (options.hasOwnProperty('hostReplacementPaths')) {
             for (const filePath of Object.keys(options.hostReplacementPaths)) {
                 const replacementFilePath = options.hostReplacementPaths[filePath];
                 const content = this._compilerHost.readFile(replacementFilePath);
@@ -167,7 +140,6 @@ class AotPlugin {
         // We enable caching of the filesystem in compilerHost _after_ the program has been created,
         // because we don't want SourceFile instances to be cached past this point.
         this._compilerHost.enableCaching();
-        this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
         if (options.entryModule) {
             this._entryModule = options.entryModule;
         }
@@ -193,7 +165,7 @@ class AotPlugin {
             this._replaceExport = options.replaceExport || this._replaceExport;
         }
         if (options.hasOwnProperty('missingTranslation')) {
-            const [MAJOR, MINOR, PATCH] = ngtools_api_1.VERSION.full.split('.').map((x) => parseInt(x, 10));
+            const [MAJOR, MINOR, PATCH] = VERSION.full.split('.').map((x) => parseInt(x, 10));
             if (MAJOR < 4 || (MINOR == 2 && PATCH < 2)) {
                 console.warn((`The --missing-translation parameter will be ignored because it is only `
                     + `compatible with Angular version 4.2.0 or higher. If you want to use it, please `
@@ -201,14 +173,12 @@ class AotPlugin {
             }
             this._missingTranslation = options.missingTranslation;
         }
-        benchmark_1.timeEnd('AotPlugin._setupOptions');
     }
     _findLazyRoutesInAst() {
-        benchmark_1.time('AotPlugin._findLazyRoutesInAst');
         const result = Object.create(null);
         const changedFilePaths = this._compilerHost.getChangedFilePaths();
         for (const filePath of changedFilePaths) {
-            const fileLazyRoutes = lazy_routes_1.findLazyRoutes(filePath, this._compilerHost, this._program);
+            const fileLazyRoutes = lazy_routes_1.findLazyRoutes(filePath, this._program, this._compilerHost);
             for (const routeKey of Object.keys(fileLazyRoutes)) {
                 const route = fileLazyRoutes[routeKey];
                 if (routeKey in this._lazyRoutes) {
@@ -226,20 +196,16 @@ class AotPlugin {
                 }
             }
         }
-        benchmark_1.timeEnd('AotPlugin._findLazyRoutesInAst');
         return result;
     }
     _getLazyRoutesFromNgtools() {
         try {
-            benchmark_1.time('AotPlugin._getLazyRoutesFromNgtools');
-            const result = ngtools_api_1.__NGTOOLS_PRIVATE_API_2.listLazyRoutes({
+            return __NGTOOLS_PRIVATE_API_2.listLazyRoutes({
                 program: this._program,
                 host: this._compilerHost,
                 angularCompilerOptions: this._angularCompilerOptions,
                 entryModule: this._entryModule
             });
-            benchmark_1.timeEnd('AotPlugin._getLazyRoutesFromNgtools');
-            return result;
         }
         catch (err) {
             // We silence the error that the @angular/router could not be found. In that case, there is
@@ -255,16 +221,15 @@ class AotPlugin {
     // registration hook for webpack plugin
     apply(compiler) {
         this._compiler = compiler;
-        // Decorate inputFileSystem to serve contents of CompilerHost.
-        // Use decorated inputFileSystem in watchFileSystem.
-        compiler.plugin('environment', () => {
-            compiler.inputFileSystem = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compiler.inputFileSystem, this._compilerHost);
-            compiler.watchFileSystem = new NodeWatchFileSystem(compiler.inputFileSystem);
-        });
         compiler.plugin('invalid', () => {
             // Turn this off as soon as a file becomes invalid and we're about to start a rebuild.
             this._firstRun = false;
             this._diagnoseFiles = {};
+            if (compiler.watchFileSystem.watcher) {
+                compiler.watchFileSystem.watcher.once('aggregated', (changes) => {
+                    changes.forEach((fileName) => this._compilerHost.invalidate(fileName));
+                });
+            }
         });
         // Add lazy modules to the context module for @angular/core/src/linker
         compiler.plugin('context-module-factory', (cmf) => {
@@ -275,12 +240,6 @@ class AotPlugin {
             // a linked @angular/core or cli which would not be under the same path as the project
             // being built.
             const angularCoreModuleDir = path.dirname(angularCoreModulePath).split(/node_modules/).pop();
-            // Also support the es2015 in Angular versions that have it.
-            let angularCoreEs2015Dir;
-            if (angularCorePackageJson['es2015']) {
-                const angularCoreEs2015Path = path.resolve(path.dirname(angularCorePackagePath), angularCorePackageJson['es2015']);
-                angularCoreEs2015Dir = path.dirname(angularCoreEs2015Path).split(/node_modules/).pop();
-            }
             cmf.plugin('after-resolve', (result, callback) => {
                 if (!result) {
                     return callback();
@@ -290,8 +249,7 @@ class AotPlugin {
                 //   The other logic is for flat modules and requires reading the package.json of angular
                 //     (see above).
                 if (!result.resource.endsWith(path.join('@angular/core/src/linker'))
-                    && !(angularCoreModuleDir && result.resource.endsWith(angularCoreModuleDir))
-                    && !(angularCoreEs2015Dir && result.resource.endsWith(angularCoreEs2015Dir))) {
+                    && (angularCoreModuleDir && !result.resource.endsWith(angularCoreModuleDir))) {
                     return callback(null, result);
                 }
                 this.done.then(() => {
@@ -318,20 +276,15 @@ class AotPlugin {
         });
         compiler.plugin('make', (compilation, cb) => this._make(compilation, cb));
         compiler.plugin('after-emit', (compilation, cb) => {
+            this._donePromise = null;
+            this._compilation = null;
             compilation._ngToolsWebpackPluginInstance = null;
             cb();
         });
-        compiler.plugin('done', () => {
-            this._donePromise = null;
-            this._compilation = null;
-        });
         compiler.plugin('after-resolvers', (compiler) => {
             // Virtual file system.
-            // Wait for the plugin to be done when requesting `.ts` files directly (entry points), or
-            // when the issuer is a `.ts` file.
             compiler.resolvers.normal.plugin('before-resolve', (request, cb) => {
-                if (this.done && (request.request.endsWith('.ts')
-                    || (request.context.issuer && request.context.issuer.endsWith('.ts')))) {
+                if (request.request.match(/\.ts$/)) {
                     this.done.then(() => cb(), () => cb());
                 }
                 else {
@@ -377,12 +330,9 @@ class AotPlugin {
         if (!sourceFile) {
             return;
         }
-        const diagnostics = [
-            ...(this._program.getCompilerOptions().declaration
-                ? this._program.getDeclarationDiagnostics(sourceFile) : []),
-            ...this._program.getSyntacticDiagnostics(sourceFile),
-            ...this._program.getSemanticDiagnostics(sourceFile)
-        ];
+        const diagnostics = []
+            .concat(this._program.getCompilerOptions().declaration
+            ? this._program.getDeclarationDiagnostics(sourceFile) : [], this._program.getSyntacticDiagnostics(sourceFile), this._program.getSemanticDiagnostics(sourceFile));
         if (diagnostics.length > 0) {
             diagnostics.forEach(diagnostic => {
                 const messageText = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
@@ -407,21 +357,19 @@ class AotPlugin {
         }
     }
     _make(compilation, cb) {
-        benchmark_1.time('AotPlugin._make');
         this._compilation = compilation;
         if (this._compilation._ngToolsWebpackPluginInstance) {
             return cb(new Error('An @ngtools/webpack plugin already exist for this compilation.'));
         }
         this._compilation._ngToolsWebpackPluginInstance = this;
-        this._resourceLoader.update(compilation);
+        this._resourceLoader = new resource_loader_1.WebpackResourceLoader(compilation);
         this._donePromise = Promise.resolve()
             .then(() => {
             if (this._skipCodeGeneration) {
                 return;
             }
-            benchmark_1.time('AotPlugin._make.codeGen');
             // Create the Code Generator.
-            return ngtools_api_1.__NGTOOLS_PRIVATE_API_2.codeGen({
+            return __NGTOOLS_PRIVATE_API_2.codeGen({
                 basePath: this._basePath,
                 compilerOptions: this._compilerOptions,
                 program: this._program,
@@ -432,8 +380,7 @@ class AotPlugin {
                 locale: this.locale,
                 missingTranslation: this.missingTranslation,
                 readResource: (path) => this._resourceLoader.get(path)
-            })
-                .then(() => benchmark_1.timeEnd('AotPlugin._make.codeGen'));
+            });
         })
             .then(() => {
             // Get the ngfactory that were created by the previous step, and add them to the root
@@ -448,20 +395,15 @@ class AotPlugin {
             // transitive modules, which include files that might just have been generated.
             // This needs to happen after the code generator has been created for generated files
             // to be properly resolved.
-            benchmark_1.time('AotPlugin._make.createProgram');
             this._program = ts.createProgram(this._rootFilePath, this._compilerOptions, this._compilerHost, this._program);
-            benchmark_1.timeEnd('AotPlugin._make.createProgram');
         })
             .then(() => {
             // Re-diagnose changed files.
-            benchmark_1.time('AotPlugin._make.diagnose');
             const changedFilePaths = this._compilerHost.getChangedFilePaths();
             changedFilePaths.forEach(filePath => this.diagnose(filePath));
-            benchmark_1.timeEnd('AotPlugin._make.diagnose');
         })
             .then(() => {
             if (this._typeCheck) {
-                benchmark_1.time('AotPlugin._make._typeCheck');
                 const diagnostics = this._program.getGlobalDiagnostics();
                 if (diagnostics.length > 0) {
                     const message = diagnostics
@@ -478,13 +420,15 @@ class AotPlugin {
                         .join('\n');
                     throw new Error(message);
                 }
-                benchmark_1.timeEnd('AotPlugin._make._typeCheck');
             }
+        })
+            .then(() => {
+            // Populate the file system cache with the virtual module.
+            this._compilerHost.populateWebpackResolver(this._compiler.resolvers.normal);
         })
             .then(() => {
             // We need to run the `listLazyRoutes` the first time because it also navigates libraries
             // and other things that we might miss using the findLazyRoutesInAst.
-            benchmark_1.time('AotPlugin._make._discoveredLazyRoutes');
             this._discoveredLazyRoutes = this.firstRun
                 ? this._getLazyRoutesFromNgtools()
                 : this._findLazyRoutesInAst();
@@ -505,17 +449,14 @@ class AotPlugin {
                     this._lazyRoutes[k + '.ngfactory'] = path.join(this.genDir, lr);
                 }
             });
-            benchmark_1.timeEnd('AotPlugin._make._discoveredLazyRoutes');
         })
             .then(() => {
             if (this._compilation.errors == 0) {
                 this._compilerHost.resetChangedFileTracker();
             }
-            benchmark_1.timeEnd('AotPlugin._make');
             cb();
         }, (err) => {
-            compilation.errors.push(err.stack);
-            benchmark_1.timeEnd('AotPlugin._make');
+            compilation.errors.push(err);
             cb();
         });
     }

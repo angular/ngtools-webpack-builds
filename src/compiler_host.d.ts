@@ -1,6 +1,5 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
-import { WebpackResourceLoader } from './resource_loader';
 export interface OnErrorFn {
     (message: string): void;
 }
@@ -63,20 +62,19 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _basePath;
     private _setParentNodes;
     private _cache;
-    private _resourceLoader?;
     constructor(_options: ts.CompilerOptions, basePath: string);
     private _normalizePath(path);
-    resolve(path: string): string;
+    private _resolve(path);
     private _setFileContent(fileName, content);
     readonly dirty: boolean;
     enableCaching(): void;
+    populateWebpackResolver(resolver: any): void;
     resetChangedFileTracker(): void;
     getChangedFilePaths(): string[];
     invalidate(fileName: string): void;
-    fileExists(fileName: string, delegate?: boolean): boolean;
+    fileExists(fileName: string): boolean;
     readFile(fileName: string): string;
-    stat(path: string): VirtualStats;
-    directoryExists(directoryName: string, delegate?: boolean): boolean;
+    directoryExists(directoryName: string): boolean;
     getFiles(path: string): string[];
     getDirectories(path: string): string[];
     getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, _onError?: OnErrorFn): ts.SourceFile;
@@ -87,6 +85,4 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     getCanonicalFileName(fileName: string): string;
     useCaseSensitiveFileNames(): boolean;
     getNewLine(): string;
-    setResourceLoader(resourceLoader: WebpackResourceLoader): void;
-    readResource(fileName: string): string | Promise<string>;
 }

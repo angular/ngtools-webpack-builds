@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// @ignoreDep @angular/compiler-cli
 const ts = require("typescript");
 const path = require("path");
 const fs = require("fs");
-const ngtools_api_1 = require("./ngtools_api");
+const { __NGTOOLS_PRIVATE_API_2, VERSION } = require('@angular/compiler-cli');
 const resource_loader_1 = require("./resource_loader");
 class ExtractI18nPlugin {
     constructor(options) {
@@ -35,7 +36,7 @@ class ExtractI18nPlugin {
         catch (err) {
             throw new Error(`An error happened while parsing ${this._tsConfigPath} JSON: ${err}.`);
         }
-        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, undefined, this._tsConfigPath);
+        const tsConfig = ts.parseJsonConfigFileContent(tsConfigJson, ts.sys, basePath, null, this._tsConfigPath);
         let fileNames = tsConfig.fileNames;
         if (options.hasOwnProperty('exclude')) {
             let exclude = typeof options.exclude == 'string'
@@ -63,9 +64,7 @@ class ExtractI18nPlugin {
             genDir = path.resolve(process.cwd(), options.genDir);
         }
         this._compilerOptions = tsConfig.options;
-        this._angularCompilerOptions = Object.assign(
-        // kept for compatibility with Angular <v5.0.0-beta.7+
-        { genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath, outDir: genDir });
+        this._angularCompilerOptions = Object.assign({ genDir }, this._compilerOptions, tsConfig.raw['angularCompilerOptions'], { basePath });
         this._basePath = basePath;
         this._genDir = genDir;
         // this._compilerHost = new WebpackCompilerHost(this._compilerOptions, this._basePath);
@@ -75,20 +74,19 @@ class ExtractI18nPlugin {
             this._i18nFormat = options.i18nFormat;
         }
         if (options.hasOwnProperty('locale')) {
-            if (ngtools_api_1.VERSION.major === '2') {
+            if (VERSION.major === '2') {
                 console.warn("The option '--locale' is only available on the xi18n command"
                     + ' starting from Angular v4, please update to a newer version.', '\n\n');
             }
             this._locale = options.locale;
         }
         if (options.hasOwnProperty('outFile')) {
-            if (ngtools_api_1.VERSION.major === '2') {
+            if (VERSION.major === '2') {
                 console.warn("The option '--out-file' is only available on the xi18n command"
                     + ' starting from Angular v4, please update to a newer version.', '\n\n');
             }
             this._outFile = options.outFile;
         }
-        this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
     }
     apply(compiler) {
         this._compiler = compiler;
@@ -111,10 +109,10 @@ class ExtractI18nPlugin {
                 'for this compilation'));
         }
         this._compilation._ngToolsWebpackXi18nPluginInstance = this;
-        this._resourceLoader.update(compilation);
+        this._resourceLoader = new resource_loader_1.WebpackResourceLoader(compilation);
         this._donePromise = Promise.resolve()
             .then(() => {
-            return ngtools_api_1.__NGTOOLS_PRIVATE_API_2.extractI18n({
+            return __NGTOOLS_PRIVATE_API_2.extractI18n({
                 basePath: this._basePath,
                 compilerOptions: this._compilerOptions,
                 program: this._program,
