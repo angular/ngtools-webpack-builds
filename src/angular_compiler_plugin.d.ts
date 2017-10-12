@@ -38,6 +38,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _tsFilenames;
     private _program;
     private _compilerHost;
+    private _moduleResolutionCache;
     private _angularCompilerHost;
     private _resourceLoader;
     private _lazyRoutes;
@@ -78,6 +79,7 @@ export declare class AngularCompilerPlugin implements Tapable {
         outputText: string;
         sourceMap: string;
     };
+    getDependencies(fileName: string): string[];
     private _emit(sourceFiles, customTransformers);
     private _validateLocale(locale);
 }

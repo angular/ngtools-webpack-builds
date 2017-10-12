@@ -18,6 +18,7 @@ const benchmark_1 = require("./benchmark");
 const type_checker_1 = require("./type_checker");
 const gather_diagnostics_1 = require("./gather_diagnostics");
 const ngtools_api_1 = require("./ngtools_api");
+const ast_helpers_1 = require("./transformers/ast_helpers");
 var PLATFORM;
 (function (PLATFORM) {
     PLATFORM[PLATFORM["Browser"] = 0] = "Browser";
@@ -191,6 +192,8 @@ class AngularCompilerPlugin {
                 this._compilerHost.writeFile(filePath, content, false);
             }
         }
+        // Use an identity function as all our paths are absolute already.
+        this._moduleResolutionCache = ts.createModuleResolutionCache(this._basePath, x => x);
         // Set platform.
         this._platform = options.platform || PLATFORM.Browser;
         benchmark_1.timeEnd('AngularCompilerPlugin._setupOptions');
@@ -603,6 +606,24 @@ class AngularCompilerPlugin {
             outputText: this._compilerHost.readFile(outputFile),
             sourceMap: this._compilerHost.readFile(outputFile + '.map')
         };
+    }
+    getDependencies(fileName) {
+        const sourceFile = this._compilerHost.getSourceFile(fileName, ts.ScriptTarget.Latest);
+        const options = this._compilerOptions;
+        const host = this._compilerHost;
+        const cache = this._moduleResolutionCache;
+        return ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration)
+            .map(decl => {
+            const moduleName = decl.moduleSpecifier.text;
+            const resolved = ts.resolveModuleName(moduleName, fileName, options, host, cache);
+            if (resolved.resolvedModule) {
+                return resolved.resolvedModule.resolvedFileName;
+            }
+            else {
+                return null;
+            }
+        })
+            .filter(x => x);
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,

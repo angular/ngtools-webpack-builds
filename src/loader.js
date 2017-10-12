@@ -356,6 +356,21 @@ function _getResourcesUrls(refactor) {
         return acc;
     }, []);
 }
+function _getImports(refactor, compilerOptions, host, cache) {
+    const containingFile = refactor.fileName;
+    return refactor.findAstNodes(null, ts.SyntaxKind.ImportDeclaration, false)
+        .map((clause) => {
+        const moduleName = clause.moduleSpecifier.text;
+        const resolved = ts.resolveModuleName(moduleName, containingFile, compilerOptions, host, cache);
+        if (resolved.resolvedModule) {
+            return resolved.resolvedModule.resolvedFileName;
+        }
+        else {
+            return null;
+        }
+    })
+        .filter(x => x);
+}
 /**
  * Recursively calls diagnose on the plugins for all the reverse dependencies.
  * @private
@@ -450,6 +465,7 @@ function ngcLoader(source) {
                 .then(() => {
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
                 const result = plugin.getFile(sourceFileName);
+                const dependencies = plugin.getDependencies(sourceFileName);
                 if (result.sourceMap) {
                     // Process sourcemaps for Webpack.
                     // Remove the sourceMappingURL.
@@ -463,6 +479,7 @@ function ngcLoader(source) {
                 if (result.outputText === undefined) {
                     throw new Error('TypeScript compilation failed.');
                 }
+                dependencies.forEach(dep => this.addDependency(dep));
                 cb(null, result.outputText, result.sourceMap);
             })
                 .catch(err => {
@@ -478,6 +495,12 @@ function ngcLoader(source) {
                 source = null;
             }
             const refactor = new refactor_1.TypeScriptFileRefactor(sourceFileName, plugin.compilerHost, plugin.program, source);
+            // Force a few compiler options to make sure we get the result we want.
+            const compilerOptions = Object.assign({}, plugin.compilerOptions, {
+                inlineSources: true,
+                inlineSourceMap: false,
+                sourceRoot: plugin.basePath
+            });
             Promise.resolve()
                 .then(() => {
                 benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.refactor');
@@ -516,6 +539,8 @@ function ngcLoader(source) {
                 _getResourcesUrls(refactor).forEach((url) => {
                     this.addDependency(path.resolve(path.dirname(sourceFileName), url));
                 });
+                _getImports(refactor, compilerOptions, plugin.compilerHost, plugin.moduleResolutionCache)
+                    .forEach((importString) => this.addDependency(importString));
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.addDependency');
             })
                 .then(() => {
@@ -541,12 +566,6 @@ function ngcLoader(source) {
                     }
                     benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.getDiagnostics');
                 }
-                // Force a few compiler options to make sure we get the result we want.
-                const compilerOptions = Object.assign({}, plugin.compilerOptions, {
-                    inlineSources: true,
-                    inlineSourceMap: false,
-                    sourceRoot: plugin.basePath
-                });
                 benchmark_1.time(timeLabel + '.ngcLoader.AotPlugin.transpile');
                 const result = refactor.transpile(compilerOptions);
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AotPlugin.transpile');

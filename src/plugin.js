@@ -43,6 +43,7 @@ class AotPlugin {
     }
     get genDir() { return this._genDir; }
     get program() { return this._program; }
+    get moduleResolutionCache() { return this._moduleResolutionCache; }
     get skipCodeGeneration() { return this._skipCodeGeneration; }
     get replaceExport() { return this._replaceExport; }
     get typeCheck() { return this._typeCheck; }
@@ -164,6 +165,8 @@ class AotPlugin {
             }
         }
         this._program = ts.createProgram(this._rootFilePath, this._compilerOptions, this._compilerHost);
+        // We use absolute paths everywhere.
+        this._moduleResolutionCache = ts.createModuleResolutionCache(this._basePath, (fileName) => this._compilerHost.resolve(fileName));
         // We enable caching of the filesystem in compilerHost _after_ the program has been created,
         // because we don't want SourceFile instances to be cached past this point.
         this._compilerHost.enableCaching();

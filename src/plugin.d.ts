@@ -32,6 +32,7 @@ export declare class AotPlugin implements Tapable {
     private _compilerOptions;
     private _angularCompilerOptions;
     private _program;
+    private _moduleResolutionCache;
     private _rootFilePath;
     private _compilerHost;
     private _resourceLoader;
@@ -66,6 +67,7 @@ export declare class AotPlugin implements Tapable {
     };
     readonly genDir: string;
     readonly program: ts.Program;
+    readonly moduleResolutionCache: ts.ModuleResolutionCache;
     readonly skipCodeGeneration: boolean;
     readonly replaceExport: boolean;
     readonly typeCheck: boolean;
