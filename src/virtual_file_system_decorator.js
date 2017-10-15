@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const path_1 = require("path");
+exports.NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
 class VirtualFileSystemDecorator {
     constructor(_inputFileSystem, _webpackCompilerHost) {
         this._inputFileSystem = _inputFileSystem;
@@ -17,6 +19,10 @@ class VirtualFileSystemDecorator {
             return this._webpackCompilerHost.stat(path);
         }
         return null;
+    }
+    getVirtualFilesPaths() {
+        return this._webpackCompilerHost.getNgFactoryPaths()
+            .map((fileName) => fileName.replace(/\//g, path_1.sep));
     }
     stat(path, callback) {
         const result = this._statSync(path);
@@ -75,4 +81,24 @@ class VirtualFileSystemDecorator {
     }
 }
 exports.VirtualFileSystemDecorator = VirtualFileSystemDecorator;
+class VirtualWatchFileSystemDecorator extends exports.NodeWatchFileSystem {
+    constructor(_virtualInputFileSystem) {
+        super(_virtualInputFileSystem);
+        this._virtualInputFileSystem = _virtualInputFileSystem;
+    }
+    watch(files, dirs, missing, startTime, options, callback, callbackUndelayed) {
+        const newCallback = (err, filesModified, contextModified, missingModified, fileTimestamps, contextTimestamps) => {
+            // Update fileTimestamps with timestamps from virtual files.
+            const virtualFilesStats = this._virtualInputFileSystem.getVirtualFilesPaths()
+                .map((fileName) => ({
+                path: fileName,
+                mtime: +this._virtualInputFileSystem.statSync(fileName).mtime
+            }));
+            virtualFilesStats.forEach(stats => fileTimestamps[stats.path] = +stats.mtime);
+            callback(err, filesModified, contextModified, missingModified, fileTimestamps, contextTimestamps);
+        };
+        return super.watch(files, dirs, missing, startTime, options, newCallback, callbackUndelayed);
+    }
+}
+exports.VirtualWatchFileSystemDecorator = VirtualWatchFileSystemDecorator;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/virtual_file_system_decorator.js.map

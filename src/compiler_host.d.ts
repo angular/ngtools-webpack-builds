@@ -58,6 +58,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _delegate;
     private _files;
     private _directories;
+    private _cachedResources;
     private _changedFiles;
     private _changedDirs;
     private _basePath;
@@ -72,6 +73,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     enableCaching(): void;
     resetChangedFileTracker(): void;
     getChangedFilePaths(): string[];
+    getNgFactoryPaths(): string[];
     invalidate(fileName: string): void;
     fileExists(fileName: string, delegate?: boolean): boolean;
     readFile(fileName: string): string;
