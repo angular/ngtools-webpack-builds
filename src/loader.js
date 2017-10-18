@@ -481,13 +481,6 @@ function ngcLoader(source) {
                 // Dependencies must use system path separator.
                 const dependencies = plugin.getDependencies(sourceFileName);
                 dependencies.forEach(dep => this.addDependency(dep.replace(/\//g, path.sep)));
-                // Also add the original file dependencies to virtual files.
-                const virtualFilesRe = /\.(?:ngfactory|css\.shim\.ngstyle)\.js$/;
-                if (virtualFilesRe.test(sourceFileName)) {
-                    const originalFile = sourceFileName.replace(virtualFilesRe, '.ts');
-                    const origDependencies = plugin.getDependencies(originalFile);
-                    origDependencies.forEach(dep => this.addDependency(dep.replace(/\//g, path.sep)));
-                }
                 cb(null, result.outputText, result.sourceMap);
             })
                 .catch(err => {

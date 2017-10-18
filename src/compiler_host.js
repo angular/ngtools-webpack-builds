@@ -76,7 +76,6 @@ class WebpackCompilerHost {
         this._options = _options;
         this._files = Object.create(null);
         this._directories = Object.create(null);
-        this._cachedResources = Object.create(null);
         this._changedFiles = Object.create(null);
         this._changedDirs = Object.create(null);
         this._cache = false;
@@ -121,10 +120,6 @@ class WebpackCompilerHost {
     }
     getChangedFilePaths() {
         return Object.keys(this._changedFiles);
-    }
-    getNgFactoryPaths() {
-        return Object.keys(this._files)
-            .filter(fileName => fileName.endsWith('.ngfactory.js') || fileName.endsWith('.ngstyle.js'));
     }
     invalidate(fileName) {
         fileName = this.resolve(fileName);
@@ -233,23 +228,9 @@ class WebpackCompilerHost {
     }
     readResource(fileName) {
         if (this._resourceLoader) {
-            const denormalizedFileName = fileName.replace(/\//g, path_1.sep);
-            const resourceDeps = this._resourceLoader.getResourceDependencies(denormalizedFileName);
-            if (this._cachedResources[fileName] === undefined
-                || resourceDeps.some((dep) => this._changedFiles[this.resolve(dep)])) {
-                return this._resourceLoader.get(denormalizedFileName)
-                    .then((resource) => {
-                    // Add resource dependencies to the compiler host file list.
-                    // This way we can check the changed files list to determine whether to use cache.
-                    this._resourceLoader.getResourceDependencies(denormalizedFileName)
-                        .forEach((dep) => this.readFile(dep));
-                    this._cachedResources[fileName] = resource;
-                    return resource;
-                });
-            }
-            else {
-                return this._cachedResources[fileName];
-            }
+            // We still read it to add it to the compiler host file list.
+            this.readFile(fileName);
+            return this._resourceLoader.get(fileName);
         }
         else {
             return this.readFile(fileName);

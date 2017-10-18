@@ -9,15 +9,12 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 class WebpackResourceLoader {
     constructor() {
         this._uniqueId = 0;
-        this._resourceDependencies = new Map();
+        this._cache = new Map();
     }
     update(parentCompilation) {
         this._parentCompilation = parentCompilation;
         this._context = parentCompilation.context;
         this._uniqueId = 0;
-    }
-    getResourceDependencies(filePath) {
-        return this._resourceDependencies.get(filePath) || [];
     }
     _compile(filePath) {
         if (!this._parentCompilation) {
@@ -72,9 +69,9 @@ class WebpackResourceLoader {
                             this._parentCompilation.assets[fileName] = childCompilation.assets[fileName];
                         }
                     });
-                    // Save the dependencies for this resource.
-                    this._resourceDependencies.set(outputName, childCompilation.fileDependencies);
                     resolve({
+                        // Boolean showing if this entry was changed since the last compilation.
+                        rendered: entries[0].rendered,
                         // Output name.
                         outputName,
                         // Compiled code.
@@ -86,16 +83,16 @@ class WebpackResourceLoader {
     }
     _evaluate(output) {
         try {
-            const outputName = output.outputName;
             const vmContext = vm.createContext(Object.assign({ require: require }, global));
-            const vmScript = new vm.Script(output.source, { filename: outputName });
+            const vmScript = new vm.Script(output.source, { filename: output.outputName });
             // Evaluate code and cast to string
             let evaluatedSource;
             evaluatedSource = vmScript.runInContext(vmContext);
             if (typeof evaluatedSource == 'string') {
+                this._cache.set(output.outputName, { outputName: output.outputName, evaluatedSource });
                 return Promise.resolve(evaluatedSource);
             }
-            return Promise.reject('The loader "' + outputName + '" didn\'t return a string.');
+            return Promise.reject('The loader "' + output.outputName + '" didn\'t return a string.');
         }
         catch (e) {
             return Promise.reject(e);
@@ -103,7 +100,18 @@ class WebpackResourceLoader {
     }
     get(filePath) {
         return this._compile(filePath)
-            .then((result) => this._evaluate(result));
+            .then((result) => {
+            if (!result.rendered) {
+                // Check cache.
+                const outputName = result.outputName;
+                const cachedOutput = this._cache.get(outputName);
+                if (cachedOutput) {
+                    // Return cached evaluatedSource.
+                    return Promise.resolve(cachedOutput.evaluatedSource);
+                }
+            }
+            return this._evaluate(result);
+        });
     }
 }
 exports.WebpackResourceLoader = WebpackResourceLoader;

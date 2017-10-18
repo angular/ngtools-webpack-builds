@@ -5,6 +5,7 @@ const child_process_1 = require("child_process");
 const path = require("path");
 const ts = require("typescript");
 const ContextElementDependency = require('webpack/lib/dependencies/ContextElementDependency');
+const NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
 const treeKill = require('tree-kill');
 const resource_loader_1 = require("./resource_loader");
 const compiler_host_1 = require("./compiler_host");
@@ -344,7 +345,7 @@ class AngularCompilerPlugin {
         // Use decorated inputFileSystem in watchFileSystem.
         compiler.plugin('environment', () => {
             compiler.inputFileSystem = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compiler.inputFileSystem, this._compilerHost);
-            compiler.watchFileSystem = new virtual_file_system_decorator_1.VirtualWatchFileSystemDecorator(compiler.inputFileSystem);
+            compiler.watchFileSystem = new NodeWatchFileSystem(compiler.inputFileSystem);
         });
         // Add lazy modules to the context module for @angular/core
         compiler.plugin('context-module-factory', (cmf) => {
@@ -607,18 +608,14 @@ class AngularCompilerPlugin {
         };
     }
     getDependencies(fileName) {
-        const resolvedFileName = this._compilerHost.resolve(fileName);
-        const sourceFile = this._compilerHost.getSourceFile(resolvedFileName, ts.ScriptTarget.Latest);
-        if (!sourceFile) {
-            return [];
-        }
+        const sourceFile = this._compilerHost.getSourceFile(fileName, ts.ScriptTarget.Latest);
         const options = this._compilerOptions;
         const host = this._compilerHost;
         const cache = this._moduleResolutionCache;
-        const esImports = ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration)
+        return ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration)
             .map(decl => {
             const moduleName = decl.moduleSpecifier.text;
-            const resolved = ts.resolveModuleName(moduleName, resolvedFileName, options, host, cache);
+            const resolved = ts.resolveModuleName(moduleName, fileName, options, host, cache);
             if (resolved.resolvedModule) {
                 return resolved.resolvedModule.resolvedFileName;
             }
@@ -627,12 +624,6 @@ class AngularCompilerPlugin {
             }
         })
             .filter(x => x);
-        const resourceImports = transformers_1.findResources(sourceFile)
-            .map((resourceReplacement) => resourceReplacement.resourcePaths)
-            .reduce((prev, curr) => prev.concat(curr), [])
-            .map((resourcePath) => path.resolve(path.dirname(resolvedFileName), resourcePath))
-            .reduce((prev, curr) => prev.concat(...this._resourceLoader.getResourceDependencies(curr)), []);
-        return [...esImports, ...resourceImports];
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,
