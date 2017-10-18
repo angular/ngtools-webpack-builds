@@ -78,7 +78,6 @@ class TypeChecker {
             options: this._angularCompilerOptions,
             tsHost: compilerHost
         });
-        this._tsFilenames = [];
         benchmark_1.timeEnd('TypeChecker.constructor');
     }
     _updateTsFilenames(changedTsFiles) {
