@@ -323,16 +323,33 @@ class AngularCompilerPlugin {
         const typeCheckerFile = g['angularCliIsLocal']
             ? './type_checker_bootstrap.js'
             : './type_checker.js';
-        this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile));
+        let hasMemoryFlag = false;
+        const memoryFlagRegex = /--max-old-space-size/;
+        const debugArgRegex = /--inspect(?:-brk|-port)?|--debug(?:-brk|-port)/;
+        const execArgv = process.execArgv.filter((arg) => {
+            // Check if memory is being set by parent process.
+            if (memoryFlagRegex.test(arg)) {
+                hasMemoryFlag = true;
+            }
+            // Remove debug args.
+            // Workaround for https://github.com/nodejs/node/issues/9435
+            return !debugArgRegex.test(arg);
+        });
+        if (!hasMemoryFlag) {
+            // Force max 8gb ram.
+            execArgv.push('--max-old-space-size=8192');
+        }
+        const forkOptions = { execArgv };
+        this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile), [], forkOptions);
         this._typeCheckerProcess.send(new type_checker_1.InitMessage(this._compilerOptions, this._basePath, this._JitMode, this._tsFilenames));
         // Cleanup.
         const killTypeCheckerProcess = () => {
             treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
             process.exit();
         };
-        process.on('exit', killTypeCheckerProcess);
-        process.on('SIGINT', killTypeCheckerProcess);
-        process.on('uncaughtException', killTypeCheckerProcess);
+        process.once('exit', killTypeCheckerProcess);
+        process.once('SIGINT', killTypeCheckerProcess);
+        process.once('uncaughtException', killTypeCheckerProcess);
     }
     _updateForkedTypeChecker(changedTsFiles) {
         this._typeCheckerProcess.send(new type_checker_1.UpdateMessage(changedTsFiles));
