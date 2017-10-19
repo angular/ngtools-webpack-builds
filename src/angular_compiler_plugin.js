@@ -583,11 +583,11 @@ class AngularCompilerPlugin {
                 const warnings = diagnostics
                     .filter((diag) => diag.category === ts.DiagnosticCategory.Warning);
                 if (errors.length > 0) {
-                    const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, errors);
+                    const message = ngtools_api_1.formatDiagnostics(errors);
                     this._compilation.errors.push(message);
                 }
                 if (warnings.length > 0) {
-                    const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, warnings);
+                    const message = ngtools_api_1.formatDiagnostics(warnings);
                     this._compilation.warnings.push(message);
                 }
                 // Reset changed files on successful compilation.

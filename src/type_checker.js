@@ -116,11 +116,11 @@ class TypeChecker {
             const errors = allDiagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error);
             const warnings = allDiagnostics.filter((d) => d.category === ts.DiagnosticCategory.Warning);
             if (errors.length > 0) {
-                const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, errors);
+                const message = ngtools_api_1.formatDiagnostics(errors);
                 console.error(bold(red('ERROR in ' + message)));
             }
             if (warnings.length > 0) {
-                const message = ngtools_api_1.formatDiagnostics(this._angularCompilerOptions, warnings);
+                const message = ngtools_api_1.formatDiagnostics(warnings);
                 console.log(bold(yellow('WARNING in ' + message)));
             }
         }

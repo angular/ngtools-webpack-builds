@@ -88,7 +88,7 @@ export interface CreateCompilerHostInterface {
     }): CompilerHost;
 }
 export interface FormatDiagnosticsInterface {
-    (options: CompilerOptions, diags: Diagnostics): string;
+    (diags: Diagnostics): string;
 }
 export declare function CompilerCliIsSupported(): void;
 export declare const VERSION: any;
