@@ -9,8 +9,15 @@ function exportLazyModuleMap(sourceFile, lazyRoutes) {
     const dirName = path.normalize(path.dirname(sourceFile.fileName));
     const modules = Object.keys(lazyRoutes)
         .map((loadChildrenString) => {
-        const [, moduleName] = loadChildrenString.split('#');
-        const modulePath = lazyRoutes[loadChildrenString];
+        let [, moduleName] = loadChildrenString.split('#');
+        let modulePath = lazyRoutes[loadChildrenString];
+        if (modulePath.endsWith('.ngfactory.ts')) {
+            modulePath = modulePath.replace('.ngfactory', '');
+            moduleName = moduleName.replace('NgFactory', '');
+            loadChildrenString = loadChildrenString
+                .replace('.ngfactory', '')
+                .replace('NgFactory', '');
+        }
         return {
             modulePath,
             moduleName,
