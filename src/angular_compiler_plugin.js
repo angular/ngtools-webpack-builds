@@ -39,6 +39,14 @@ class AngularCompilerPlugin {
         this._options = Object.assign({}, options);
         this._setupOptions(this._options);
     }
+    get _ngCompilerSupportsNewApi() {
+        if (this._JitMode) {
+            return false;
+        }
+        else {
+            return !!this._program.listLazyRoutes;
+        }
+    }
     get options() { return this._options; }
     get done() { return this._donePromise; }
     get entryModule() {
@@ -238,7 +246,10 @@ class AngularCompilerPlugin {
             });
             benchmark_1.timeEnd('AngularCompilerPlugin._createOrUpdateProgram.ng.createProgram');
             benchmark_1.time('AngularCompilerPlugin._createOrUpdateProgram.ng.loadNgStructureAsync');
-            return this._program.loadNgStructureAsync().then(() => benchmark_1.timeEnd('AngularCompilerPlugin._createOrUpdateProgram.ng.loadNgStructureAsync'));
+            return this._program.loadNgStructureAsync()
+                .then(() => {
+                benchmark_1.timeEnd('AngularCompilerPlugin._createOrUpdateProgram.ng.loadNgStructureAsync');
+            });
         }
     }
     _getLazyRoutesFromNgtools() {
@@ -279,6 +290,24 @@ class AngularCompilerPlugin {
         }
         benchmark_1.timeEnd('AngularCompilerPlugin._findLazyRoutesInAst');
         return result;
+    }
+    _listLazyRoutesFromProgram() {
+        const ngProgram = this._program;
+        if (!ngProgram.listLazyRoutes) {
+            throw new Error('_listLazyRoutesFromProgram was called with an old program.');
+        }
+        const lazyRoutes = ngProgram.listLazyRoutes();
+        return lazyRoutes.reduce((acc, curr) => {
+            const ref = curr.route;
+            if (ref in acc && acc[ref] !== curr.referencedModule.filePath) {
+                throw new Error(+`Duplicated path in loadChildren detected: "${ref}" is used in 2 loadChildren, `
+                    + `but they point to different modules "(${acc[ref]} and `
+                    + `"${curr.referencedModule.filePath}"). Webpack cannot distinguish on context and `
+                    + 'would fail to load the proper one.');
+            }
+            acc[ref] = curr.referencedModule.filePath;
+            return acc;
+        }, {});
     }
     // Process the lazy routes discovered, adding then to _lazyRoutes.
     // TODO: find a way to remove lazy routes that don't exist anymore.
@@ -502,6 +531,9 @@ class AngularCompilerPlugin {
             .filter(k => /(ts|html|css|scss|sass|less|styl)/.test(k));
         return Promise.resolve()
             .then(() => {
+            if (this._ngCompilerSupportsNewApi) {
+                return;
+            }
             // Try to find lazy routes.
             // We need to run the `listLazyRoutes` the first time because it also navigates libraries
             // and other things that we might miss using the (faster) findLazyRoutesInAst.
@@ -519,6 +551,12 @@ class AngularCompilerPlugin {
             // Make a new program and load the Angular structure if there are changes.
             if (changedFiles.length > 0) {
                 return this._createOrUpdateProgram();
+            }
+        })
+            .then(() => {
+            if (this._ngCompilerSupportsNewApi) {
+                // TODO: keep this when the new ngCompiler supports the new lazy routes API.
+                this._lazyRoutes = this._listLazyRoutesFromProgram();
             }
         })
             .then(() => {

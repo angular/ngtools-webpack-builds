@@ -65,12 +65,24 @@ export interface Program {
     getTsSemanticDiagnostics(sourceFile?: ts.SourceFile, cancellationToken?: ts.CancellationToken): ts.Diagnostic[];
     getNgSemanticDiagnostics(fileName?: string, cancellationToken?: ts.CancellationToken): Diagnostic[];
     loadNgStructureAsync(): Promise<void>;
+    listLazyRoutes?(): LazyRoute[];
     emit({emitFlags, cancellationToken, customTransformers, emitCallback}: {
         emitFlags?: any;
         cancellationToken?: ts.CancellationToken;
         customTransformers?: CustomTransformers;
         emitCallback?: TsEmitCallback;
     }): ts.EmitResult;
+}
+export interface LazyRoute {
+    route: string;
+    module: {
+        name: string;
+        filePath: string;
+    };
+    referencedModule: {
+        name: string;
+        filePath: string;
+    };
 }
 export declare type Diagnostics = Array<ts.Diagnostic | Diagnostic>;
 export interface CreateProgramInterface {

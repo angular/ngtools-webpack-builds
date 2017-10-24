@@ -54,6 +54,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _compilation;
     private _forkTypeChecker;
     private _typeCheckerProcess;
+    private readonly _ngCompilerSupportsNewApi;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
     readonly done: Promise<void>;
@@ -68,6 +69,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _createOrUpdateProgram();
     private _getLazyRoutesFromNgtools();
     private _findLazyRoutesInAst(changedFilePaths);
+    private _listLazyRoutesFromProgram();
     private _processLazyRoutes(discoveredLazyRoutes);
     private _createForkedTypeChecker();
     private _updateForkedTypeChecker(changedTsFiles);

@@ -2,14 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const process = require("process");
 const ts = require("typescript");
-const chalk = require("chalk");
+const chalk_1 = require("chalk");
 const compiler_host_1 = require("./compiler_host");
 const benchmark_1 = require("./benchmark");
 const gather_diagnostics_1 = require("./gather_diagnostics");
 const ngtools_api_1 = require("./ngtools_api");
 // Force basic color support on terminals with no color support.
 // Chalk typings don't have the correct constructor parameters.
-const chalkCtx = new chalk.constructor(chalk.supportsColor ? {} : { level: 1 });
+const chalkCtx = new chalk_1.default.constructor(chalk_1.default.supportsColor ? {} : { level: 1 });
 const { bold, red, yellow } = chalkCtx;
 var MESSAGE_KIND;
 (function (MESSAGE_KIND) {
