@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// @ignoreDep typescript
 const process = require("process");
 const ts = require("typescript");
 const chalk_1 = require("chalk");

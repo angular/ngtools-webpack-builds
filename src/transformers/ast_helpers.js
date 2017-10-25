@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// @ignoreDep typescript
 const ts = require("typescript");
 const compiler_host_1 = require("../compiler_host");
 const make_transform_1 = require("./make_transform");

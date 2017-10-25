@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// @ignoreDep typescript
 const ts = require("typescript");
 const path_1 = require("path");
 const dev = Math.floor(Math.random() * 10000);

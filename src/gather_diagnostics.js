@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// @ignoreDep typescript
 const ts = require("typescript");
 const benchmark_1 = require("./benchmark");
 class CancellationToken {
