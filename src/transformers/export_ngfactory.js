@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // @ignoreDep typescript
 const ts = require("typescript");
+const path_1 = require("path");
 const ast_helpers_1 = require("./ast_helpers");
 const make_transform_1 = require("./make_transform");
 function exportNgFactory(sourceFile, entryModule) {
@@ -12,6 +13,8 @@ function exportNgFactory(sourceFile, entryModule) {
     if (entryModuleIdentifiers.length === 0) {
         return [];
     }
+    const relativeEntryModulePath = path_1.relative(path_1.dirname(sourceFile.fileName), entryModule.path);
+    const normalizedEntryModulePath = `./${relativeEntryModulePath}`.replace(/\\/g, '/');
     // Get the module path from the import.
     let modulePath;
     entryModuleIdentifiers.forEach((entryModuleIdentifier) => {
@@ -26,7 +29,7 @@ function exportNgFactory(sourceFile, entryModule) {
         modulePath = moduleSpecifier.text;
         // Add the transform operations.
         const factoryClassName = entryModule.className + 'NgFactory';
-        const factoryModulePath = modulePath + '.ngfactory';
+        const factoryModulePath = normalizedEntryModulePath + '.ngfactory';
         const namedExports = ts.createNamedExports([ts.createExportSpecifier(undefined, ts.createIdentifier(factoryClassName))]);
         const newImport = ts.createExportDeclaration(undefined, undefined, namedExports, ts.createLiteral(factoryModulePath));
         ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));

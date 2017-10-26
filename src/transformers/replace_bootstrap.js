@@ -2,35 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // @ignoreDep typescript
 const ts = require("typescript");
+const path_1 = require("path");
 const ast_helpers_1 = require("./ast_helpers");
 const insert_import_1 = require("./insert_import");
 const remove_import_1 = require("./remove_import");
 const make_transform_1 = require("./make_transform");
 function replaceBootstrap(sourceFile, entryModule) {
     const ops = [];
-    // Find all identifiers using the entry module class name.
+    // Find all identifiers.
     const entryModuleIdentifiers = ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.Identifier, true)
         .filter(identifier => identifier.getText() === entryModule.className);
     if (entryModuleIdentifiers.length === 0) {
         return [];
     }
-    // Get the module path from the import.
-    let modulePath;
-    entryModuleIdentifiers.forEach((entryModuleIdentifier) => {
-        // TODO: only supports `import {A, B, C} from 'modulePath'` atm, add other import support later.
-        if (entryModuleIdentifier.parent.kind !== ts.SyntaxKind.ImportSpecifier) {
-            return;
-        }
-        const importSpec = entryModuleIdentifier.parent;
-        const moduleSpecifier = importSpec.parent.parent.parent.moduleSpecifier;
-        if (moduleSpecifier.kind !== ts.SyntaxKind.StringLiteral) {
-            return;
-        }
-        modulePath = moduleSpecifier.text;
-    });
-    if (!modulePath) {
-        return [];
-    }
+    const relativeEntryModulePath = path_1.relative(path_1.dirname(sourceFile.fileName), entryModule.path);
+    const normalizedEntryModulePath = `./${relativeEntryModulePath}`.replace(/\\/g, '/');
     // Find the bootstrap calls.
     const removedEntryModuleIdentifiers = [];
     const removedPlatformBrowserDynamicIdentifier = [];
@@ -60,7 +46,7 @@ function replaceBootstrap(sourceFile, entryModule) {
         const idNgFactory = ts.createUniqueName('__NgCli_bootstrap_');
         // Add the transform operations.
         const factoryClassName = entryModule.className + 'NgFactory';
-        const factoryModulePath = modulePath + '.ngfactory';
+        const factoryModulePath = normalizedEntryModulePath + '.ngfactory';
         ops.push(
         // Replace the entry module import.
         ...insert_import_1.insertStarImport(sourceFile, idNgFactory, factoryModulePath), new make_transform_1.ReplaceNodeOperation(sourceFile, entryModuleIdentifier, ts.createPropertyAccess(idNgFactory, ts.createIdentifier(factoryClassName))), 
