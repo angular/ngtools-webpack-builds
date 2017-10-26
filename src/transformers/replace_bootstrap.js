@@ -56,14 +56,16 @@ function replaceBootstrap(sourceFile, entryModule) {
             return;
         }
         const platformBrowserDynamicIdentifier = innerCallExpr.expression;
+        const idPlatformBrowser = ts.createUniqueName('__NgCli_bootstrap_');
+        const idNgFactory = ts.createUniqueName('__NgCli_bootstrap_');
         // Add the transform operations.
         const factoryClassName = entryModule.className + 'NgFactory';
         const factoryModulePath = modulePath + '.ngfactory';
         ops.push(
         // Replace the entry module import.
-        ...insert_import_1.insertImport(sourceFile, factoryClassName, factoryModulePath), new make_transform_1.ReplaceNodeOperation(sourceFile, entryModuleIdentifier, ts.createIdentifier(factoryClassName)), 
+        ...insert_import_1.insertStarImport(sourceFile, idNgFactory, factoryModulePath), new make_transform_1.ReplaceNodeOperation(sourceFile, entryModuleIdentifier, ts.createPropertyAccess(idNgFactory, ts.createIdentifier(factoryClassName))), 
         // Replace the platformBrowserDynamic import.
-        ...insert_import_1.insertImport(sourceFile, 'platformBrowser', '@angular/platform-browser'), new make_transform_1.ReplaceNodeOperation(sourceFile, platformBrowserDynamicIdentifier, ts.createIdentifier('platformBrowser')), new make_transform_1.ReplaceNodeOperation(sourceFile, bootstrapModuleIdentifier, ts.createIdentifier('bootstrapModuleFactory')));
+        ...insert_import_1.insertStarImport(sourceFile, idPlatformBrowser, '@angular/platform-browser'), new make_transform_1.ReplaceNodeOperation(sourceFile, platformBrowserDynamicIdentifier, ts.createPropertyAccess(idPlatformBrowser, 'platformBrowser')), new make_transform_1.ReplaceNodeOperation(sourceFile, bootstrapModuleIdentifier, ts.createIdentifier('bootstrapModuleFactory')));
         // Save the import identifiers that we replaced for removal.
         removedEntryModuleIdentifiers.push(entryModuleIdentifier);
         removedPlatformBrowserDynamicIdentifier.push(platformBrowserDynamicIdentifier);

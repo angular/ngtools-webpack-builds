@@ -4,6 +4,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
 const ast_helpers_1 = require("./ast_helpers");
 const make_transform_1 = require("./make_transform");
+function insertStarImport(sourceFile, identifier, modulePath) {
+    const ops = [];
+    const allImports = ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration);
+    // We don't need to verify if the symbol is already imported, star imports should be unique.
+    // Create the new import node.
+    const namespaceImport = ts.createNamespaceImport(identifier);
+    const importClause = ts.createImportClause(undefined, namespaceImport);
+    const newImport = ts.createImportDeclaration(undefined, undefined, importClause, ts.createLiteral(modulePath));
+    if (allImports.length > 0) {
+        // Find the last import and insert after.
+        ops.push(new make_transform_1.AddNodeOperation(sourceFile, allImports[allImports.length - 1], undefined, newImport));
+    }
+    else {
+        // Insert before the first node.
+        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));
+    }
+    return ops;
+}
+exports.insertStarImport = insertStarImport;
 function insertImport(sourceFile, symbolName, modulePath) {
     const ops = [];
     // Find all imports.
