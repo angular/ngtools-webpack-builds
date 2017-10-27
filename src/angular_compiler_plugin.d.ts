@@ -48,6 +48,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _transformMap;
     private _platform;
     private _JitMode;
+    private _emitSkipped;
     private _firstRun;
     private _donePromise;
     private _compiler;
@@ -66,6 +67,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _setupOptions(options);
     private _getTsProgram();
     private _getChangedTsFiles();
+    private _getChangedCompilationFiles();
     private _createOrUpdateProgram();
     private _getLazyRoutesFromNgtools();
     private _findLazyRoutesInAst(changedFilePaths);
@@ -77,9 +79,10 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _make(compilation, cb);
     private _update();
     writeI18nOutFile(): void;
-    getFile(fileName: string): {
+    getCompiledFile(fileName: string): {
         outputText: string;
         sourceMap: string;
+        errorDependencies: string[];
     };
     getDependencies(fileName: string): string[];
     private _emit(sourceFiles, customTransformers);

@@ -44,26 +44,32 @@ let typeChecker;
 let lastCancellationToken;
 process.on('message', (message) => {
     benchmark_1.time('TypeChecker.message');
-    switch (message.kind) {
-        case MESSAGE_KIND.Init:
-            const initMessage = message;
-            typeChecker = new TypeChecker(initMessage.compilerOptions, initMessage.basePath, initMessage.jitMode, initMessage.tsFilenames);
-            break;
-        case MESSAGE_KIND.Update:
-            if (!typeChecker) {
-                throw new Error('TypeChecker: update message received before initialization');
-            }
-            if (lastCancellationToken) {
-                // This cancellation token doesn't seem to do much, messages don't seem to be processed
-                // before the diagnostics finish.
-                lastCancellationToken.requestCancellation();
-            }
-            const updateMessage = message;
-            lastCancellationToken = new gather_diagnostics_1.CancellationToken();
-            typeChecker.update(updateMessage.changedTsFiles, lastCancellationToken);
-            break;
-        default:
-            throw new Error(`TypeChecker: Unexpected message received: ${message}.`);
+    try {
+        switch (message.kind) {
+            case MESSAGE_KIND.Init:
+                const initMessage = message;
+                typeChecker = new TypeChecker(initMessage.compilerOptions, initMessage.basePath, initMessage.jitMode, initMessage.tsFilenames);
+                break;
+            case MESSAGE_KIND.Update:
+                if (!typeChecker) {
+                    throw new Error('TypeChecker: update message received before initialization');
+                }
+                if (lastCancellationToken) {
+                    // This cancellation token doesn't seem to do much, messages don't seem to be processed
+                    // before the diagnostics finish.
+                    lastCancellationToken.requestCancellation();
+                }
+                const updateMessage = message;
+                lastCancellationToken = new gather_diagnostics_1.CancellationToken();
+                typeChecker.update(updateMessage.changedTsFiles, lastCancellationToken);
+                break;
+            default:
+                throw new Error(`TypeChecker: Unexpected message received: ${message}.`);
+        }
+    }
+    catch (error) {
+        // Ignore errors in the TypeChecker.
+        // Anything that would throw here will error out the compilation as well.
     }
     benchmark_1.timeEnd('TypeChecker.message');
 });

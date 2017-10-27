@@ -464,7 +464,7 @@ function ngcLoader(source) {
             plugin.done
                 .then(() => {
                 benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
-                const result = plugin.getFile(sourceFileName);
+                const result = plugin.getCompiledFile(sourceFileName);
                 if (result.sourceMap) {
                     // Process sourcemaps for Webpack.
                     // Remove the sourceMappingURL.
@@ -474,11 +474,9 @@ function ngcLoader(source) {
                     sourceMap.sources[0] = sourceFileName;
                     result.sourceMap = JSON.stringify(sourceMap);
                 }
-                benchmark_1.timeEnd(timeLabel);
-                if (result.outputText === undefined) {
-                    throw new Error('TypeScript compilation failed.');
-                }
                 // Dependencies must use system path separator.
+                // TODO: move the denormalizer into it's own helper.
+                result.errorDependencies.forEach(dep => this.addDependency(dep.replace(/\//g, path.sep)));
                 const dependencies = plugin.getDependencies(sourceFileName);
                 dependencies.forEach(dep => this.addDependency(dep.replace(/\//g, path.sep)));
                 // Also add the original file dependencies to virtual files.
@@ -488,10 +486,11 @@ function ngcLoader(source) {
                     const origDependencies = plugin.getDependencies(originalFile);
                     origDependencies.forEach(dep => this.addDependency(dep.replace(/\//g, path.sep)));
                 }
+                benchmark_1.timeEnd(timeLabel);
                 cb(null, result.outputText, result.sourceMap);
             })
                 .catch(err => {
-                benchmark_1.timeEnd(timeLabel + '.ngcLoader.AngularCompilerPlugin');
+                benchmark_1.timeEnd(timeLabel);
                 cb(err);
             });
         }

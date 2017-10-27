@@ -59,11 +59,6 @@ function gatherDiagnostics(program, jitMode, benchmarkLabel, cancellationToken) 
         checkOtherDiagnostics = checkOtherDiagnostics &&
             checkDiagnostics(angularProgram.getTsSemanticDiagnostics(undefined, cancellationToken));
         benchmark_1.timeEnd(`${benchmarkLabel}.gatherDiagnostics.ng.getTsSemanticDiagnostics`);
-        // Check Angular structural diagnostics.
-        benchmark_1.time(`${benchmarkLabel}.gatherDiagnostics.ng.getNgStructuralDiagnostics`);
-        checkOtherDiagnostics = checkOtherDiagnostics &&
-            checkDiagnostics(angularProgram.getNgStructuralDiagnostics(cancellationToken));
-        benchmark_1.timeEnd(`${benchmarkLabel}.gatherDiagnostics.ng.getNgStructuralDiagnostics`);
         // Check Angular semantic diagnostics
         benchmark_1.time(`${benchmarkLabel}.gatherDiagnostics.ng.getNgSemanticDiagnostics`);
         checkOtherDiagnostics = checkOtherDiagnostics &&
