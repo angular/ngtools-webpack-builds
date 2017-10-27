@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
 const ast_helpers_1 = require("./ast_helpers");
 const make_transform_1 = require("./make_transform");
+const insert_import_1 = require("./insert_import");
 function registerLocaleData(sourceFile, entryModule, locale) {
     const ops = [];
     // Find all identifiers using the entry module class name.
@@ -28,22 +29,18 @@ function registerLocaleData(sourceFile, entryModule, locale) {
             || propAccessExpr.expression.kind !== ts.SyntaxKind.CallExpression) {
             return;
         }
+        const firstNode = ast_helpers_1.getFirstNode(sourceFile);
         // Create the import node for the locale.
-        const localeIdentifier = ts.createIdentifier(`__locale_${locale.replace(/-/g, '')}__`);
-        const localeImportClause = ts.createImportClause(localeIdentifier, undefined);
-        const localeNewImport = ts.createImportDeclaration(undefined, undefined, localeImportClause, ts.createLiteral(`@angular/common/locales/${locale}`));
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), localeNewImport));
+        const localeNamespaceId = ts.createUniqueName('__NgCli_locale_');
+        ops.push(...insert_import_1.insertStarImport(sourceFile, localeNamespaceId, `@angular/common/locales/${locale}`, firstNode, true));
         // Create the import node for the registerLocaleData function.
         const regIdentifier = ts.createIdentifier(`registerLocaleData`);
-        const regImportSpecifier = ts.createImportSpecifier(undefined, regIdentifier);
-        const regNamedImport = ts.createNamedImports([regImportSpecifier]);
-        const regImportClause = ts.createImportClause(undefined, regNamedImport);
-        const regNewImport = ts.createImportDeclaration(undefined, undefined, regImportClause, ts.createLiteral('@angular/common'));
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), regNewImport));
+        const regNamespaceId = ts.createUniqueName('__NgCli_locale_');
+        ops.push(...insert_import_1.insertStarImport(sourceFile, regNamespaceId, '@angular/common', firstNode, true));
         // Create the register function call
-        const registerFunctionCall = ts.createCall(regIdentifier, undefined, [localeIdentifier]);
+        const registerFunctionCall = ts.createCall(ts.createPropertyAccess(regNamespaceId, regIdentifier), undefined, [ts.createPropertyAccess(localeNamespaceId, 'default')]);
         const registerFunctionStatement = ts.createStatement(registerFunctionCall);
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), registerFunctionStatement));
+        ops.push(new make_transform_1.AddNodeOperation(sourceFile, firstNode, registerFunctionStatement));
     });
     return ops;
 }

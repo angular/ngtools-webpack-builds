@@ -10,15 +10,8 @@ function exportLazyModuleMap(sourceFile, lazyRoutes) {
     const dirName = path.normalize(path.dirname(sourceFile.fileName));
     const modules = Object.keys(lazyRoutes)
         .map((loadChildrenString) => {
-        let [, moduleName] = loadChildrenString.split('#');
-        let modulePath = lazyRoutes[loadChildrenString];
-        if (modulePath.match(/\.ngfactory\.[jt]s$/)) {
-            modulePath = modulePath.replace('.ngfactory', '');
-            moduleName = moduleName.replace('NgFactory', '');
-            loadChildrenString = loadChildrenString
-                .replace('.ngfactory', '')
-                .replace('NgFactory', '');
-        }
+        const [, moduleName] = loadChildrenString.split('#');
+        const modulePath = lazyRoutes[loadChildrenString];
         return {
             modulePath,
             moduleName,
@@ -33,7 +26,14 @@ function exportLazyModuleMap(sourceFile, lazyRoutes) {
         const newImport = ts.createImportDeclaration(undefined, undefined, importClause, ts.createLiteral(relativePath));
         ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));
     });
-    const lazyModuleObjectLiteral = ts.createObjectLiteral(modules.map((mod, idx) => ts.createPropertyAssignment(ts.createLiteral(mod.loadChildrenString), ts.createPropertyAccess(ts.createIdentifier(`__lazy_${idx}__`), mod.moduleName))));
+    const lazyModuleObjectLiteral = ts.createObjectLiteral(modules.map((mod, idx) => {
+        let [modulePath, moduleName] = mod.loadChildrenString.split('#');
+        if (modulePath.match(/\.ngfactory/)) {
+            modulePath = modulePath.replace('.ngfactory', '');
+            moduleName = moduleName.replace('NgFactory', '');
+        }
+        return ts.createPropertyAssignment(ts.createLiteral(`${modulePath}#${moduleName}`), ts.createPropertyAccess(ts.createIdentifier(`__lazy_${idx}__`), mod.moduleName));
+    }));
     const lazyModuleVariableStmt = ts.createVariableStatement([ts.createToken(ts.SyntaxKind.ExportKeyword)], [ts.createVariableDeclaration('LAZY_MODULE_MAP', undefined, lazyModuleObjectLiteral)]);
     ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getLastNode(sourceFile), undefined, lazyModuleVariableStmt));
     return ops;

@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
 const ast_helpers_1 = require("./ast_helpers");
 const make_transform_1 = require("./make_transform");
-function insertStarImport(sourceFile, identifier, modulePath) {
+function insertStarImport(sourceFile, identifier, modulePath, target, before = false) {
     const ops = [];
     const allImports = ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration);
     // We don't need to verify if the symbol is already imported, star imports should be unique.
@@ -12,7 +12,10 @@ function insertStarImport(sourceFile, identifier, modulePath) {
     const namespaceImport = ts.createNamespaceImport(identifier);
     const importClause = ts.createImportClause(undefined, namespaceImport);
     const newImport = ts.createImportDeclaration(undefined, undefined, importClause, ts.createLiteral(modulePath));
-    if (allImports.length > 0) {
+    if (target) {
+        ops.push(new make_transform_1.AddNodeOperation(sourceFile, target, before ? newImport : undefined, before ? undefined : newImport));
+    }
+    else if (allImports.length > 0) {
         // Find the last import and insert after.
         ops.push(new make_transform_1.AddNodeOperation(sourceFile, allImports[allImports.length - 1], undefined, newImport));
     }
