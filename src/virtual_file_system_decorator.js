@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const path_1 = require("path");
 exports.NodeWatchFileSystem = require('webpack/lib/node/NodeWatchFileSystem');
 class VirtualFileSystemDecorator {
     constructor(_inputFileSystem, _webpackCompilerHost) {
@@ -21,8 +20,7 @@ class VirtualFileSystemDecorator {
         return null;
     }
     getVirtualFilesPaths() {
-        return this._webpackCompilerHost.getNgFactoryPaths()
-            .map((fileName) => fileName.replace(/\//g, path_1.sep));
+        return this._webpackCompilerHost.getNgFactoryPaths();
     }
     stat(path, callback) {
         const result = this._statSync(path);

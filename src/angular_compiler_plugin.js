@@ -642,7 +642,7 @@ class AngularCompilerPlugin {
             }
             this._emitSkipped = !emitResult || emitResult.emitSkipped;
             // Reset changed files on successful compilation.
-            if (this._emitSkipped && this._compilation.errors.length === 0) {
+            if (!this._emitSkipped && this._compilation.errors.length === 0) {
                 this._compilerHost.resetChangedFileTracker();
             }
             benchmark_1.timeEnd('AngularCompilerPlugin._update');
@@ -684,7 +684,8 @@ class AngularCompilerPlugin {
                 // We also need to all changed files as dependencies of this file, so that all of them
                 // will be watched and trigger a rebuild next time.
                 outputText = '';
-                errorDependencies = this._getChangedCompilationFiles();
+                errorDependencies = this._getChangedCompilationFiles()
+                    .map((p) => this._compilerHost.denormalizePath(p));
             }
         }
         else {
@@ -728,8 +729,12 @@ class AngularCompilerPlugin {
             .map((resourceReplacement) => resourceReplacement.resourcePaths)
             .reduce((prev, curr) => prev.concat(curr), [])
             .map((resourcePath) => path.resolve(path.dirname(resolvedFileName), resourcePath))
-            .reduce((prev, curr) => prev.concat(...this._resourceLoader.getResourceDependencies(curr)), []);
-        return [...esImports, ...resourceImports];
+            .reduce((prev, curr) => prev.concat(...this.getResourceDependencies(curr)), []);
+        // These paths are meant to be used by the loader so we must denormalize them.
+        return [...esImports, ...resourceImports].map((p) => this._compilerHost.denormalizePath(p));
+    }
+    getResourceDependencies(fileName) {
+        return this._resourceLoader.getResourceDependencies(fileName);
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,

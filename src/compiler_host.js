@@ -88,6 +88,9 @@ class WebpackCompilerHost {
     _normalizePath(path) {
         return path.replace(/\\/g, '/');
     }
+    denormalizePath(path) {
+        return path.replace(/\//g, path_1.sep);
+    }
     resolve(path) {
         path = this._normalizePath(path);
         if (path[0] == '.') {
@@ -125,7 +128,8 @@ class WebpackCompilerHost {
     }
     getNgFactoryPaths() {
         return Object.keys(this._files)
-            .filter(fileName => fileName.endsWith('.ngfactory.js') || fileName.endsWith('.ngstyle.js'));
+            .filter(fileName => fileName.endsWith('.ngfactory.js') || fileName.endsWith('.ngstyle.js'))
+            .map((path) => this.denormalizePath(path));
     }
     invalidate(fileName) {
         fileName = this.resolve(fileName);
@@ -234,7 +238,8 @@ class WebpackCompilerHost {
     }
     readResource(fileName) {
         if (this._resourceLoader) {
-            const denormalizedFileName = fileName.replace(/\//g, path_1.sep);
+            // These paths are meant to be used by the loader so we must denormalize them.
+            const denormalizedFileName = this.denormalizePath(fileName);
             const resourceDeps = this._resourceLoader.getResourceDependencies(denormalizedFileName);
             if (this._cachedResources[fileName] === undefined
                 || resourceDeps.some((dep) => this._changedFiles[this.resolve(dep)])) {

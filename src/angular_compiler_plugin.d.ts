@@ -85,6 +85,7 @@ export declare class AngularCompilerPlugin implements Tapable {
         errorDependencies: string[];
     };
     getDependencies(fileName: string): string[];
+    getResourceDependencies(fileName: string): string[];
     private _emit(sourceFiles, customTransformers);
     private _validateLocale(locale);
 }
