@@ -474,7 +474,7 @@ function ngcLoader(source) {
                     sourceMap.sources = sourceMap.sources.map((fileName) => {
                         return path.join(path.dirname(sourceFileName), fileName);
                     });
-                    result.sourceMap = JSON.stringify(sourceMap);
+                    result.sourceMap = sourceMap;
                 }
                 // Manually add the dependencies for TS files.
                 // Type only imports will be stripped out by compilation so we need to add them as
