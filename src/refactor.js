@@ -5,8 +5,51 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const ts = require("typescript");
 const source_map_1 = require("source-map");
-const transformers_1 = require("./transformers");
 const MagicString = require('magic-string');
+/**
+ * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
+ * @param node The root node to check, or null if the whole tree should be searched.
+ * @param sourceFile The source file where the node is.
+ * @param kind The kind of nodes to find.
+ * @param recursive Whether to go in matched nodes to keep matching.
+ * @param max The maximum number of items to return.
+ * @return all nodes of kind, or [] if none is found
+ */
+// TODO: replace this with collectDeepNodes and add limits to collectDeepNodes
+function findAstNodes(node, sourceFile, kind, recursive = false, max = Infinity) {
+    // TODO: refactor operations that only need `refactor.findAstNodes()` to use this instead.
+    if (max == 0) {
+        return [];
+    }
+    if (!node) {
+        node = sourceFile;
+    }
+    let arr = [];
+    if (node.kind === kind) {
+        // If we're not recursively looking for children, stop here.
+        if (!recursive) {
+            return [node];
+        }
+        arr.push(node);
+        max--;
+    }
+    if (max > 0) {
+        for (const child of node.getChildren(sourceFile)) {
+            findAstNodes(child, sourceFile, kind, recursive, max)
+                .forEach((node) => {
+                if (max > 0) {
+                    arr.push(node);
+                }
+                max--;
+            });
+            if (max <= 0) {
+                break;
+            }
+        }
+    }
+    return arr;
+}
+exports.findAstNodes = findAstNodes;
 function resolve(filePath, _host, program) {
     if (path.isAbsolute(filePath)) {
         return filePath;
@@ -65,7 +108,7 @@ class TypeScriptFileRefactor {
      * @return all nodes of kind, or [] if none is found
      */
     findAstNodes(node, kind, recursive = false, max = Infinity) {
-        return transformers_1.findAstNodes(node, this._sourceFile, kind, recursive, max);
+        return findAstNodes(node, this._sourceFile, kind, recursive, max);
     }
     findFirstAstNode(node, kind) {
         return this.findAstNodes(node, kind, false, 1)[0] || null;

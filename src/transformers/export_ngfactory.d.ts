@@ -1,6 +1,5 @@
 import * as ts from 'typescript';
-import { TransformOperation } from './make_transform';
-export declare function exportNgFactory(sourceFile: ts.SourceFile, entryModule: {
+export declare function exportNgFactory(shouldTransform: (fileName: string) => boolean, getEntryModule: () => {
     path: string;
     className: string;
-}): TransformOperation[];
+}): ts.TransformerFactory<ts.SourceFile>;

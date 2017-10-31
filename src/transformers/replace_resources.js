@@ -4,33 +4,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
 const ast_helpers_1 = require("./ast_helpers");
 const make_transform_1 = require("./make_transform");
-function replaceResources(sourceFile) {
-    const ops = [];
-    const replacements = findResources(sourceFile);
-    if (replacements.length > 0) {
-        // Add the replacement operations.
-        ops.push(...(replacements.map((rep) => rep.replaceNodeOperation)));
-        // If we added a require call, we need to also add typings for it.
-        // The typings need to be compatible with node typings, but also work by themselves.
-        // interface NodeRequire {(id: string): any;}
-        const nodeRequireInterface = ts.createInterfaceDeclaration([], [], 'NodeRequire', [], [], [
-            ts.createCallSignature([], [
-                ts.createParameter([], [], undefined, 'id', undefined, ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword))
-            ], ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword))
-        ]);
-        // declare var require: NodeRequire;
-        const varRequire = ts.createVariableStatement([ts.createToken(ts.SyntaxKind.DeclareKeyword)], [ts.createVariableDeclaration('require', ts.createTypeReferenceNode('NodeRequire', []))]);
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), nodeRequireInterface));
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), varRequire));
-    }
-    return ops;
+const interfaces_1 = require("./interfaces");
+function replaceResources(shouldTransform) {
+    const standardTransform = function (sourceFile) {
+        const ops = [];
+        if (!shouldTransform(sourceFile.fileName)) {
+            return ops;
+        }
+        const replacements = findResources(sourceFile);
+        if (replacements.length > 0) {
+            // Add the replacement operations.
+            ops.push(...(replacements.map((rep) => rep.replaceNodeOperation)));
+            // If we added a require call, we need to also add typings for it.
+            // The typings need to be compatible with node typings, but also work by themselves.
+            // interface NodeRequire {(id: string): any;}
+            const nodeRequireInterface = ts.createInterfaceDeclaration([], [], 'NodeRequire', [], [], [
+                ts.createCallSignature([], [
+                    ts.createParameter([], [], undefined, 'id', undefined, ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword))
+                ], ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword))
+            ]);
+            // declare var require: NodeRequire;
+            const varRequire = ts.createVariableStatement([ts.createToken(ts.SyntaxKind.DeclareKeyword)], [ts.createVariableDeclaration('require', ts.createTypeReferenceNode('NodeRequire', []))]);
+            ops.push(new interfaces_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), nodeRequireInterface));
+            ops.push(new interfaces_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), varRequire));
+        }
+        return ops;
+    };
+    return make_transform_1.makeTransform(standardTransform);
 }
 exports.replaceResources = replaceResources;
 function findResources(sourceFile) {
     const replacements = [];
     // Find all object literals.
-    ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ObjectLiteralExpression, true)
-        .map(node => ast_helpers_1.findAstNodes(node, sourceFile, ts.SyntaxKind.PropertyAssignment))
+    ast_helpers_1.collectDeepNodes(sourceFile, ts.SyntaxKind.ObjectLiteralExpression)
+        .map(node => ast_helpers_1.collectDeepNodes(node, ts.SyntaxKind.PropertyAssignment))
         .reduce((prev, curr) => curr ? prev.concat(curr) : prev, [])
         .filter((node) => {
         const key = _getContentOfKeyLiteral(node.name);
@@ -48,11 +55,11 @@ function findResources(sourceFile) {
             const propAssign = ts.createPropertyAssignment('template', requireCall);
             replacements.push({
                 resourcePaths: [resourcePath],
-                replaceNodeOperation: new make_transform_1.ReplaceNodeOperation(sourceFile, node, propAssign)
+                replaceNodeOperation: new interfaces_1.ReplaceNodeOperation(sourceFile, node, propAssign)
             });
         }
         else if (key == 'styleUrls') {
-            const arr = ast_helpers_1.findAstNodes(node, sourceFile, ts.SyntaxKind.ArrayLiteralExpression, false);
+            const arr = ast_helpers_1.collectDeepNodes(node, ts.SyntaxKind.ArrayLiteralExpression);
             if (!arr || arr.length == 0 || arr[0].elements.length == 0) {
                 return;
             }
@@ -63,7 +70,7 @@ function findResources(sourceFile) {
             const propAssign = ts.createPropertyAssignment('styles', requireArray);
             replacements.push({
                 resourcePaths: stylePaths,
-                replaceNodeOperation: new make_transform_1.ReplaceNodeOperation(sourceFile, node, propAssign)
+                replaceNodeOperation: new interfaces_1.ReplaceNodeOperation(sourceFile, node, propAssign)
             });
         }
     });

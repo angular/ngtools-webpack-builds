@@ -102,10 +102,21 @@ export interface CreateCompilerHostInterface {
 export interface FormatDiagnosticsInterface {
     (diags: Diagnostics): string;
 }
+export interface ParsedConfiguration {
+    project: string;
+    options: CompilerOptions;
+    rootNames: string[];
+    emitFlags: any;
+    errors: Diagnostics;
+}
+export interface ReadConfigurationInterface {
+    (project: string, existingOptions?: ts.CompilerOptions): ParsedConfiguration;
+}
 export declare function CompilerCliIsSupported(): void;
 export declare const VERSION: any;
 export declare const __NGTOOLS_PRIVATE_API_2: any;
 export declare const createProgram: CreateProgramInterface;
 export declare const createCompilerHost: CreateCompilerHostInterface;
 export declare const formatDiagnostics: FormatDiagnosticsInterface;
+export declare const readConfiguration: ReadConfigurationInterface;
 export declare const EmitFlags: any;

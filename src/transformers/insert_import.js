@@ -3,25 +3,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // @ignoreDep typescript
 const ts = require("typescript");
 const ast_helpers_1 = require("./ast_helpers");
-const make_transform_1 = require("./make_transform");
+const interfaces_1 = require("./interfaces");
 function insertStarImport(sourceFile, identifier, modulePath, target, before = false) {
     const ops = [];
-    const allImports = ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration);
+    const allImports = ast_helpers_1.collectDeepNodes(sourceFile, ts.SyntaxKind.ImportDeclaration);
     // We don't need to verify if the symbol is already imported, star imports should be unique.
     // Create the new import node.
     const namespaceImport = ts.createNamespaceImport(identifier);
     const importClause = ts.createImportClause(undefined, namespaceImport);
     const newImport = ts.createImportDeclaration(undefined, undefined, importClause, ts.createLiteral(modulePath));
     if (target) {
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, target, before ? newImport : undefined, before ? undefined : newImport));
+        ops.push(new interfaces_1.AddNodeOperation(sourceFile, target, before ? newImport : undefined, before ? undefined : newImport));
     }
     else if (allImports.length > 0) {
         // Find the last import and insert after.
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, allImports[allImports.length - 1], undefined, newImport));
+        ops.push(new interfaces_1.AddNodeOperation(sourceFile, allImports[allImports.length - 1], undefined, newImport));
     }
     else {
         // Insert before the first node.
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));
+        ops.push(new interfaces_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));
     }
     return ops;
 }
@@ -29,7 +29,7 @@ exports.insertStarImport = insertStarImport;
 function insertImport(sourceFile, symbolName, modulePath) {
     const ops = [];
     // Find all imports.
-    const allImports = ast_helpers_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ImportDeclaration);
+    const allImports = ast_helpers_1.collectDeepNodes(sourceFile, ts.SyntaxKind.ImportDeclaration);
     const maybeImports = allImports
         .filter((node) => {
         // Filter all imports that do not match the modulePath.
@@ -60,7 +60,7 @@ function insertImport(sourceFile, symbolName, modulePath) {
             return ops;
         }
         // Just pick the first one and insert at the end of its identifier list.
-        ops.push(new make_transform_1.AddNodeOperation(sourceFile, maybeImports[0].elements[maybeImports[0].elements.length - 1], undefined, ts.createImportSpecifier(undefined, ts.createIdentifier(symbolName))));
+        ops.push(new interfaces_1.AddNodeOperation(sourceFile, maybeImports[0].elements[maybeImports[0].elements.length - 1], undefined, ts.createImportSpecifier(undefined, ts.createIdentifier(symbolName))));
     }
     else {
         // Create the new import node.
@@ -69,11 +69,11 @@ function insertImport(sourceFile, symbolName, modulePath) {
         const newImport = ts.createImportDeclaration(undefined, undefined, importClause, ts.createLiteral(modulePath));
         if (allImports.length > 0) {
             // Find the last import and insert after.
-            ops.push(new make_transform_1.AddNodeOperation(sourceFile, allImports[allImports.length - 1], undefined, newImport));
+            ops.push(new interfaces_1.AddNodeOperation(sourceFile, allImports[allImports.length - 1], undefined, newImport));
         }
         else {
             // Insert before the first node.
-            ops.push(new make_transform_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));
+            ops.push(new interfaces_1.AddNodeOperation(sourceFile, ast_helpers_1.getFirstNode(sourceFile), newImport));
         }
     }
     return ops;

@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
-import { ReplaceNodeOperation, TransformOperation } from './make_transform';
-export declare function replaceResources(sourceFile: ts.SourceFile): TransformOperation[];
+import { ReplaceNodeOperation } from './interfaces';
+export declare function replaceResources(shouldTransform: (fileName: string) => boolean): ts.TransformerFactory<ts.SourceFile>;
 export interface ResourceReplacement {
     resourcePaths: string[];
     replaceNodeOperation: ReplaceNodeOperation;

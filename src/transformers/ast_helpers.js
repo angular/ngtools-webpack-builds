@@ -3,68 +3,34 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // @ignoreDep typescript
 const ts = require("typescript");
 const compiler_host_1 = require("../compiler_host");
-const make_transform_1 = require("./make_transform");
-/**
- * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
- * @param node The root node to check, or null if the whole tree should be searched.
- * @param sourceFile The source file where the node is.
- * @param kind The kind of nodes to find.
- * @param recursive Whether to go in matched nodes to keep matching.
- * @param max The maximum number of items to return.
- * @return all nodes of kind, or [] if none is found
- */
-function findAstNodes(node, sourceFile, kind, recursive = false, max = Infinity) {
-    // TODO: refactor operations that only need `refactor.findAstNodes()` to use this instead.
-    if (max == 0) {
-        return [];
-    }
-    if (!node) {
-        node = sourceFile;
-    }
-    let arr = [];
-    if (node.kind === kind) {
-        // If we're not recursively looking for children, stop here.
-        if (!recursive) {
-            return [node];
+// Find all nodes from the AST in the subtree of node of SyntaxKind kind.
+function collectDeepNodes(node, kind) {
+    const nodes = [];
+    const helper = (child) => {
+        if (child.kind === kind) {
+            nodes.push(child);
         }
-        arr.push(node);
-        max--;
-    }
-    if (max > 0) {
-        for (const child of node.getChildren(sourceFile)) {
-            findAstNodes(child, sourceFile, kind, recursive, max)
-                .forEach((node) => {
-                if (max > 0) {
-                    arr.push(node);
-                }
-                max--;
-            });
-            if (max <= 0) {
-                break;
-            }
-        }
-    }
-    return arr;
+        ts.forEachChild(child, helper);
+    };
+    ts.forEachChild(node, helper);
+    return nodes;
 }
-exports.findAstNodes = findAstNodes;
+exports.collectDeepNodes = collectDeepNodes;
 function getFirstNode(sourceFile) {
-    const syntaxList = findAstNodes(null, sourceFile, ts.SyntaxKind.SyntaxList, false, 1)[0] || null;
-    if (syntaxList) {
-        return (syntaxList && syntaxList.getChildCount() > 0) ? syntaxList.getChildAt(0) : null;
+    if (sourceFile.statements.length > 0) {
+        return sourceFile.statements[0] || null;
     }
     return null;
 }
 exports.getFirstNode = getFirstNode;
 function getLastNode(sourceFile) {
-    const syntaxList = findAstNodes(null, sourceFile, ts.SyntaxKind.SyntaxList, false, 1)[0] || null;
-    if (syntaxList) {
-        const childCount = syntaxList.getChildCount();
-        return childCount > 0 ? syntaxList.getChildAt(childCount - 1) : null;
+    if (sourceFile.statements.length > 0) {
+        return sourceFile.statements[sourceFile.statements.length - 1] || null;
     }
     return null;
 }
 exports.getLastNode = getLastNode;
-function transformTypescript(content, transformOpsCb) {
+function transformTypescript(content, transformers) {
     // Set compiler options.
     const compilerOptions = {
         noEmitOnError: false,
@@ -83,11 +49,8 @@ function transformTypescript(content, transformOpsCb) {
     compilerHost.writeFile(fileName, content, false);
     // Create the TypeScript program.
     const program = ts.createProgram([fileName], compilerOptions, compilerHost);
-    // Get the transform operations.
-    const sourceFile = program.getSourceFile(fileName);
-    const transformOps = transformOpsCb(sourceFile);
     // Emit.
-    const { emitSkipped, diagnostics } = program.emit(undefined, undefined, undefined, undefined, { before: [make_transform_1.makeTransform(transformOps)] });
+    const { emitSkipped, diagnostics } = program.emit(undefined, undefined, undefined, undefined, { before: transformers });
     // Log diagnostics if emit wasn't successfull.
     if (emitSkipped) {
         console.log(diagnostics);

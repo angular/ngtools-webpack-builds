@@ -2,53 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ts = require("typescript");
 const semver_1 = require("semver");
+const interfaces_1 = require("./interfaces");
 // Typescript below 2.5.0 needs a workaround.
 const visitEachChild = semver_1.satisfies(ts.version, '^2.5.0')
     ? ts.visitEachChild
     : visitEachChildWorkaround;
-var OPERATION_KIND;
-(function (OPERATION_KIND) {
-    OPERATION_KIND[OPERATION_KIND["Remove"] = 0] = "Remove";
-    OPERATION_KIND[OPERATION_KIND["Add"] = 1] = "Add";
-    OPERATION_KIND[OPERATION_KIND["Replace"] = 2] = "Replace";
-})(OPERATION_KIND = exports.OPERATION_KIND || (exports.OPERATION_KIND = {}));
-class TransformOperation {
-    constructor(kind, sourceFile, target) {
-        this.kind = kind;
-        this.sourceFile = sourceFile;
-        this.target = target;
-    }
-}
-exports.TransformOperation = TransformOperation;
-class RemoveNodeOperation extends TransformOperation {
-    constructor(sourceFile, target) {
-        super(OPERATION_KIND.Remove, sourceFile, target);
-    }
-}
-exports.RemoveNodeOperation = RemoveNodeOperation;
-class AddNodeOperation extends TransformOperation {
-    constructor(sourceFile, target, before, after) {
-        super(OPERATION_KIND.Add, sourceFile, target);
-        this.before = before;
-        this.after = after;
-    }
-}
-exports.AddNodeOperation = AddNodeOperation;
-class ReplaceNodeOperation extends TransformOperation {
-    constructor(sourceFile, target, replacement) {
-        super(OPERATION_KIND.Replace, sourceFile, target);
-        this.replacement = replacement;
-    }
-}
-exports.ReplaceNodeOperation = ReplaceNodeOperation;
-function makeTransform(ops) {
-    const sourceFiles = ops.reduce((prev, curr) => prev.includes(curr.sourceFile) ? prev : prev.concat(curr.sourceFile), []);
-    const removeOps = ops.filter((op) => op.kind === OPERATION_KIND.Remove);
-    const addOps = ops.filter((op) => op.kind === OPERATION_KIND.Add);
-    const replaceOps = ops
-        .filter((op) => op.kind === OPERATION_KIND.Replace);
+function makeTransform(standardTransform) {
     return (context) => {
         const transformer = (sf) => {
+            const ops = standardTransform(sf);
+            const removeOps = ops
+                .filter((op) => op.kind === interfaces_1.OPERATION_KIND.Remove);
+            const addOps = ops.filter((op) => op.kind === interfaces_1.OPERATION_KIND.Add);
+            const replaceOps = ops
+                .filter((op) => op.kind === interfaces_1.OPERATION_KIND.Replace);
             const visitor = (node) => {
                 let modified = false;
                 let modifiedNodes = [node];
@@ -83,7 +50,7 @@ function makeTransform(ops) {
                 }
             };
             // Only visit source files we have ops for.
-            return sourceFiles.includes(sf) ? ts.visitNode(sf, visitor) : sf;
+            return ops.length > 0 ? ts.visitNode(sf, visitor) : sf;
         };
         return transformer;
     };

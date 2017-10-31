@@ -24,19 +24,20 @@ class TypeCheckerMessage {
 }
 exports.TypeCheckerMessage = TypeCheckerMessage;
 class InitMessage extends TypeCheckerMessage {
-    constructor(compilerOptions, basePath, jitMode, tsFilenames) {
+    constructor(compilerOptions, basePath, jitMode, rootNames) {
         super(MESSAGE_KIND.Init);
         this.compilerOptions = compilerOptions;
         this.basePath = basePath;
         this.jitMode = jitMode;
-        this.tsFilenames = tsFilenames;
+        this.rootNames = rootNames;
     }
 }
 exports.InitMessage = InitMessage;
 class UpdateMessage extends TypeCheckerMessage {
-    constructor(changedTsFiles) {
+    constructor(rootNames, changedCompilationFiles) {
         super(MESSAGE_KIND.Update);
-        this.changedTsFiles = changedTsFiles;
+        this.rootNames = rootNames;
+        this.changedCompilationFiles = changedCompilationFiles;
     }
 }
 exports.UpdateMessage = UpdateMessage;
@@ -44,73 +45,70 @@ let typeChecker;
 let lastCancellationToken;
 process.on('message', (message) => {
     benchmark_1.time('TypeChecker.message');
-    try {
-        switch (message.kind) {
-            case MESSAGE_KIND.Init:
-                const initMessage = message;
-                typeChecker = new TypeChecker(initMessage.compilerOptions, initMessage.basePath, initMessage.jitMode, initMessage.tsFilenames);
-                break;
-            case MESSAGE_KIND.Update:
-                if (!typeChecker) {
-                    throw new Error('TypeChecker: update message received before initialization');
-                }
-                if (lastCancellationToken) {
-                    // This cancellation token doesn't seem to do much, messages don't seem to be processed
-                    // before the diagnostics finish.
-                    lastCancellationToken.requestCancellation();
-                }
-                const updateMessage = message;
-                lastCancellationToken = new gather_diagnostics_1.CancellationToken();
-                typeChecker.update(updateMessage.changedTsFiles, lastCancellationToken);
-                break;
-            default:
-                throw new Error(`TypeChecker: Unexpected message received: ${message}.`);
-        }
-    }
-    catch (error) {
-        // Ignore errors in the TypeChecker.
-        // Anything that would throw here will error out the compilation as well.
+    switch (message.kind) {
+        case MESSAGE_KIND.Init:
+            const initMessage = message;
+            typeChecker = new TypeChecker(initMessage.compilerOptions, initMessage.basePath, initMessage.jitMode, initMessage.rootNames);
+            break;
+        case MESSAGE_KIND.Update:
+            if (!typeChecker) {
+                throw new Error('TypeChecker: update message received before initialization');
+            }
+            if (lastCancellationToken) {
+                // This cancellation token doesn't seem to do much, messages don't seem to be processed
+                // before the diagnostics finish.
+                lastCancellationToken.requestCancellation();
+            }
+            const updateMessage = message;
+            lastCancellationToken = new gather_diagnostics_1.CancellationToken();
+            typeChecker.update(updateMessage.rootNames, updateMessage.changedCompilationFiles, lastCancellationToken);
+            break;
+        default:
+            throw new Error(`TypeChecker: Unexpected message received: ${message}.`);
     }
     benchmark_1.timeEnd('TypeChecker.message');
 });
 class TypeChecker {
-    constructor(_angularCompilerOptions, _basePath, _JitMode, _tsFilenames) {
-        this._angularCompilerOptions = _angularCompilerOptions;
+    constructor(_compilerOptions, _basePath, _JitMode, _rootNames) {
+        this._compilerOptions = _compilerOptions;
         this._JitMode = _JitMode;
-        this._tsFilenames = _tsFilenames;
+        this._rootNames = _rootNames;
         benchmark_1.time('TypeChecker.constructor');
-        const compilerHost = new compiler_host_1.WebpackCompilerHost(_angularCompilerOptions, _basePath);
+        const compilerHost = new compiler_host_1.WebpackCompilerHost(_compilerOptions, _basePath);
         compilerHost.enableCaching();
-        this._angularCompilerHost = ngtools_api_1.createCompilerHost({
-            options: this._angularCompilerOptions,
+        // We don't set a async resource loader on the compiler host because we only support
+        // html templates, which are the only ones that can throw errors, and those can be loaded
+        // synchronously.
+        // If we need to also report errors on styles then we'll need to ask the main thread
+        // for these resources.
+        this._compilerHost = ngtools_api_1.createCompilerHost({
+            options: this._compilerOptions,
             tsHost: compilerHost
         });
         benchmark_1.timeEnd('TypeChecker.constructor');
     }
-    _updateTsFilenames(changedTsFiles) {
-        benchmark_1.time('TypeChecker._updateTsFilenames');
-        changedTsFiles.forEach((fileName) => {
-            this._angularCompilerHost.invalidate(fileName);
-            if (!this._tsFilenames.includes(fileName)) {
-                this._tsFilenames.push(fileName);
-            }
+    _update(rootNames, changedCompilationFiles) {
+        benchmark_1.time('TypeChecker._update');
+        this._rootNames = rootNames;
+        changedCompilationFiles.forEach((fileName) => {
+            this._compilerHost.invalidate(fileName);
         });
-        benchmark_1.timeEnd('TypeChecker._updateTsFilenames');
+        benchmark_1.timeEnd('TypeChecker._update');
     }
     _createOrUpdateProgram() {
         if (this._JitMode) {
             // Create the TypeScript program.
             benchmark_1.time('TypeChecker._createOrUpdateProgram.ts.createProgram');
-            this._program = ts.createProgram(this._tsFilenames, this._angularCompilerOptions, this._angularCompilerHost, this._program);
+            this._program = ts.createProgram(this._rootNames, this._compilerOptions, this._compilerHost, this._program);
             benchmark_1.timeEnd('TypeChecker._createOrUpdateProgram.ts.createProgram');
         }
         else {
             benchmark_1.time('TypeChecker._createOrUpdateProgram.ng.createProgram');
             // Create the Angular program.
             this._program = ngtools_api_1.createProgram({
-                rootNames: this._tsFilenames,
-                options: this._angularCompilerOptions,
-                host: this._angularCompilerHost,
+                rootNames: this._rootNames,
+                options: this._compilerOptions,
+                host: this._compilerHost,
                 oldProgram: this._program
             });
             benchmark_1.timeEnd('TypeChecker._createOrUpdateProgram.ng.createProgram');
@@ -126,14 +124,18 @@ class TypeChecker {
                 const message = ngtools_api_1.formatDiagnostics(errors);
                 console.error(bold(red('ERROR in ' + message)));
             }
+            else {
+                // Reset the changed file tracker only if there are no errors.
+                this._compilerHost.resetChangedFileTracker();
+            }
             if (warnings.length > 0) {
                 const message = ngtools_api_1.formatDiagnostics(warnings);
                 console.log(bold(yellow('WARNING in ' + message)));
             }
         }
     }
-    update(changedTsFiles, cancellationToken) {
-        this._updateTsFilenames(changedTsFiles);
+    update(rootNames, changedCompilationFiles, cancellationToken) {
+        this._update(rootNames, changedCompilationFiles);
         this._createOrUpdateProgram();
         this._diagnose(cancellationToken);
     }

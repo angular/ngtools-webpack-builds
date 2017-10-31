@@ -68,5 +68,6 @@ catch (e) {
 exports.createProgram = ngtools2.createProgram;
 exports.createCompilerHost = ngtools2.createCompilerHost;
 exports.formatDiagnostics = ngtools2.formatDiagnostics;
+exports.readConfiguration = compilerCli.readConfiguration;
 exports.EmitFlags = ngtools2.EmitFlags;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/ngtools_api.js.map

@@ -10,12 +10,10 @@ export interface AngularCompilerPluginOptions {
     entryModule?: string;
     mainPath?: string;
     skipCodeGeneration?: boolean;
-    hostOverrideFileSystem?: {
-        [path: string]: string;
-    };
     hostReplacementPaths?: {
         [path: string]: string;
     };
+    singleFileIncludes?: string[];
     i18nInFile?: string;
     i18nInFormat?: string;
     i18nOutFile?: string;
@@ -23,8 +21,6 @@ export interface AngularCompilerPluginOptions {
     locale?: string;
     missingTranslation?: string;
     platform?: PLATFORM;
-    exclude?: string | string[];
-    include?: string[];
     compilerOptions?: ts.CompilerOptions;
 }
 export declare enum PLATFORM {
@@ -34,18 +30,18 @@ export declare enum PLATFORM {
 export declare class AngularCompilerPlugin implements Tapable {
     private _options;
     private _compilerOptions;
-    private _angularCompilerOptions;
-    private _tsFilenames;
+    private _rootNames;
+    private _singleFileIncludes;
     private _program;
     private _compilerHost;
     private _moduleResolutionCache;
-    private _angularCompilerHost;
     private _resourceLoader;
     private _lazyRoutes;
     private _tsConfigPath;
     private _entryModule;
+    private _mainPath;
     private _basePath;
-    private _transformMap;
+    private _transformers;
     private _platform;
     private _JitMode;
     private _emitSkipped;
@@ -74,9 +70,10 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _listLazyRoutesFromProgram();
     private _processLazyRoutes(discoveredLazyRoutes);
     private _createForkedTypeChecker();
-    private _updateForkedTypeChecker(changedTsFiles);
+    private _updateForkedTypeChecker(rootNames, changedCompilationFiles);
     apply(compiler: any): void;
     private _make(compilation, cb);
+    private _makeTransformers();
     private _update();
     writeI18nOutFile(): void;
     getCompiledFile(fileName: string): {
@@ -86,6 +83,6 @@ export declare class AngularCompilerPlugin implements Tapable {
     };
     getDependencies(fileName: string): string[];
     getResourceDependencies(fileName: string): string[];
-    private _emit(sourceFiles, customTransformers);
+    private _emit(sourceFiles);
     private _validateLocale(locale);
 }

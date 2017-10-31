@@ -11,10 +11,11 @@ export declare class InitMessage extends TypeCheckerMessage {
     compilerOptions: ts.CompilerOptions;
     basePath: string;
     jitMode: boolean;
-    tsFilenames: string[];
-    constructor(compilerOptions: ts.CompilerOptions, basePath: string, jitMode: boolean, tsFilenames: string[]);
+    rootNames: string[];
+    constructor(compilerOptions: ts.CompilerOptions, basePath: string, jitMode: boolean, rootNames: string[]);
 }
 export declare class UpdateMessage extends TypeCheckerMessage {
-    changedTsFiles: string[];
-    constructor(changedTsFiles: string[]);
+    rootNames: string[];
+    changedCompilationFiles: string[];
+    constructor(rootNames: string[], changedCompilationFiles: string[]);
 }
