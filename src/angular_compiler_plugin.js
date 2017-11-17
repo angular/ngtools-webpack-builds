@@ -484,9 +484,14 @@ class AngularCompilerPlugin {
         const isMainPath = (fileName) => fileName === this._mainPath;
         const getEntryModule = () => this.entryModule;
         const getLazyRoutes = () => this._lazyRoutes;
+        const getTypeChecker = () => this._getTsProgram().getTypeChecker();
         if (this._JitMode) {
             // Replace resources in JIT.
             this._transformers.push(transformers_1.replaceResources(isAppPath));
+        }
+        else {
+            // Remove unneeded angular decorators.
+            this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
         }
         if (this._platform === PLATFORM.Browser) {
             // If we have a locale, auto import the locale data file.
@@ -497,7 +502,7 @@ class AngularCompilerPlugin {
             }
             if (!this._JitMode) {
                 // Replace bootstrap in browser AOT.
-                this._transformers.push(transformers_1.replaceBootstrap(isAppPath, getEntryModule));
+                this._transformers.push(transformers_1.replaceBootstrap(isAppPath, getEntryModule, getTypeChecker));
             }
         }
         else if (this._platform === PLATFORM.Server) {
