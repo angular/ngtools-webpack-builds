@@ -339,15 +339,18 @@ class AngularCompilerPlugin {
         const g = global;
         const typeCheckerFile = g['angularCliIsLocal']
             ? './type_checker_bootstrap.js'
-            : './type_checker.js';
+            : './type_checker_worker.js';
         const debugArgRegex = /--inspect(?:-brk|-port)?|--debug(?:-brk|-port)/;
         const execArgv = process.execArgv.filter((arg) => {
             // Remove debug args.
             // Workaround for https://github.com/nodejs/node/issues/9435
             return !debugArgRegex.test(arg);
         });
+        // Signal the process to start listening for messages
+        // Solves https://github.com/angular/angular-cli/issues/9071
+        const forkArgs = [type_checker_1.AUTO_START_ARG];
         const forkOptions = { execArgv };
-        this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile), [], forkOptions);
+        this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile), forkArgs, forkOptions);
         this._typeCheckerProcess.send(new type_checker_1.InitMessage(this._compilerOptions, this._basePath, this._JitMode, this._rootNames));
         // Cleanup.
         const killTypeCheckerProcess = () => {
