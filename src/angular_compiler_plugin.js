@@ -536,7 +536,7 @@ class AngularCompilerPlugin {
         else if (this._platform === PLATFORM.Server) {
             this._transformers.push(transformers_1.exportLazyModuleMap(isMainPath, getLazyRoutes));
             if (!this._JitMode) {
-                this._transformers.push(transformers_1.exportNgFactory(isMainPath, getEntryModule));
+                this._transformers.push(transformers_1.exportNgFactory(isMainPath, getEntryModule), transformers_1.replaceServerBootstrap(isMainPath, getEntryModule, getTypeChecker));
             }
         }
     }
