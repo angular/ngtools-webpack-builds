@@ -68,10 +68,7 @@ function elideImports(sourceFile, removedNodes, getTypeChecker) {
         .forEach((id) => {
         if (removedSymbolMap.has(id.text)) {
             const symbol = removedSymbolMap.get(id.text);
-            // Check if the symbol is the same or if it is a named export.
-            // Named exports don't have the same symbol but will have the same name.
-            if ((id.parent && id.parent.kind === ts.SyntaxKind.ExportSpecifier)
-                || typeChecker.getSymbolAtLocation(id) === symbol.symbol) {
+            if (typeChecker.getSymbolAtLocation(id) === symbol.symbol) {
                 symbol.all.push(id);
             }
         }
