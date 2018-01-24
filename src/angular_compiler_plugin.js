@@ -164,8 +164,6 @@ class AngularCompilerPlugin {
                 this._compilerHost.writeFile(filePath, content, false);
             }
         }
-        // Use an identity function as all our paths are absolute already.
-        this._moduleResolutionCache = ts.createModuleResolutionCache(this._basePath, x => x);
         // Resolve mainPath if provided.
         if (options.mainPath) {
             this._mainPath = this._compilerHost.resolve(options.mainPath);
@@ -209,6 +207,8 @@ class AngularCompilerPlugin {
             if (this._forkTypeChecker && !this._firstRun) {
                 this._updateForkedTypeChecker(this._rootNames, this._getChangedCompilationFiles());
             }
+            // Use an identity function as all our paths are absolute already.
+            this._moduleResolutionCache = ts.createModuleResolutionCache(this._basePath, x => x);
             if (this._JitMode) {
                 // Create the TypeScript program.
                 benchmark_1.time('AngularCompilerPlugin._createOrUpdateProgram.ts.createProgram');
@@ -466,12 +466,9 @@ class AngularCompilerPlugin {
             });
         });
         compiler.plugin('normal-module-factory', (nmf) => {
-            compiler.resolvers.normal.apply(new paths_plugin_1.PathsPlugin({
-                nmf,
-                tsConfigPath: this._tsConfigPath,
-                compilerOptions: this._compilerOptions,
-                compilerHost: this._compilerHost
-            }));
+            nmf.plugin('before-resolve', (request, callback) => {
+                paths_plugin_1.resolveWithPaths(request, callback, this._compilerOptions, this._compilerHost, this._moduleResolutionCache);
+            });
         });
     }
     _make(compilation, cb) {
