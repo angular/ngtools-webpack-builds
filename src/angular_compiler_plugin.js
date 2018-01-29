@@ -32,6 +32,7 @@ class AngularCompilerPlugin {
         this._transformers = [];
         this._JitMode = false;
         this._emitSkipped = true;
+        this._changedFileExtensions = new Set(['ts', 'html', 'css']);
         // Webpack plugin.
         this._firstRun = true;
         this._warnings = [];
@@ -190,9 +191,21 @@ class AngularCompilerPlugin {
             .filter(k => k.endsWith('.ts') && !k.endsWith('.d.ts'))
             .filter(k => this._compilerHost.fileExists(k));
     }
+    updateChangedFileExtensions(extension) {
+        if (extension) {
+            this._changedFileExtensions.add(extension);
+        }
+    }
     _getChangedCompilationFiles() {
         return this._compilerHost.getChangedFilePaths()
-            .filter(k => /\.(?:ts|html|css|scss|sass|less|styl)$/.test(k));
+            .filter(k => {
+            for (const ext of this._changedFileExtensions) {
+                if (k.endsWith(ext)) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
     _createOrUpdateProgram() {
         return Promise.resolve()
@@ -681,10 +694,14 @@ class AngularCompilerPlugin {
         const resourceImports = transformers_1.findResources(sourceFile)
             .map((resourceReplacement) => resourceReplacement.resourcePaths)
             .reduce((prev, curr) => prev.concat(curr), [])
-            .map((resourcePath) => path.resolve(path.dirname(resolvedFileName), resourcePath))
-            .reduce((prev, curr) => prev.concat(...this.getResourceDependencies(curr)), []);
+            .map((resourcePath) => path.resolve(path.dirname(resolvedFileName), resourcePath));
         // These paths are meant to be used by the loader so we must denormalize them.
-        return [...esImports, ...resourceImports].map((p) => this._compilerHost.denormalizePath(p));
+        const uniqueDependencies = new Set([
+            ...esImports,
+            ...resourceImports,
+            ...this.getResourceDependencies(resolvedFileName)
+        ].map((p) => this._compilerHost.denormalizePath(p)));
+        return [...uniqueDependencies];
     }
     getResourceDependencies(fileName) {
         return this._resourceLoader.getResourceDependencies(fileName);

@@ -45,6 +45,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _platform;
     private _JitMode;
     private _emitSkipped;
+    private _changedFileExtensions;
     private _firstRun;
     private _donePromise;
     private _normalizedLocale;
@@ -64,6 +65,7 @@ export declare class AngularCompilerPlugin implements Tapable {
     private _setupOptions(options);
     private _getTsProgram();
     private _getChangedTsFiles();
+    updateChangedFileExtensions(extension: string): void;
     private _getChangedCompilationFiles();
     private _createOrUpdateProgram();
     private _getLazyRoutesFromNgtools();
