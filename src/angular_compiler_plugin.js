@@ -432,7 +432,7 @@ class AngularCompilerPlugin {
                     // TODO: check if we can't just leave it as is (angularCoreModuleDir).
                     result.resource = path.join(this._basePath, '$$_lazy_route_resource');
                     result.dependencies.forEach((d) => d.critical = false);
-                    result.resolveDependencies = (_fs, _resource, _recursive, _regExp, cb) => {
+                    result.resolveDependencies = (_fs, _resourceOrOptions, recursiveOrCallback, _regExp, cb) => {
                         const dependencies = Object.keys(this._lazyRoutes)
                             .map((key) => {
                             const modulePath = this._lazyRoutes[key];
@@ -445,6 +445,10 @@ class AngularCompilerPlugin {
                             }
                         })
                             .filter(x => !!x);
+                        if (typeof cb !== 'function' && typeof recursiveOrCallback === 'function') {
+                            // Webpack 4 only has 3 parameters
+                            cb = recursiveOrCallback;
+                        }
                         cb(null, dependencies);
                     };
                     return callback(null, result);
