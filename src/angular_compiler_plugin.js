@@ -462,20 +462,22 @@ class AngularCompilerPlugin {
         compiler.plugin('done', () => {
             this._donePromise = null;
         });
-        // TODO: consider if it's better to remove this plugin and instead make it wait on the
-        // VirtualFileSystemDecorator.
         compiler.plugin('after-resolvers', (compiler) => {
-            // Virtual file system.
-            // Wait for the plugin to be done when requesting `.ts` files directly (entry points), or
-            // when the issuer is a `.ts` or `.ngfactory.js` file.
-            compiler.resolvers.normal.plugin('before-resolve', (request, cb) => {
-                if (this.done && (request.request.endsWith('.ts')
-                    || (request.context.issuer && /\.ts|ngfactory\.js$/.test(request.context.issuer)))) {
-                    this.done.then(() => cb(), () => cb());
-                }
-                else {
-                    cb();
-                }
+            compiler.plugin('normal-module-factory', (nmf) => {
+                // Virtual file system.
+                // TODO: consider if it's better to remove this plugin and instead make it wait on the
+                // VirtualFileSystemDecorator.
+                // Wait for the plugin to be done when requesting `.ts` files directly (entry points), or
+                // when the issuer is a `.ts` or `.ngfactory.js` file.
+                nmf.plugin('before-resolve', (request, callback) => {
+                    if (this.done && (request.request.endsWith('.ts')
+                        || (request.context.issuer && /\.ts|ngfactory\.js$/.test(request.context.issuer)))) {
+                        this.done.then(() => callback(null, request), () => callback(null, request));
+                    }
+                    else {
+                        callback(null, request);
+                    }
+                });
             });
         });
         compiler.plugin('normal-module-factory', (nmf) => {
