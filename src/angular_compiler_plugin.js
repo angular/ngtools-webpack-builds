@@ -95,7 +95,6 @@ class AngularCompilerPlugin {
         this._basePath = config.options.basePath;
         // Overwrite outDir so we can find generated files next to their .ts origin in compilerHost.
         this._compilerOptions.outDir = '';
-        this._compilerOptions.suppressOutputPathCheck = true;
         // Default plugin sourceMap to compiler options setting.
         if (!options.hasOwnProperty('sourceMap')) {
             options.sourceMap = this._compilerOptions.sourceMap || false;
