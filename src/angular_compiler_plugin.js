@@ -39,6 +39,7 @@ class AngularCompilerPlugin {
         this._errors = [];
         // TypeChecker process.
         this._forkTypeChecker = true;
+        this._forkedTypeCheckerInitialized = false;
         ngtools_api_1.CompilerCliIsSupported();
         this._options = Object.assign({}, options);
         this._setupOptions(this._options);
@@ -218,7 +219,7 @@ class AngularCompilerPlugin {
             this._rootNames = config.rootNames.concat(...this._singleFileIncludes);
             // Update the forked type checker with all changed compilation files.
             // This includes templates, that also need to be reloaded on the type checker.
-            if (this._forkTypeChecker && !this._firstRun) {
+            if (this._forkTypeChecker && this._typeCheckerProcess && !this._firstRun) {
                 this._updateForkedTypeChecker(this._rootNames, this._getChangedCompilationFiles());
             }
             // Use an identity function as all our paths are absolute already.
@@ -365,35 +366,34 @@ class AngularCompilerPlugin {
         const forkArgs = [type_checker_1.AUTO_START_ARG];
         const forkOptions = { execArgv };
         this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile), forkArgs, forkOptions);
-        this._typeCheckerProcess.send(new type_checker_1.InitMessage(this._compilerOptions, this._basePath, this._JitMode, this._rootNames));
-        // Cleanup.
-        const killTypeCheckerProcess = () => {
-            if (this._typeCheckerProcess && this._typeCheckerProcess.pid) {
-                treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
-                this._typeCheckerProcess = undefined;
-                this._forkTypeChecker = false;
-            }
-        };
         // Handle child process exit.
         const handleChildProcessExit = () => {
-            killTypeCheckerProcess();
+            this._killForkedTypeChecker();
             const msg = 'AngularCompilerPlugin: Forked Type Checker exited unexpectedly. ' +
-                'Falling back to typechecking on main thread.';
+                'Falling back to type checking on main thread.';
             this._warnings.push(msg);
         };
         this._typeCheckerProcess.once('exit', handleChildProcessExit);
         this._typeCheckerProcess.once('SIGINT', handleChildProcessExit);
         this._typeCheckerProcess.once('uncaughtException', handleChildProcessExit);
         // Handle parent process exit.
-        const handleParentProcessExit = () => {
-            killTypeCheckerProcess();
-            process.exit();
-        };
+        const handleParentProcessExit = () => this._killForkedTypeChecker();
         process.once('exit', handleParentProcessExit);
         process.once('SIGINT', handleParentProcessExit);
         process.once('uncaughtException', handleParentProcessExit);
     }
+    _killForkedTypeChecker() {
+        if (this._typeCheckerProcess && this._typeCheckerProcess.pid) {
+            treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
+            this._typeCheckerProcess = undefined;
+            this._forkTypeChecker = false;
+        }
+    }
     _updateForkedTypeChecker(rootNames, changedCompilationFiles) {
+        if (!this._forkedTypeCheckerInitialized) {
+            this._typeCheckerProcess.send(new type_checker_1.InitMessage(this._compilerOptions, this._basePath, this._JitMode, this._rootNames));
+            this._forkedTypeCheckerInitialized = true;
+        }
         this._typeCheckerProcess.send(new type_checker_1.UpdateMessage(rootNames, changedCompilationFiles));
     }
     // Registration hook for webpack plugin.
@@ -457,6 +457,14 @@ class AngularCompilerPlugin {
                     .catch(err => callback(err));
             });
         });
+        // Create and destroy forked type checker on watch mode.
+        compiler.plugin('watch-run', (_compiler, callback) => {
+            if (this._forkTypeChecker && !this._typeCheckerProcess) {
+                this._createForkedTypeChecker();
+            }
+            callback();
+        });
+        compiler.plugin('watch-close', () => this._killForkedTypeChecker());
         // Remake the plugin on each compilation.
         compiler.plugin('make', (compilation, cb) => this._make(compilation, cb));
         compiler.plugin('invalid', () => this._firstRun = false);
@@ -501,10 +509,6 @@ class AngularCompilerPlugin {
         compilation._ngToolsWebpackPluginInstance = this;
         // Update the resource loader with the new webpack compilation.
         this._resourceLoader.update(compilation);
-        // Create a new process for the type checker on the second build if there isn't one yet.
-        if (this._forkTypeChecker && !this._firstRun && !this._typeCheckerProcess) {
-            this._createForkedTypeChecker();
-        }
         this._donePromise = Promise.resolve()
             .then(() => this._update())
             .then(() => {
