@@ -322,18 +322,19 @@ class AngularCompilerPlugin {
         Object.keys(discoveredLazyRoutes)
             .forEach(lazyRouteKey => {
             const [lazyRouteModule, moduleName] = lazyRouteKey.split('#');
-            if (!lazyRouteModule || !moduleName) {
+            if (!lazyRouteModule) {
                 return;
             }
-            const lazyRouteTSFile = discoveredLazyRoutes[lazyRouteKey];
+            const lazyRouteTSFile = discoveredLazyRoutes[lazyRouteKey].replace(/\\/g, '/');
             let modulePath, moduleKey;
             if (this._JitMode) {
                 modulePath = lazyRouteTSFile;
-                moduleKey = lazyRouteKey;
+                moduleKey = `${lazyRouteModule}${moduleName ? '#' + moduleName : ''}`;
             }
             else {
                 modulePath = lazyRouteTSFile.replace(/(\.d)?\.ts$/, `.ngfactory.js`);
-                moduleKey = `${lazyRouteModule}.ngfactory#${moduleName}NgFactory`;
+                const factoryModuleName = moduleName ? `#${moduleName}NgFactory` : '';
+                moduleKey = `${lazyRouteModule}.ngfactory${factoryModuleName}`;
             }
             if (moduleKey in this._lazyRoutes) {
                 if (this._lazyRoutes[moduleKey] !== modulePath) {
@@ -587,6 +588,9 @@ class AngularCompilerPlugin {
                 }
                 else if (changedTsFiles.length > 0) {
                     this._processLazyRoutes(this._findLazyRoutesInAst(changedTsFiles));
+                }
+                if (this._options.additionalLazyModules) {
+                    this._processLazyRoutes(this._options.additionalLazyModules);
                 }
             }
         })

@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import { WebpackResourceLoader } from './resource_loader';
@@ -13,8 +14,8 @@ export declare class VirtualStats implements fs.Stats {
     protected _dev: number;
     protected _ino: number;
     protected _mode: number;
-    protected _uid: any;
-    protected _gid: any;
+    protected _uid: number;
+    protected _gid: number;
     constructor(_path: string);
     isFile(): boolean;
     isDirectory(): boolean;
@@ -27,16 +28,20 @@ export declare class VirtualStats implements fs.Stats {
     readonly ino: number;
     readonly mode: number;
     readonly nlink: number;
-    readonly uid: any;
-    readonly gid: any;
+    readonly uid: number;
+    readonly gid: number;
     readonly rdev: number;
     readonly size: number;
     readonly blksize: number;
     readonly blocks: number;
     readonly atime: Date;
+    readonly atimeMs: number;
     readonly mtime: Date;
+    readonly mtimeMs: number;
     readonly ctime: Date;
+    readonly ctimeMs: number;
     readonly birthtime: Date;
+    readonly birthtimeMs: number;
 }
 export declare class VirtualDirStats extends VirtualStats {
     constructor(_fileName: string);
