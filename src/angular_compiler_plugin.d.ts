@@ -21,9 +21,6 @@ export interface AngularCompilerPluginOptions {
     locale?: string;
     missingTranslation?: string;
     platform?: PLATFORM;
-    additionalLazyModules?: {
-        [module: string]: string;
-    };
     compilerOptions?: ts.CompilerOptions;
 }
 export declare enum PLATFORM {

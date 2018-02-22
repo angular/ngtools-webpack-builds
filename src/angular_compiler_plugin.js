@@ -585,9 +585,6 @@ class AngularCompilerPlugin {
                 else if (changedTsFiles.length > 0) {
                     this._processLazyRoutes(this._findLazyRoutesInAst(changedTsFiles));
                 }
-                if (this._options.additionalLazyModules) {
-                    this._processLazyRoutes(this._options.additionalLazyModules);
-                }
             }
         })
             .then(() => {

@@ -3,8 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // @ignoreDep typescript
 const path = require("path");
 const ts = require("typescript");
+const ModulesInRootPlugin = require('enhanced-resolve/lib/ModulesInRootPlugin');
 function resolveWithPaths(request, callback, compilerOptions, host, cache) {
-    if (!request || !request.request) {
+    if (!request || !request.request || !compilerOptions.paths) {
         callback(null, request);
         return;
     }
@@ -14,22 +15,55 @@ function resolveWithPaths(request, callback, compilerOptions, host, cache) {
         return;
     }
     // check if any path mapping rules are relevant
-    const isPathMapped = compilerOptions.paths && Object.keys(compilerOptions.paths)
-        .some(pattern => {
+    const pathMapOptions = [];
+    for (const pattern in compilerOptions.paths) {
         // can only contain zero or one
         const starIndex = pattern.indexOf('*');
         if (starIndex === -1) {
-            return pattern === request.request;
+            if (pattern === request.request) {
+                pathMapOptions.push({
+                    partial: '',
+                    potentials: compilerOptions.paths[pattern]
+                });
+            }
         }
         else if (starIndex === pattern.length - 1) {
-            return request.request.startsWith(pattern.slice(0, -1));
+            if (request.request.startsWith(pattern.slice(0, -1))) {
+                pathMapOptions.push({
+                    partial: request.request.slice(pattern.length - 1),
+                    potentials: compilerOptions.paths[pattern]
+                });
+            }
         }
         else {
             const [prefix, suffix] = pattern.split('*');
-            return request.request.startsWith(prefix) && request.request.endsWith(suffix);
+            if (request.request.startsWith(prefix) && request.request.endsWith(suffix)) {
+                pathMapOptions.push({
+                    partial: request.request.slice(prefix.length).slice(0, -suffix.length),
+                    potentials: compilerOptions.paths[pattern]
+                });
+            }
         }
-    });
-    if (!isPathMapped) {
+    }
+    if (pathMapOptions.length === 0) {
+        callback(null, request);
+        return;
+    }
+    if (pathMapOptions.length === 1 && pathMapOptions[0].potentials.length === 1) {
+        const onlyPotential = pathMapOptions[0].potentials[0];
+        let replacement;
+        const starIndex = onlyPotential.indexOf('*');
+        if (starIndex === -1) {
+            replacement = onlyPotential;
+        }
+        else if (starIndex === onlyPotential.length - 1) {
+            replacement = onlyPotential.slice(0, -1) + pathMapOptions[0].partial;
+        }
+        else {
+            const [prefix, suffix] = onlyPotential.split('*');
+            replacement = prefix + pathMapOptions[0].partial + suffix;
+        }
+        request.request = path.resolve(compilerOptions.baseUrl, replacement);
         callback(null, request);
         return;
     }
@@ -59,4 +93,53 @@ function resolveWithPaths(request, callback, compilerOptions, host, cache) {
     callback(null, request);
 }
 exports.resolveWithPaths = resolveWithPaths;
+class PathsPlugin {
+    static _loadOptionsFromTsConfig(tsConfigPath, host) {
+        const tsConfig = ts.readConfigFile(tsConfigPath, (path) => {
+            if (host) {
+                return host.readFile(path);
+            }
+            else {
+                return ts.sys.readFile(path);
+            }
+        });
+        if (tsConfig.error) {
+            throw tsConfig.error;
+        }
+        return tsConfig.config.compilerOptions;
+    }
+    constructor(options) {
+        if (!options.hasOwnProperty('tsConfigPath')) {
+            // This could happen in JavaScript.
+            throw new Error('tsConfigPath option is mandatory.');
+        }
+        const tsConfigPath = options.tsConfigPath;
+        if (options.compilerOptions) {
+            this._compilerOptions = options.compilerOptions;
+        }
+        else {
+            this._compilerOptions = PathsPlugin._loadOptionsFromTsConfig(tsConfigPath);
+        }
+        if (options.compilerHost) {
+            this._host = options.compilerHost;
+        }
+        else {
+            this._host = ts.createCompilerHost(this._compilerOptions, false);
+        }
+        this._nmf = options.nmf;
+        this.source = 'described-resolve';
+        this.target = 'resolve';
+        this._absoluteBaseUrl = path.resolve(path.dirname(tsConfigPath), this._compilerOptions.baseUrl || '.');
+    }
+    apply(resolver) {
+        let baseUrl = this._compilerOptions.baseUrl || '.';
+        if (baseUrl) {
+            resolver.apply(new ModulesInRootPlugin('module', this._absoluteBaseUrl, 'resolve'));
+        }
+        this._nmf.plugin('before-resolve', (request, callback) => {
+            resolveWithPaths(request, callback, this._compilerOptions, this._host);
+        });
+    }
+}
+exports.PathsPlugin = PathsPlugin;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/paths-plugin.js.map

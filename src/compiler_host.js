@@ -14,8 +14,8 @@ class VirtualStats {
         this._dev = dev;
         this._ino = Math.floor(Math.random() * 100000);
         this._mode = parseInt('777', 8); // RWX for everyone.
-        this._uid = Number(process.env['UID']) || 0;
-        this._gid = Number(process.env['GID']) || 0;
+        this._uid = process.env['UID'] || 0;
+        this._gid = process.env['GID'] || 0;
     }
     isFile() { return false; }
     isDirectory() { return false; }
@@ -35,13 +35,9 @@ class VirtualStats {
     get blksize() { return 512; }
     get blocks() { return Math.ceil(this.size / this.blksize); }
     get atime() { return this._atime; }
-    get atimeMs() { return this._atime.getTime(); }
     get mtime() { return this._mtime; }
-    get mtimeMs() { return this._mtime.getTime(); }
     get ctime() { return this._ctime; }
-    get ctimeMs() { return this._ctime.getTime(); }
     get birthtime() { return this._btime; }
-    get birthtimeMs() { return this._btime.getTime(); }
 }
 exports.VirtualStats = VirtualStats;
 class VirtualDirStats extends VirtualStats {
