@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const ts = require("typescript");
 function resolveWithPaths(request, callback, compilerOptions, host, cache) {
-    if (!request || !request.request) {
+    if (!request || !request.request || !compilerOptions.paths) {
         callback(null, request);
         return;
     }
@@ -14,22 +14,55 @@ function resolveWithPaths(request, callback, compilerOptions, host, cache) {
         return;
     }
     // check if any path mapping rules are relevant
-    const isPathMapped = compilerOptions.paths && Object.keys(compilerOptions.paths)
-        .some(pattern => {
+    const pathMapOptions = [];
+    for (const pattern in compilerOptions.paths) {
         // can only contain zero or one
         const starIndex = pattern.indexOf('*');
         if (starIndex === -1) {
-            return pattern === request.request;
+            if (pattern === request.request) {
+                pathMapOptions.push({
+                    partial: '',
+                    potentials: compilerOptions.paths[pattern]
+                });
+            }
         }
         else if (starIndex === pattern.length - 1) {
-            return request.request.startsWith(pattern.slice(0, -1));
+            if (request.request.startsWith(pattern.slice(0, -1))) {
+                pathMapOptions.push({
+                    partial: request.request.slice(pattern.length - 1),
+                    potentials: compilerOptions.paths[pattern]
+                });
+            }
         }
         else {
             const [prefix, suffix] = pattern.split('*');
-            return request.request.startsWith(prefix) && request.request.endsWith(suffix);
+            if (request.request.startsWith(prefix) && request.request.endsWith(suffix)) {
+                pathMapOptions.push({
+                    partial: request.request.slice(prefix.length).slice(0, -suffix.length),
+                    potentials: compilerOptions.paths[pattern]
+                });
+            }
         }
-    });
-    if (!isPathMapped) {
+    }
+    if (pathMapOptions.length === 0) {
+        callback(null, request);
+        return;
+    }
+    if (pathMapOptions.length === 1 && pathMapOptions[0].potentials.length === 1) {
+        const onlyPotential = pathMapOptions[0].potentials[0];
+        let replacement;
+        const starIndex = onlyPotential.indexOf('*');
+        if (starIndex === -1) {
+            replacement = onlyPotential;
+        }
+        else if (starIndex === onlyPotential.length - 1) {
+            replacement = onlyPotential.slice(0, -1) + pathMapOptions[0].partial;
+        }
+        else {
+            const [prefix, suffix] = onlyPotential.split('*');
+            replacement = prefix + pathMapOptions[0].partial + suffix;
+        }
+        request.request = path.resolve(compilerOptions.baseUrl, replacement);
         callback(null, request);
         return;
     }
