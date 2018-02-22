@@ -322,19 +322,18 @@ class AngularCompilerPlugin {
         Object.keys(discoveredLazyRoutes)
             .forEach(lazyRouteKey => {
             const [lazyRouteModule, moduleName] = lazyRouteKey.split('#');
-            if (!lazyRouteModule) {
+            if (!lazyRouteModule || !moduleName) {
                 return;
             }
-            const lazyRouteTSFile = discoveredLazyRoutes[lazyRouteKey].replace(/\\/g, '/');
+            const lazyRouteTSFile = discoveredLazyRoutes[lazyRouteKey];
             let modulePath, moduleKey;
             if (this._JitMode) {
                 modulePath = lazyRouteTSFile;
-                moduleKey = `${lazyRouteModule}${moduleName ? '#' + moduleName : ''}`;
+                moduleKey = lazyRouteKey;
             }
             else {
                 modulePath = lazyRouteTSFile.replace(/(\.d)?\.ts$/, `.ngfactory.js`);
-                const factoryModuleName = moduleName ? `#${moduleName}NgFactory` : '';
-                moduleKey = `${lazyRouteModule}.ngfactory${factoryModuleName}`;
+                moduleKey = `${lazyRouteModule}.ngfactory#${moduleName}NgFactory`;
             }
             if (moduleKey in this._lazyRoutes) {
                 if (this._lazyRoutes[moduleKey] !== modulePath) {
@@ -368,22 +367,26 @@ class AngularCompilerPlugin {
         const forkOptions = { execArgv };
         this._typeCheckerProcess = child_process_1.fork(path.resolve(__dirname, typeCheckerFile), forkArgs, forkOptions);
         // Handle child process exit.
-        this._typeCheckerProcess.once('exit', (_, signal) => {
-            this._typeCheckerProcess = undefined;
-            // If process exited not because of SIGTERM (see _killForkedTypeChecker), than something
-            // went wrong and it should fallback to type checking on the main thread.
-            if (signal !== 'SIGTERM') {
-                this._forkTypeChecker = false;
-                const msg = 'AngularCompilerPlugin: Forked Type Checker exited unexpectedly. ' +
-                    'Falling back to type checking on main thread.';
-                this._warnings.push(msg);
-            }
-        });
+        const handleChildProcessExit = () => {
+            this._killForkedTypeChecker();
+            const msg = 'AngularCompilerPlugin: Forked Type Checker exited unexpectedly. ' +
+                'Falling back to type checking on main thread.';
+            this._warnings.push(msg);
+        };
+        this._typeCheckerProcess.once('exit', handleChildProcessExit);
+        this._typeCheckerProcess.once('SIGINT', handleChildProcessExit);
+        this._typeCheckerProcess.once('uncaughtException', handleChildProcessExit);
+        // Handle parent process exit.
+        const handleParentProcessExit = () => this._killForkedTypeChecker();
+        process.once('exit', handleParentProcessExit);
+        process.once('SIGINT', handleParentProcessExit);
+        process.once('uncaughtException', handleParentProcessExit);
     }
     _killForkedTypeChecker() {
         if (this._typeCheckerProcess && this._typeCheckerProcess.pid) {
             treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
             this._typeCheckerProcess = undefined;
+            this._forkTypeChecker = false;
         }
     }
     _updateForkedTypeChecker(rootNames, changedCompilationFiles) {
@@ -584,9 +587,6 @@ class AngularCompilerPlugin {
                 }
                 else if (changedTsFiles.length > 0) {
                     this._processLazyRoutes(this._findLazyRoutesInAst(changedTsFiles));
-                }
-                if (this._options.additionalLazyModules) {
-                    this._processLazyRoutes(this._options.additionalLazyModules);
                 }
             }
         })
