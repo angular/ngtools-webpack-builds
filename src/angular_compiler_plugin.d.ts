@@ -1,5 +1,4 @@
 import * as ts from 'typescript';
-import { Tapable } from './webpack';
 /**
  * Option Constants
  */
@@ -21,6 +20,7 @@ export interface AngularCompilerPluginOptions {
     locale?: string;
     missingTranslation?: string;
     platform?: PLATFORM;
+    nameLazyFiles?: boolean;
     additionalLazyModules?: {
         [module: string]: string;
     };
@@ -30,7 +30,7 @@ export declare enum PLATFORM {
     Browser = 0,
     Server = 1,
 }
-export declare class AngularCompilerPlugin implements Tapable {
+export declare class AngularCompilerPlugin {
     private _options;
     private _compilerOptions;
     private _rootNames;

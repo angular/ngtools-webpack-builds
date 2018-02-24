@@ -430,13 +430,14 @@ class AngularCompilerPlugin {
                     // TODO: check if we can't just leave it as is (angularCoreModuleDir).
                     result.resource = path.join(this._basePath, '$$_lazy_route_resource');
                     result.dependencies.forEach((d) => d.critical = false);
-                    result.resolveDependencies = (_fs, _resourceOrOptions, recursiveOrCallback, _regExp, cb) => {
+                    result.resolveDependencies = (_fs, resourceOrOptions, recursiveOrCallback, _regExp, cb) => {
                         const dependencies = Object.keys(this._lazyRoutes)
                             .map((key) => {
                             const modulePath = this._lazyRoutes[key];
                             const importPath = key.split('#')[0];
                             if (modulePath !== null) {
-                                return new ContextElementDependency(modulePath, importPath);
+                                const name = importPath.replace(/(\.ngfactory)?\.(js|ts)$/, '');
+                                return new ContextElementDependency(modulePath, name);
                             }
                             else {
                                 return null;
@@ -446,6 +447,9 @@ class AngularCompilerPlugin {
                         if (typeof cb !== 'function' && typeof recursiveOrCallback === 'function') {
                             // Webpack 4 only has 3 parameters
                             cb = recursiveOrCallback;
+                            if (this._options.nameLazyFiles) {
+                                resourceOrOptions.chunkName = '[request]';
+                            }
                         }
                         cb(null, dependencies);
                     };
