@@ -148,6 +148,10 @@ class AngularCompilerPlugin {
             this._compilerOptions.i18nInMissingTranslations =
                 options.missingTranslation;
         }
+        // Process forked type checker options.
+        if (options.forkTypeChecker !== undefined) {
+            this._forkTypeChecker = options.forkTypeChecker;
+        }
         // Create the webpack compiler host.
         const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath);
         webpackCompilerHost.enableCaching();

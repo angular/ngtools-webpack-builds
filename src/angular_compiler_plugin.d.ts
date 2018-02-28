@@ -12,6 +12,7 @@ export interface AngularCompilerPluginOptions {
     hostReplacementPaths?: {
         [path: string]: string;
     };
+    forkTypeChecker?: boolean;
     singleFileIncludes?: string[];
     i18nInFile?: string;
     i18nInFormat?: string;
