@@ -401,12 +401,12 @@ class AngularCompilerPlugin {
     apply(compiler) {
         // Decorate inputFileSystem to serve contents of CompilerHost.
         // Use decorated inputFileSystem in watchFileSystem.
-        compiler.plugin('environment', () => {
+        compiler.hooks.environment.tap('angular-compiler', () => {
             compiler.inputFileSystem = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compiler.inputFileSystem, this._compilerHost);
             compiler.watchFileSystem = new virtual_file_system_decorator_1.VirtualWatchFileSystemDecorator(compiler.inputFileSystem);
         });
         // Add lazy modules to the context module for @angular/core
-        compiler.plugin('context-module-factory', (cmf) => {
+        compiler.hooks.contextModuleFactory.tap('angular-compiler', (cmf) => {
             const angularCorePackagePath = require.resolve('@angular/core/package.json');
             const angularCorePackageJson = require(angularCorePackagePath);
             const angularCoreModulePath = path.resolve(path.dirname(angularCorePackagePath), angularCorePackageJson['module']);
@@ -420,7 +420,7 @@ class AngularCompilerPlugin {
                 const angularCoreEs2015Path = path.resolve(path.dirname(angularCorePackagePath), angularCorePackageJson['es2015']);
                 angularCoreEs2015Dir = path.dirname(angularCoreEs2015Path).split(/node_modules/).pop();
             }
-            cmf.plugin('after-resolve', (result, callback) => {
+            cmf.hooks.afterResolve.tapAsync('angular-compiler', (result, callback) => {
                 if (!result) {
                     return callback();
                 }
@@ -463,31 +463,31 @@ class AngularCompilerPlugin {
             });
         });
         // Create and destroy forked type checker on watch mode.
-        compiler.plugin('watch-run', (_compiler, callback) => {
+        compiler.hooks.watchRun.tapAsync('angular-compiler', (_compiler, callback) => {
             if (this._forkTypeChecker && !this._typeCheckerProcess) {
                 this._createForkedTypeChecker();
             }
             callback();
         });
-        compiler.plugin('watch-close', () => this._killForkedTypeChecker());
+        compiler.hooks.watchClose.tap('angular-compiler', () => this._killForkedTypeChecker());
         // Remake the plugin on each compilation.
-        compiler.plugin('make', (compilation, cb) => this._make(compilation, cb));
-        compiler.plugin('invalid', () => this._firstRun = false);
-        compiler.plugin('after-emit', (compilation, cb) => {
+        compiler.hooks.make.tapAsync('angular-compiler', (compilation, cb) => this._make(compilation, cb));
+        compiler.hooks.invalid.tap('angular-compiler', () => this._firstRun = false);
+        compiler.hooks.afterEmit.tapAsync('angular-compiler', (compilation, cb) => {
             compilation._ngToolsWebpackPluginInstance = null;
             cb();
         });
-        compiler.plugin('done', () => {
+        compiler.hooks.done.tap('angular-compiler', () => {
             this._donePromise = null;
         });
-        compiler.plugin('after-resolvers', (compiler) => {
-            compiler.plugin('normal-module-factory', (nmf) => {
+        compiler.hooks.afterResolvers.tap('angular-compiler', (compiler) => {
+            compiler.hooks.normalModuleFactory.tap('angular-compiler', (nmf) => {
                 // Virtual file system.
                 // TODO: consider if it's better to remove this plugin and instead make it wait on the
                 // VirtualFileSystemDecorator.
                 // Wait for the plugin to be done when requesting `.ts` files directly (entry points), or
                 // when the issuer is a `.ts` or `.ngfactory.js` file.
-                nmf.plugin('before-resolve', (request, callback) => {
+                nmf.hooks.beforeResolve.tapAsync('angular-compiler', (request, callback) => {
                     if (this.done && (request.request.endsWith('.ts')
                         || (request.context.issuer && /\.ts|ngfactory\.js$/.test(request.context.issuer)))) {
                         this.done.then(() => callback(null, request), () => callback(null, request));
@@ -498,8 +498,8 @@ class AngularCompilerPlugin {
                 });
             });
         });
-        compiler.plugin('normal-module-factory', (nmf) => {
-            nmf.plugin('before-resolve', (request, callback) => {
+        compiler.hooks.normalModuleFactory.tap('angular-compiler', (nmf) => {
+            nmf.hooks.beforeResolve.tapAsync('angular-compiler', (request, callback) => {
                 paths_plugin_1.resolveWithPaths(request, callback, this._compilerOptions, this._compilerHost, this._moduleResolutionCache);
             });
         });

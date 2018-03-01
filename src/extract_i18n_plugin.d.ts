@@ -10,7 +10,6 @@ export interface ExtractI18nPluginOptions {
 }
 export declare class ExtractI18nPlugin implements Tapable {
     private _resourceLoader;
-    private _compilation;
     private _tsConfigPath;
     private _basePath;
     private _rootFilePath;

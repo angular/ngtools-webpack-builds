@@ -7,7 +7,6 @@ const ngtools_api_1 = require("./ngtools_api");
 const resource_loader_1 = require("./resource_loader");
 class ExtractI18nPlugin {
     constructor(options) {
-        this._compilation = null;
         this._compilerOptions = null;
         this._angularCompilerOptions = null;
         this._setupOptions(options);
@@ -89,24 +88,22 @@ class ExtractI18nPlugin {
         this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
     }
     apply(compiler) {
-        compiler.plugin('make', (compilation, cb) => this._make(compilation, cb));
-        compiler.plugin('after-emit', (compilation, cb) => {
-            this._compilation = null;
+        compiler.hooks.make.tapAsync('extract-i8n', (compilation, cb) => this._make(compilation, cb));
+        compiler.hooks.afterEmit.tapAsync('extract-i8n', (compilation, cb) => {
             compilation._ngToolsWebpackXi18nPluginInstance = null;
             cb();
         });
     }
     _make(compilation, cb) {
-        this._compilation = compilation;
-        if (this._compilation._ngToolsWebpackXi18nPluginInstance) {
+        if (compilation._ngToolsWebpackXi18nPluginInstance) {
             return cb(new Error('An @ngtools/webpack xi18n plugin already exist for ' +
                 'this compilation.'));
         }
-        if (!this._compilation._ngToolsWebpackPluginInstance) {
+        if (!compilation._ngToolsWebpackPluginInstance) {
             return cb(new Error('An @ngtools/webpack aot plugin does not exists ' +
                 'for this compilation'));
         }
-        this._compilation._ngToolsWebpackXi18nPluginInstance = this;
+        compilation._ngToolsWebpackXi18nPluginInstance = this;
         this._resourceLoader.update(compilation);
         Promise.resolve()
             .then(() => {
@@ -123,7 +120,7 @@ class ExtractI18nPlugin {
             });
         })
             .then(() => cb(), (err) => {
-            this._compilation.errors.push(err);
+            compilation.errors.push(err);
             cb(err);
         });
     }

@@ -15,15 +15,27 @@ function _getContentOfKeyLiteral(_source, node) {
     }
 }
 function findLazyRoutes(filePath, host, program, compilerOptions) {
-    const refactor = new refactor_1.TypeScriptFileRefactor(filePath, host, program);
-    return refactor
-        .findAstNodes(null, ts.SyntaxKind.ObjectLiteralExpression, true)
+    if (!compilerOptions && program) {
+        compilerOptions = program.getCompilerOptions();
+    }
+    const fileName = refactor_1.resolve(filePath, host, compilerOptions).replace(/\\/g, '/');
+    let sourceFile;
+    if (program) {
+        sourceFile = program.getSourceFile(fileName);
+    }
+    if (!sourceFile) {
+        sourceFile = ts.createSourceFile(fileName, host.readFile(fileName), ts.ScriptTarget.Latest, true);
+    }
+    if (!sourceFile) {
+        throw new Error(`Source file not found: '${fileName}'.`);
+    }
+    return refactor_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ObjectLiteralExpression, true)
         .map((node) => {
-        return refactor.findAstNodes(node, ts.SyntaxKind.PropertyAssignment, false);
+        return refactor_1.findAstNodes(node, sourceFile, ts.SyntaxKind.PropertyAssignment, false);
     })
         .reduce((acc, props) => {
         return acc.concat(props.filter(literal => {
-            return _getContentOfKeyLiteral(refactor.sourceFile, literal.name) == 'loadChildren';
+            return _getContentOfKeyLiteral(sourceFile, literal.name) == 'loadChildren';
         }));
     }, [])
         .filter((node) => node.initializer.kind == ts.SyntaxKind.StringLiteral)
