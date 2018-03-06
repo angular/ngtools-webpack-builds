@@ -521,7 +521,7 @@ class AngularCompilerPlugin {
             benchmark_1.timeEnd('AngularCompilerPlugin._make');
             cb();
         }, (err) => {
-            compilation.errors.push(err.stack);
+            compilation.errors.push(err);
             this.pushCompilationErrors(compilation);
             benchmark_1.timeEnd('AngularCompilerPlugin._make');
             cb();
@@ -616,7 +616,7 @@ class AngularCompilerPlugin {
                 .filter((diag) => diag.category === ts.DiagnosticCategory.Warning);
             if (errors.length > 0) {
                 const message = ngtools_api_1.formatDiagnostics(errors);
-                this._errors.push(message);
+                this._errors.push(new Error(message));
             }
             if (warnings.length > 0) {
                 const message = ngtools_api_1.formatDiagnostics(warnings);
@@ -844,8 +844,11 @@ class AngularCompilerPlugin {
                     locale = parentLocale;
                 }
                 else {
-                    throw new Error(`Unable to load the locale data file "@angular/common/locales/${locale}", ` +
-                        `please check that "${locale}" is a valid locale id.`);
+                    this._warnings.push(`AngularCompilerPlugin: Unable to load the locale data file ` +
+                        `"@angular/common/locales/${locale}", ` +
+                        `please check that "${locale}" is a valid locale id.
+            If needed, you can use "registerLocaleData" manually.`);
+                    return null;
                 }
             }
         }
