@@ -10,17 +10,20 @@ const semver_1 = require("semver");
 // See https://github.com/angular/angular-cli/issues/8107#issuecomment-338185872
 try {
     const version = require('typescript').version;
-    if (!semver_1.gte(version, '2.4.2')) {
+    if (!semver_1.gte(version, '2.0.2')) {
         throw new Error();
     }
 }
 catch (e) {
     throw new Error('Could not find local "typescript" package.'
-        + 'The "@ngtools/webpack" package requires a local "typescript@^2.4.2" package to be installed.'
+        + 'The "@ngtools/webpack" package requires a local "typescript@^2.0.2" package to be installed.'
         + e);
 }
+__export(require("./plugin"));
 __export(require("./angular_compiler_plugin"));
 __export(require("./extract_i18n_plugin"));
 var loader_1 = require("./loader");
 exports.default = loader_1.ngcLoader;
+var paths_plugin_1 = require("./paths-plugin");
+exports.PathsPlugin = paths_plugin_1.PathsPlugin;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/index.js.map
