@@ -21,6 +21,16 @@ export interface ResolverPlugin extends Tapable {
 export interface LoaderCallback {
     (err: Error | null, source?: string, sourceMap?: string): void;
 }
+export interface ModuleReason {
+    dependency: any;
+    module: NormalModule;
+}
+export interface NormalModule {
+    buildTimestamp: number;
+    built: boolean;
+    reasons: ModuleReason[];
+    resource: string;
+}
 export interface NormalModuleFactory {
     plugin(event: string, callback: (data: NormalModuleFactoryRequest, callback: Callback<any>) => void): any;
 }
@@ -29,6 +39,14 @@ export interface NormalModuleFactoryRequest {
     contextInfo: {
         issuer: string;
     };
+}
+export interface LoaderContext {
+    _module: NormalModule;
+    addDependency(path: string): void;
+    async(): LoaderCallback;
+    cacheable(): void;
+    readonly resourcePath: string;
+    readonly query: any;
 }
 export interface InputFileSystem {
     stat(path: string, callback: Callback<any>): void;

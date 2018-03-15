@@ -30,40 +30,45 @@ function CompilerCliIsSupported() {
         throw new Error('The @ngtools/webpack plugin now relies on the project @angular/compiler-cli. '
             + 'Please clean your node_modules and reinstall.');
     }
-    // Throw if we're less than 5.x
-    if (Number(version.major) < 5) {
-        throw new Error('Version of @angular/compiler-cli needs to be 5.0.0 or greater. '
+    // Throw if we're neither 2.3.1 or more, nor 4.x.y, nor 5.x.y, nor 6.x.y.
+    if (!(version.major == '6'
+        || version.major == '5'
+        || version.major == '4'
+        || (version.major == '2'
+            && (version.minor == '4'
+                || version.minor == '3' && version.patch == '1')))) {
+        throw new Error('Version of @angular/compiler-cli needs to be 2.3.1 or greater. '
             + `Current version is "${version.full}".`);
     }
 }
 exports.CompilerCliIsSupported = CompilerCliIsSupported;
 // These imports do not exist on a global install for Angular CLI, so we cannot use a static ES6
 // import.
-let compilerCli;
+let compilerCli = {};
 try {
     compilerCli = require('@angular/compiler-cli');
 }
-catch (_a) {
+catch (e) {
     // Don't throw an error if the private API does not exist.
     // Instead, the `CompilerCliIsSupported` method should return throw and indicate the
     // plugin cannot be used.
 }
-exports.VERSION = compilerCli && compilerCli.VERSION;
-exports.__NGTOOLS_PRIVATE_API_2 = compilerCli && compilerCli.__NGTOOLS_PRIVATE_API_2;
-exports.readConfiguration = compilerCli && compilerCli.readConfiguration;
+exports.VERSION = compilerCli.VERSION;
+exports.__NGTOOLS_PRIVATE_API_2 = compilerCli.__NGTOOLS_PRIVATE_API_2;
 // These imports do not exist on Angular versions lower than 5, so we cannot use a static ES6
 // import.
-let ngtools2;
+let ngtools2 = {};
 try {
     ngtools2 = require('@angular/compiler-cli/ngtools2');
 }
-catch (_b) {
+catch (e) {
     // Don't throw an error if the private API does not exist.
     // Instead, the `AngularCompilerPlugin.isSupported` method should return false and indicate the
     // plugin cannot be used.
 }
-exports.createProgram = ngtools2 && ngtools2.createProgram;
-exports.createCompilerHost = ngtools2 && ngtools2.createCompilerHost;
-exports.formatDiagnostics = ngtools2 && ngtools2.formatDiagnostics;
-exports.EmitFlags = ngtools2 && ngtools2.EmitFlags;
+exports.createProgram = ngtools2.createProgram;
+exports.createCompilerHost = ngtools2.createCompilerHost;
+exports.formatDiagnostics = ngtools2.formatDiagnostics;
+exports.readConfiguration = compilerCli.readConfiguration;
+exports.EmitFlags = ngtools2.EmitFlags;
 //# sourceMappingURL=/home/travis/build/angular/angular-cli/src/ngtools_api.js.map
