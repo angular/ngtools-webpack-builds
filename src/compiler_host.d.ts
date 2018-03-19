@@ -79,7 +79,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     resetChangedFileTracker(): void;
     getChangedFilePaths(): string[];
     getNgFactoryPaths(): string[];
-    invalidate(fileName: string): void;
+    invalidate(path: string): void;
     fileExists(fileName: string, delegate?: boolean): boolean;
     readFile(fileName: string): string;
     stat(path: string): VirtualStats;

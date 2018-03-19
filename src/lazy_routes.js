@@ -23,7 +23,7 @@ function findLazyRoutes(filePath, host, program, compilerOptions) {
     if (program) {
         sourceFile = program.getSourceFile(fileName);
     }
-    if (!sourceFile) {
+    if (!sourceFile && host.fileExists(fileName)) {
         sourceFile = ts.createSourceFile(fileName, host.readFile(fileName), ts.ScriptTarget.Latest, true);
     }
     if (!sourceFile) {

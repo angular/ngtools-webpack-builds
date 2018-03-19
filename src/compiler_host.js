@@ -134,12 +134,21 @@ class WebpackCompilerHost {
             .filter(fileName => fileName.endsWith('.ngfactory.js') || fileName.endsWith('.ngstyle.js'))
             .map((path) => this.denormalizePath(path));
     }
-    invalidate(fileName) {
-        fileName = this.resolve(fileName);
-        if (fileName in this._files) {
-            this._files[fileName] = null;
+    invalidate(path) {
+        const fullPath = this.resolve(path);
+        if (fullPath in this._files) {
+            this._files[fullPath] = null;
         }
-        this._changedFiles[fileName] = true;
+        else {
+            for (const file in this._files) {
+                if (file.startsWith(fullPath + '/')) {
+                    this._files[file] = null;
+                }
+            }
+        }
+        if (this.fileExists(fullPath)) {
+            this._changedFiles[fullPath] = true;
+        }
     }
     fileExists(fileName, delegate = true) {
         fileName = this.resolve(fileName);
