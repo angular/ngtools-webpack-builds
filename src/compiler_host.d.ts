@@ -106,3 +106,4 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     setResourceLoader(resourceLoader: WebpackResourceLoader): void;
     readResource(fileName: string): string | Promise<string> | undefined;
 }
+export declare function workaroundResolve(path: Path | string): string;
