@@ -1,3 +1,13 @@
+/// <reference types="node" />
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
+import { virtualFs } from '@angular-devkit/core';
+import * as fs from 'fs';
 import * as ts from 'typescript';
 /**
  * Option Constants
@@ -26,6 +36,7 @@ export interface AngularCompilerPluginOptions {
         [module: string]: string;
     };
     compilerOptions?: ts.CompilerOptions;
+    host: virtualFs.Host<fs.Stats>;
 }
 export declare enum PLATFORM {
     Browser = 0,
@@ -61,11 +72,11 @@ export declare class AngularCompilerPlugin {
     private readonly _ngCompilerSupportsNewApi;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
-    readonly done: Promise<void>;
+    readonly done: Promise<void> | null;
     readonly entryModule: {
         path: string;
         className: string;
-    };
+    } | null;
     static isSupported(): boolean;
     private _setupOptions(options);
     private _getTsProgram();
@@ -88,7 +99,7 @@ export declare class AngularCompilerPlugin {
     writeI18nOutFile(): void;
     getCompiledFile(fileName: string): {
         outputText: string;
-        sourceMap: string;
+        sourceMap: string | undefined;
         errorDependencies: string[];
     };
     getDependencies(fileName: string): string[];

@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
-import { CompilerOptions } from './ngtools_api';
 import { CancellationToken } from './gather_diagnostics';
+import { CompilerOptions } from './ngtools_api';
 export declare enum MESSAGE_KIND {
     Init = 0,
     Update = 1,
