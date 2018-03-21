@@ -1,18 +1,6 @@
-/**
- * @license
- * Copyright Google Inc. All Rights Reserved.
- *
- * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
- */
-/**
- * This is a copy of types in @compiler-cli/src/ngtools_api.d.ts file,
- * together with safe imports for private apis for cases where @angular/compiler-cli isn't
- * available or is below version 5.
- */
+import * as ts from 'typescript';
 import * as ngc from '@angular/compiler-cli';
 import * as ngtools from '@angular/compiler-cli/ngtools2';
-import * as ts from 'typescript';
 export declare const DEFAULT_ERROR_CODE = 100;
 export declare const UNKNOWN_ERROR_CODE = 500;
 export declare const SOURCE: "angular";

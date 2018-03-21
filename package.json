@@ -1,28 +1,25 @@
 {
   "name": "@ngtools/webpack",
-  "version": "6.0.0",
+  "version": "6.0.0-beta.6-916731c",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
   "license": "MIT",
   "keywords": [
     "angular",
-    "devkit",
-    "sdk",
-    "Angular DevKit",
     "webpack",
     "plugin",
     "aot"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/angular/devkit.git"
+    "url": "https://github.com/angular/angular-cli.git"
   },
-  "author": "Angular Authors",
+  "author": "angular",
   "bugs": {
-    "url": "https://github.com/angular/devkit/issues"
+    "url": "https://github.com/angular/angular-cli/issues"
   },
-  "homepage": "https://github.com/angular/devkit",
+  "homepage": "https://github.com/angular/angular-cli/tree/master/packages/@ngtools/webpack",
   "engines": {
     "node": ">= 8.9.0",
     "npm": ">= 5.5.1"
@@ -34,8 +31,6 @@
     "webpack-sources": "^1.1.0"
   },
   "peerDependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#9747635",
-    "typescript": "~2.5.0 | ~2.6.0 | ~2.7.0",
     "webpack": "^4.0.0"
   }
 }
