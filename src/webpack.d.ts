@@ -1,4 +1,11 @@
 /// <reference types="node" />
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
 import { Stats } from 'fs';
 export interface Request {
     request?: Request;
@@ -31,15 +38,15 @@ export interface NormalModuleFactoryRequest {
     };
 }
 export interface InputFileSystem {
-    stat(path: string, callback: Callback<any>): void;
-    readdir(path: string, callback: Callback<any>): void;
-    readFile(path: string, callback: Callback<any>): void;
+    stat(path: string, callback: Callback<Stats>): void;
+    readdir(path: string, callback: Callback<string[]>): void;
+    readFile(path: string, callback: Callback<string>): void;
     readJson(path: string, callback: Callback<any>): void;
-    readlink(path: string, callback: Callback<any>): void;
+    readlink(path: string, callback: Callback<string>): void;
     statSync(path: string): Stats;
     readdirSync(path: string): string[];
     readFileSync(path: string): string;
-    readJsonSync(path: string): string;
+    readJsonSync(path: string): any;
     readlinkSync(path: string): string;
     purge(changes?: string[] | string): void;
 }
