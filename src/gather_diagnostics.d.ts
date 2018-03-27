@@ -1,5 +1,12 @@
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
 import * as ts from 'typescript';
-import { Program, Diagnostics } from './ngtools_api';
+import { Diagnostics, Program } from './ngtools_api';
 export declare class CancellationToken implements ts.CancellationToken {
     private _isCancelled;
     requestCancellation(): void;
