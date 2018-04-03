@@ -32,7 +32,7 @@
     "webpack-sources": "^1.1.0"
   },
   "peerDependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#fb26388",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#9ed1471",
     "typescript": "~2.5.0 || ~2.6.0 || ~2.7.0",
     "webpack": "^4.0.0"
   }
