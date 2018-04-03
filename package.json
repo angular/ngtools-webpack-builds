@@ -29,12 +29,10 @@
   },
   "dependencies": {
     "tree-kill": "^1.0.0",
-    "chalk": "~2.2.0",
-    "semver": "^5.3.0",
     "webpack-sources": "^1.1.0"
   },
   "peerDependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#0fb09ed",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#b947687",
     "typescript": "~2.5.0 || ~2.6.0 || ~2.7.0",
     "webpack": "^4.0.0"
   }
