@@ -1,14 +1,5 @@
-/// <reference types="node" />
-/**
- * @license
- * Copyright Google Inc. All Rights Reserved.
- *
- * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
- */
-import { virtualFs } from '@angular-devkit/core';
-import * as fs from 'fs';
 import * as ts from 'typescript';
+import { Tapable } from './webpack';
 /**
  * Option Constants
  */
@@ -22,7 +13,6 @@ export interface AngularCompilerPluginOptions {
     hostReplacementPaths?: {
         [path: string]: string;
     };
-    forkTypeChecker?: boolean;
     singleFileIncludes?: string[];
     i18nInFile?: string;
     i18nInFormat?: string;
@@ -31,18 +21,13 @@ export interface AngularCompilerPluginOptions {
     locale?: string;
     missingTranslation?: string;
     platform?: PLATFORM;
-    nameLazyFiles?: boolean;
-    additionalLazyModules?: {
-        [module: string]: string;
-    };
     compilerOptions?: ts.CompilerOptions;
-    host: virtualFs.Host<fs.Stats>;
 }
 export declare enum PLATFORM {
     Browser = 0,
     Server = 1,
 }
-export declare class AngularCompilerPlugin {
+export declare class AngularCompilerPlugin implements Tapable {
     private _options;
     private _compilerOptions;
     private _rootNames;
@@ -72,11 +57,11 @@ export declare class AngularCompilerPlugin {
     private readonly _ngCompilerSupportsNewApi;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
-    readonly done: Promise<void> | null;
+    readonly done: Promise<void>;
     readonly entryModule: {
         path: string;
         className: string;
-    } | null;
+    };
     static isSupported(): boolean;
     private _setupOptions(options);
     private _getTsProgram();
@@ -99,7 +84,7 @@ export declare class AngularCompilerPlugin {
     writeI18nOutFile(): void;
     getCompiledFile(fileName: string): {
         outputText: string;
-        sourceMap: string | undefined;
+        sourceMap: string;
         errorDependencies: string[];
     };
     getDependencies(fileName: string): string[];

@@ -1,9 +1,5 @@
-/**
- * @license
- * Copyright Google Inc. All Rights Reserved.
- *
- * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
- */
+export * from './plugin';
 export * from './angular_compiler_plugin';
+export * from './extract_i18n_plugin';
 export { ngcLoader as default } from './loader';
+export { PathsPlugin } from './paths-plugin';

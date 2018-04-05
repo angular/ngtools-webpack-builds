@@ -1,6 +1,7 @@
 export declare class WebpackResourceLoader {
     private _parentCompilation;
     private _context;
+    private _uniqueId;
     private _resourceDependencies;
     private _cachedResources;
     constructor();
