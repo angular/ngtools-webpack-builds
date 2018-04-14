@@ -1,14 +1,5 @@
-/// <reference types="node" />
-/**
- * @license
- * Copyright Google Inc. All Rights Reserved.
- *
- * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
- */
-import { Path, virtualFs } from '@angular-devkit/core';
-import * as fs from 'fs';
 import * as ts from 'typescript';
+import * as fs from 'fs';
 import { WebpackResourceLoader } from './resource_loader';
 export interface OnErrorFn {
     (message: string): void;
@@ -22,8 +13,8 @@ export declare class VirtualStats implements fs.Stats {
     protected _dev: number;
     protected _ino: number;
     protected _mode: number;
-    protected _uid: number;
-    protected _gid: number;
+    protected _uid: any;
+    protected _gid: any;
     constructor(_path: string);
     isFile(): boolean;
     isDirectory(): boolean;
@@ -36,20 +27,16 @@ export declare class VirtualStats implements fs.Stats {
     readonly ino: number;
     readonly mode: number;
     readonly nlink: number;
-    readonly uid: number;
-    readonly gid: number;
+    readonly uid: any;
+    readonly gid: any;
     readonly rdev: number;
     readonly size: number;
     readonly blksize: number;
     readonly blocks: number;
     readonly atime: Date;
-    readonly atimeMs: number;
     readonly mtime: Date;
-    readonly mtimeMs: number;
     readonly ctime: Date;
-    readonly ctimeMs: number;
     readonly birthtime: Date;
-    readonly birthtimeMs: number;
 }
 export declare class VirtualDirStats extends VirtualStats {
     constructor(_fileName: string);
@@ -68,8 +55,7 @@ export declare class VirtualFileStats extends VirtualStats {
 }
 export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _options;
-    private _host;
-    private _syncHost;
+    private _delegate;
     private _files;
     private _directories;
     private _changedFiles;
@@ -78,10 +64,10 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _setParentNodes;
     private _cache;
     private _resourceLoader?;
-    constructor(_options: ts.CompilerOptions, basePath: string, _host?: virtualFs.Host<fs.Stats>);
+    constructor(_options: ts.CompilerOptions, basePath: string);
     private _normalizePath(path);
     denormalizePath(path: string): string;
-    resolve(path: string): Path;
+    resolve(path: string): string;
     private _setFileContent(fileName, content);
     readonly dirty: boolean;
     enableCaching(): void;
@@ -90,20 +76,19 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     getNgFactoryPaths(): string[];
     invalidate(fileName: string): void;
     fileExists(fileName: string, delegate?: boolean): boolean;
-    readFile(fileName: string): string | undefined;
+    readFile(fileName: string): string;
     stat(path: string): VirtualStats;
     directoryExists(directoryName: string, delegate?: boolean): boolean;
     getFiles(path: string): string[];
     getDirectories(path: string): string[];
-    getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, _onError?: OnErrorFn): ts.SourceFile | undefined;
-    readonly getCancellationToken: undefined;
+    getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, _onError?: OnErrorFn): ts.SourceFile;
+    getCancellationToken(): ts.CancellationToken;
     getDefaultLibFileName(options: ts.CompilerOptions): string;
-    readonly writeFile: (fileName: string, data: string, _writeByteOrderMark: boolean, _onError?: ((message: string) => void) | undefined, _sourceFiles?: ReadonlyArray<ts.SourceFile> | undefined) => void;
+    readonly writeFile: (fileName: string, data: string, _writeByteOrderMark: boolean, _onError?: (message: string) => void, _sourceFiles?: ts.SourceFile[]) => void;
     getCurrentDirectory(): string;
     getCanonicalFileName(fileName: string): string;
     useCaseSensitiveFileNames(): boolean;
     getNewLine(): string;
     setResourceLoader(resourceLoader: WebpackResourceLoader): void;
-    readResource(fileName: string): string | Promise<string> | undefined;
+    readResource(fileName: string): string | Promise<string>;
 }
-export declare function workaroundResolve(path: Path | string): string;
