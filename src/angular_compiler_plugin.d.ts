@@ -36,7 +36,7 @@ export interface AngularCompilerPluginOptions {
         [module: string]: string;
     };
     compilerOptions?: ts.CompilerOptions;
-    host: virtualFs.Host<fs.Stats>;
+    host?: virtualFs.Host<fs.Stats>;
 }
 export declare enum PLATFORM {
     Browser = 0,
