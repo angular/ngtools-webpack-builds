@@ -28,12 +28,12 @@
     "npm": ">= 5.5.1"
   },
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#8603338",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#c332f9c",
     "tree-kill": "^1.0.0",
     "webpack-sources": "^1.1.0"
   },
   "peerDependencies": {
-    "typescript": "~2.5.0 || ~2.6.0 || ~2.7.0",
+    "typescript": "~2.4.0 || ~2.5.0 || ~2.6.0 || ~2.7.0",
     "webpack": "^4.0.0"
   }
 }
