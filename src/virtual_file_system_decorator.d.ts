@@ -19,12 +19,12 @@ export declare class VirtualFileSystemDecorator implements InputFileSystem {
     getVirtualFilesPaths(): string[];
     stat(path: string, callback: Callback<Stats>): void;
     readdir(path: string, callback: Callback<string[]>): void;
-    readFile(path: string, callback: Callback<string>): void;
+    readFile(path: string, callback: Callback<string | Buffer>): void;
     readJson(path: string, callback: Callback<{}>): void;
     readlink(path: string, callback: Callback<string>): void;
     statSync(path: string): Stats;
     readdirSync(path: string): string[];
-    readFileSync(path: string): string;
+    readFileSync(path: string): string | Buffer;
     readJsonSync(path: string): string;
     readlinkSync(path: string): string;
     purge(changes?: string[] | string): void;

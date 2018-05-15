@@ -57,12 +57,17 @@ export declare class VirtualDirStats extends VirtualStats {
     readonly size: number;
 }
 export declare class VirtualFileStats extends VirtualStats {
-    private _content;
     private _sourceFile;
-    constructor(_fileName: string, _content: string);
+    private _content;
+    private _bufferContent;
+    constructor(_fileName: string);
+    static createFromString(_fileName: string, _content: string): VirtualFileStats;
+    static createFromBuffer(_fileName: string, _buffer: virtualFs.FileBuffer): VirtualFileStats;
     content: string;
+    bufferContent: virtualFs.FileBuffer;
     setSourceFile(sourceFile: ts.SourceFile): void;
     getSourceFile(languageVersion: ts.ScriptTarget, setParentNodes: boolean): ts.SourceFile;
+    private resetMetadata();
     isFile(): boolean;
     readonly size: number;
 }
@@ -82,7 +87,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _normalizePath(path);
     denormalizePath(path: string): string;
     resolve(path: string): Path;
-    private _setFileContent(fileName, content);
+    private _cacheFile(fileName, stats);
     readonly dirty: boolean;
     enableCaching(): void;
     resetChangedFileTracker(): void;
@@ -91,7 +96,9 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     invalidate(fileName: string): void;
     fileExists(fileName: string, delegate?: boolean): boolean;
     readFile(fileName: string): string | undefined;
-    stat(path: string): VirtualStats;
+    readFileBuffer(fileName: string): Buffer | undefined;
+    private findVirtualFile(fileName);
+    stat(path: string): VirtualStats | null;
     directoryExists(directoryName: string, delegate?: boolean): boolean;
     getFiles(path: string): string[];
     getDirectories(path: string): string[];
