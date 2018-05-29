@@ -37,6 +37,7 @@ export interface AngularCompilerPluginOptions {
     };
     compilerOptions?: ts.CompilerOptions;
     host?: virtualFs.Host<fs.Stats>;
+    platformTransformers?: ts.TransformerFactory<ts.SourceFile>[];
 }
 export declare enum PLATFORM {
     Browser = 0,
@@ -57,6 +58,7 @@ export declare class AngularCompilerPlugin {
     private _mainPath;
     private _basePath;
     private _transformers;
+    private _platformTransformers;
     private _platform;
     private _JitMode;
     private _emitSkipped;
