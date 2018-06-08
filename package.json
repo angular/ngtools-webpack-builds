@@ -7,6 +7,7 @@
   "license": "MIT",
   "keywords": [
     "angular",
+    "Angular CLI",
     "devkit",
     "sdk",
     "Angular DevKit",
@@ -16,19 +17,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/angular/devkit.git"
+    "url": "https://github.com/angular/angular-cli.git"
   },
   "author": "Angular Authors",
   "bugs": {
-    "url": "https://github.com/angular/devkit/issues"
+    "url": "https://github.com/angular/angular-cli/issues"
   },
-  "homepage": "https://github.com/angular/devkit",
+  "homepage": "https://github.com/angular/angular-cli",
   "engines": {
     "node": ">= 8.9.0",
     "npm": ">= 5.5.1"
   },
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#139a4fd",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#dc62ecb",
     "tree-kill": "^1.0.0",
     "webpack-sources": "^1.1.0"
   },
