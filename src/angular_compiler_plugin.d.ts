@@ -9,6 +9,11 @@
 import { virtualFs } from '@angular-devkit/core';
 import * as fs from 'fs';
 import * as ts from 'typescript';
+export interface ContextElementDependency {
+}
+export interface ContextElementDependencyConstructor {
+    new (modulePath: string, name: string): ContextElementDependency;
+}
 /**
  * Option Constants
  */
@@ -35,6 +40,7 @@ export interface AngularCompilerPluginOptions {
     additionalLazyModules?: {
         [module: string]: string;
     };
+    contextElementDependencyConstructor?: ContextElementDependencyConstructor;
     compilerOptions?: ts.CompilerOptions;
     host?: virtualFs.Host<fs.Stats>;
     platformTransformers?: ts.TransformerFactory<ts.SourceFile>[];
@@ -68,6 +74,7 @@ export declare class AngularCompilerPlugin {
     private _normalizedLocale;
     private _warnings;
     private _errors;
+    private _contextElementDependencyConstructor;
     private _forkTypeChecker;
     private _typeCheckerProcess;
     private _forkedTypeCheckerInitialized;
