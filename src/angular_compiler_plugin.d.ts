@@ -9,6 +9,7 @@
 import { virtualFs } from '@angular-devkit/core';
 import * as fs from 'fs';
 import * as ts from 'typescript';
+import { Compiler } from 'webpack';
 export interface ContextElementDependency {
 }
 export interface ContextElementDependencyConstructor {
@@ -100,8 +101,8 @@ export declare class AngularCompilerPlugin {
     private _createForkedTypeChecker();
     private _killForkedTypeChecker();
     private _updateForkedTypeChecker(rootNames, changedCompilationFiles);
-    apply(compiler: any): void;
-    private _make(compilation, cb);
+    apply(compiler: Compiler): void;
+    private _make(compilation);
     private pushCompilationErrors(compilation);
     private _makeTransformers();
     private _update();
