@@ -27,7 +27,7 @@ export interface AngularCompilerPluginOptions {
     skipCodeGeneration?: boolean;
     hostReplacementPaths?: {
         [path: string]: string;
-    };
+    } | ((path: string) => string);
     forkTypeChecker?: boolean;
     singleFileIncludes?: string[];
     i18nInFile?: string;
