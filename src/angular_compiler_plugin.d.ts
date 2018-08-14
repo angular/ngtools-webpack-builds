@@ -87,6 +87,7 @@ export declare class AngularCompilerPlugin {
         path: string;
         className: string;
     } | null;
+    readonly typeChecker: ts.TypeChecker | null;
     static isSupported(): boolean;
     private _setupOptions;
     private _getTsProgram;
