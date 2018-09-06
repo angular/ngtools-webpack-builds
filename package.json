@@ -29,7 +29,7 @@
     "npm": ">= 5.5.1"
   },
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#ee7603f",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#54f7ea2",
     "rxjs": "~6.2.0",
     "tree-kill": "^1.0.0",
     "webpack-sources": "^1.1.0"
