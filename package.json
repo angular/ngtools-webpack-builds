@@ -25,11 +25,11 @@
   },
   "homepage": "https://github.com/angular/angular-cli",
   "engines": {
-    "node": ">= 8.9.0",
-    "npm": ">= 5.5.1"
+    "node": ">=10.3.0 <11.0.0",
+    "yarn": ">=1.6.0 <2.0.0"
   },
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#e16c8bb",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#0dc36f2",
     "rxjs": "~6.2.0",
     "tree-kill": "^1.0.0",
     "webpack-sources": "^1.1.0"
