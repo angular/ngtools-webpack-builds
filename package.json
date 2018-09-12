@@ -29,7 +29,7 @@
     "yarn": ">=1.6.0 <2.0.0"
   },
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#6133eb2",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#57a32c2",
     "rxjs": "6.2.2",
     "tree-kill": "1.2.0",
     "webpack-sources": "1.2.0"
