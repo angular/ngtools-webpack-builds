@@ -29,7 +29,6 @@ export interface AngularCompilerPluginOptions {
         [path: string]: string;
     } | ((path: string) => string);
     forkTypeChecker?: boolean;
-    singleFileIncludes?: string[];
     i18nInFile?: string;
     i18nInFormat?: string;
     i18nOutFile?: string;
@@ -54,7 +53,6 @@ export declare class AngularCompilerPlugin {
     private _options;
     private _compilerOptions;
     private _rootNames;
-    private _singleFileIncludes;
     private _program;
     private _compilerHost;
     private _moduleResolutionCache;

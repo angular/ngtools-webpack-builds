@@ -5,8 +5,8 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
+import { Diagnostics, Program } from '@angular/compiler-cli';
 import * as ts from 'typescript';
-import { Diagnostics, Program } from './ngtools_api';
 export declare class CancellationToken implements ts.CancellationToken {
     private _isCancelled;
     requestCancellation(): void;
