@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -5,7 +6,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { InputFileSystem } from 'webpack';
+import { Stats } from 'fs';
 export interface Callback<T = any> {
     (err?: Error | null, result?: T): void;
 }
@@ -18,6 +19,19 @@ export interface NormalModuleFactoryRequest {
         issuer: string;
     };
     typescriptPathMapped?: boolean;
+}
+export interface InputFileSystem {
+    stat(path: string, callback: Callback<Stats>): void;
+    readdir(path: string, callback: Callback<string[]>): void;
+    readFile(path: string, callback: Callback<Buffer>): void;
+    readJson(path: string, callback: Callback): void;
+    readlink(path: string, callback: Callback<string>): void;
+    statSync(path: string): Stats;
+    readdirSync(path: string): string[];
+    readFileSync(path: string): Buffer;
+    readJsonSync(path: string): any;
+    readlinkSync(path: string): string;
+    purge(changes?: string[] | string): void;
 }
 export interface NodeWatchFileSystemInterface {
     inputFileSystem: InputFileSystem;
