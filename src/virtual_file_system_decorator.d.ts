@@ -8,8 +8,9 @@
  */
 import { Path } from '@angular-devkit/core';
 import { Stats } from 'fs';
+import { InputFileSystem } from 'webpack';
 import { WebpackCompilerHost } from './compiler_host';
-import { Callback, InputFileSystem, NodeWatchFileSystemInterface } from './webpack';
+import { Callback, NodeWatchFileSystemInterface } from './webpack';
 export declare const NodeWatchFileSystem: NodeWatchFileSystemInterface;
 export declare class VirtualFileSystemDecorator implements InputFileSystem {
     private _inputFileSystem;
@@ -18,11 +19,11 @@ export declare class VirtualFileSystemDecorator implements InputFileSystem {
     private _readFileSync;
     private _statSync;
     getVirtualFilesPaths(): string[];
-    stat(path: string, callback: Callback<Stats>): void;
+    stat(path: string, callback: (err: Error, stats: Stats) => void): void;
     readdir(path: string, callback: Callback<string[]>): void;
-    readFile(path: string, callback: Callback<Buffer>): void;
+    readFile(path: string, callback: (err: Error, contents: Buffer) => void): void;
     readJson(path: string, callback: Callback<{}>): void;
-    readlink(path: string, callback: Callback<string>): void;
+    readlink(path: string, callback: (err: Error, linkString: string) => void): void;
     statSync(path: string): Stats;
     readdirSync(path: string): string[];
     readFileSync(path: string): Buffer;

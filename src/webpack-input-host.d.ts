@@ -9,7 +9,7 @@
 import { Path, PathFragment, virtualFs } from '@angular-devkit/core';
 import { Stats } from 'fs';
 import { Observable } from 'rxjs';
-import { InputFileSystem } from './webpack';
+import { InputFileSystem } from 'webpack';
 export declare class WebpackInputHost implements virtualFs.Host<Stats> {
     readonly inputFileSystem: InputFileSystem;
     constructor(inputFileSystem: InputFileSystem);
