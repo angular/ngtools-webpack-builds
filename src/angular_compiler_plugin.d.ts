@@ -6,7 +6,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { virtualFs } from '@angular-devkit/core';
+import { logging, virtualFs } from '@angular-devkit/core';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 import { Compiler } from 'webpack';
@@ -37,6 +37,7 @@ export interface AngularCompilerPluginOptions {
     missingTranslation?: string;
     platform?: PLATFORM;
     nameLazyFiles?: boolean;
+    logger?: logging.Logger;
     additionalLazyModules?: {
         [module: string]: string;
     };
@@ -77,6 +78,7 @@ export declare class AngularCompilerPlugin {
     private _forkTypeChecker;
     private _typeCheckerProcess;
     private _forkedTypeCheckerInitialized;
+    private _logger;
     private readonly _ngCompilerSupportsNewApi;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
