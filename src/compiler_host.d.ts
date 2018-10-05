@@ -16,9 +16,11 @@ export interface OnErrorFn {
 export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _options;
     private _syncHost;
+    private _memoryHost;
     private _changedFiles;
     private _basePath;
     private _resourceLoader?;
+    private _sourceFileCache;
     constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host);
     private readonly virtualFiles;
     denormalizePath(path: string): string;
@@ -29,7 +31,8 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     invalidate(fileName: string): void;
     fileExists(fileName: string, delegate?: boolean): boolean;
     readFile(fileName: string): string | undefined;
-    readFileBuffer(fileName: string): Buffer | undefined;
+    readFileBuffer(fileName: string): Buffer;
+    private _makeStats;
     stat(path: string): Stats | null;
     directoryExists(directoryName: string): boolean;
     getDirectories(path: string): string[];
