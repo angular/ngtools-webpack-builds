@@ -79,7 +79,6 @@ export declare class AngularCompilerPlugin {
     private _typeCheckerProcess;
     private _forkedTypeCheckerInitialized;
     private _logger;
-    private readonly _ngCompilerSupportsNewApi;
     constructor(options: AngularCompilerPluginOptions);
     readonly options: AngularCompilerPluginOptions;
     readonly done: Promise<void> | null;
@@ -95,7 +94,6 @@ export declare class AngularCompilerPlugin {
     updateChangedFileExtensions(extension: string): void;
     private _getChangedCompilationFiles;
     private _createOrUpdateProgram;
-    private _getLazyRoutesFromNgtools;
     private _findLazyRoutesInAst;
     private _listLazyRoutesFromProgram;
     private _processLazyRoutes;
