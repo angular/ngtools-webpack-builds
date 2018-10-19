@@ -21,6 +21,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _basePath;
     private _resourceLoader?;
     private _sourceFileCache;
+    private _virtualFileExtensions;
     constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host);
     private readonly virtualFiles;
     denormalizePath(path: string): string;
