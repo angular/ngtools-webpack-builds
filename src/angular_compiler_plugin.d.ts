@@ -94,7 +94,6 @@ export declare class AngularCompilerPlugin {
     updateChangedFileExtensions(extension: string): void;
     private _getChangedCompilationFiles;
     private _createOrUpdateProgram;
-    private _findLazyRoutesInAst;
     private _listLazyRoutesFromProgram;
     private _processLazyRoutes;
     private _createForkedTypeChecker;
