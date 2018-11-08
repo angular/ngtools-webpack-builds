@@ -6,10 +6,5 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import * as ts from 'typescript';
-import { ReplaceNodeOperation } from './interfaces';
-export declare function replaceResources(shouldTransform: (fileName: string) => boolean): ts.TransformerFactory<ts.SourceFile>;
-export interface ResourceReplacement {
-    resourcePaths: string[];
-    replaceNodeOperation: ReplaceNodeOperation;
-}
-export declare function findResources(sourceFile: ts.SourceFile): ResourceReplacement[];
+export declare function replaceResources(shouldTransform: (fileName: string) => boolean, getTypeChecker: () => ts.TypeChecker): ts.TransformerFactory<ts.SourceFile>;
+export declare function getResourceUrl(node: ts.Expression): string | null;
