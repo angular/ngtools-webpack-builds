@@ -41,6 +41,7 @@ export interface AngularCompilerPluginOptions {
     additionalLazyModules?: {
         [module: string]: string;
     };
+    additionalLazyModuleResources?: string[];
     contextElementDependencyConstructor?: ContextElementDependencyConstructor;
     compilerOptions?: ts.CompilerOptions;
     host?: virtualFs.Host<fs.Stats>;
