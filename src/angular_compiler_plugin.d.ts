@@ -100,7 +100,9 @@ export declare class AngularCompilerPlugin {
     private _createForkedTypeChecker;
     private _killForkedTypeChecker;
     private _updateForkedTypeChecker;
-    apply(compiler: Compiler): void;
+    apply(compiler: Compiler & {
+        watchMode?: boolean;
+    }): void;
     private _make;
     private pushCompilationErrors;
     private _makeTransformers;

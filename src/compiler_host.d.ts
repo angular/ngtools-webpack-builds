@@ -15,6 +15,7 @@ export interface OnErrorFn {
 }
 export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _options;
+    private readonly cacheSourceFiles;
     private _syncHost;
     private _memoryHost;
     private _changedFiles;
@@ -22,7 +23,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _resourceLoader?;
     private _sourceFileCache;
     private _virtualFileExtensions;
-    constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host);
+    constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host, cacheSourceFiles: boolean);
     private readonly virtualFiles;
     denormalizePath(path: string): string;
     resolve(path: string): Path;
