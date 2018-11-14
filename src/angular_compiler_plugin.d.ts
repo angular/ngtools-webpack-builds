@@ -91,7 +91,6 @@ export declare class AngularCompilerPlugin {
     static isSupported(): boolean;
     private _setupOptions;
     private _getTsProgram;
-    private _getChangedTsFiles;
     updateChangedFileExtensions(extension: string): void;
     private _getChangedCompilationFiles;
     private _createOrUpdateProgram;
