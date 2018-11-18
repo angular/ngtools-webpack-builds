@@ -38,6 +38,7 @@ export interface AngularCompilerPluginOptions {
     platform?: PLATFORM;
     nameLazyFiles?: boolean;
     logger?: logging.Logger;
+    directTemplateLoading?: boolean;
     additionalLazyModules?: {
         [module: string]: string;
     };
