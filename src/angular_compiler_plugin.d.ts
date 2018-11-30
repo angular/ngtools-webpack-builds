@@ -59,7 +59,7 @@ export declare class AngularCompilerPlugin {
     private _program;
     private _compilerHost;
     private _moduleResolutionCache;
-    private _resourceLoader;
+    private _resourceLoader?;
     private _lazyRoutes;
     private _tsConfigPath;
     private _entryModule;
