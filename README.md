@@ -10,7 +10,7 @@ released version of this package.
 To test this snapshot in your own project, use
 
 ```bash
-npm install github.com/angular/ngtools-webpack-builds
+npm install git+https://github.com/angular/ngtools-webpack-builds.git
 ```
 
 ----
