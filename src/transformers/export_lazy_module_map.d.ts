@@ -1,5 +1,3 @@
 import * as ts from 'typescript';
-export interface LazyRouteMap {
-    [path: string]: string;
-}
+import { LazyRouteMap } from '../lazy_routes';
 export declare function exportLazyModuleMap(shouldTransform: (fileName: string) => boolean, lazyRoutesCb: () => LazyRouteMap): ts.TransformerFactory<ts.SourceFile>;
