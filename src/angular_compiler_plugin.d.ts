@@ -95,6 +95,7 @@ export declare class AngularCompilerPlugin {
     updateChangedFileExtensions(extension: string): void;
     private _getChangedCompilationFiles;
     private _createOrUpdateProgram;
+    private _findLazyRoutesInAst;
     private _listLazyRoutesFromProgram;
     private _processLazyRoutes;
     private _createForkedTypeChecker;
@@ -106,6 +107,7 @@ export declare class AngularCompilerPlugin {
     private _make;
     private pushCompilationErrors;
     private _makeTransformers;
+    private _getChangedTsFiles;
     private _update;
     writeI18nOutFile(): void;
     getCompiledFile(fileName: string): {
