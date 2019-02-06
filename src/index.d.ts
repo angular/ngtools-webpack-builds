@@ -7,4 +7,3 @@
  */
 export * from './angular_compiler_plugin';
 export { ngcLoader as default } from './loader';
-export declare const NgToolsLoader: string;
