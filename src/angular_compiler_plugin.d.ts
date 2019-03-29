@@ -39,8 +39,6 @@ export interface AngularCompilerPluginOptions {
     nameLazyFiles?: boolean;
     logger?: logging.Logger;
     directTemplateLoading?: boolean;
-    discoverLazyRoutes?: boolean;
-    importFactories?: boolean;
     additionalLazyModules?: {
         [module: string]: string;
     };
@@ -62,8 +60,6 @@ export declare class AngularCompilerPlugin {
     private _compilerHost;
     private _moduleResolutionCache;
     private _resourceLoader?;
-    private _discoverLazyRoutes;
-    private _importFactories;
     private _lazyRoutes;
     private _tsConfigPath;
     private _entryModule;

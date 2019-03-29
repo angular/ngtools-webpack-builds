@@ -23,4 +23,3 @@ __export(require("./register_locale_data"));
 __export(require("./replace_resources"));
 __export(require("./remove_decorators"));
 __export(require("./find_resources"));
-__export(require("./import_factory"));

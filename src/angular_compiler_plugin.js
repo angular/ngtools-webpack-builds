@@ -35,8 +35,6 @@ var PLATFORM;
 })(PLATFORM = exports.PLATFORM || (exports.PLATFORM = {}));
 class AngularCompilerPlugin {
     constructor(options) {
-        this._discoverLazyRoutes = true;
-        this._importFactories = false;
         // Contains `moduleImportPath#exportName` => `fullModulePath`.
         this._lazyRoutes = {};
         this._transformers = [];
@@ -161,29 +159,6 @@ class AngularCompilerPlugin {
         if (options.platformTransformers !== undefined) {
             this._platformTransformers = options.platformTransformers;
         }
-        // Determine if lazy route discovery via Compiler CLI private API should be attempted.
-        if (this._compilerOptions.enableIvy) {
-            // Never try to discover lazy routes with Ivy.
-            this._discoverLazyRoutes = false;
-        }
-        else if (options.discoverLazyRoutes !== undefined) {
-            // The default is to discover routes, but it can be overriden.
-            this._discoverLazyRoutes = options.discoverLazyRoutes;
-        }
-        if (this._discoverLazyRoutes === false && this.options.additionalLazyModuleResources
-            && this.options.additionalLazyModuleResources.length > 0) {
-            this._warnings.push(new Error(`Lazy route discovery is disabled but additional Lazy Module Resources were`
-                + ` provided. These will be ignored.`));
-        }
-        if (this._discoverLazyRoutes === false && this.options.additionalLazyModules
-            && Object.keys(this.options.additionalLazyModules).length > 0) {
-            this._warnings.push(new Error(`Lazy route discovery is disabled but additional lazy modules were provided.`
-                + `These will be ignored.`));
-        }
-        if (!this._compilerOptions.enableIvy && options.importFactories === true) {
-            // Only transform imports to use factories with View Engine.
-            this._importFactories = true;
-        }
         // Default ContextElementDependency to the one we can import from here.
         // Failing to use the right ContextElementDependency will throw the error below:
         // "No module factory available for dependency type: ContextElementDependency"
@@ -278,7 +253,7 @@ class AngularCompilerPlugin {
         if (!this._entryModule && this._mainPath) {
             benchmark_1.time('AngularCompilerPlugin._make.resolveEntryModuleFromMain');
             this._entryModule = entry_resolver_1.resolveEntryModuleFromMain(this._mainPath, this._compilerHost, this._getTsProgram());
-            if (this._discoverLazyRoutes && !this.entryModule && !this._compilerOptions.enableIvy) {
+            if (!this.entryModule && !this._compilerOptions.enableIvy) {
                 this._warnings.push('Lazy routes discovery is not enabled. '
                     + 'Because there is neither an entryModule nor a '
                     + 'statically analyzable bootstrap code in the main file.');
@@ -501,26 +476,25 @@ class AngularCompilerPlugin {
             compilerWithFileSystems.inputFileSystem = inputDecorator;
             compilerWithFileSystems.watchFileSystem = new virtual_file_system_decorator_1.VirtualWatchFileSystemDecorator(inputDecorator, replacements);
         });
-        if (this._discoverLazyRoutes) {
-            // Add lazy modules to the context module for @angular/core
-            compiler.hooks.contextModuleFactory.tap('angular-compiler', cmf => {
-                const angularCorePackagePath = require.resolve('@angular/core/package.json');
-                // APFv6 does not have single FESM anymore. Instead of verifying if we're pointing to
-                // FESMs, we resolve the `@angular/core` path and verify that the path for the
-                // module starts with it.
-                // This may be slower but it will be compatible with both APF5, 6 and potential future
-                // versions (until the dynamic import appears outside of core I suppose).
-                // We resolve symbolic links in order to get the real path that would be used in webpack.
-                const angularCoreResourceRoot = fs.realpathSync(path.dirname(angularCorePackagePath));
-                cmf.hooks.afterResolve.tapPromise('angular-compiler', async (result) => {
-                    // Alter only existing request from Angular or the additional lazy module resources.
-                    const isLazyModuleResource = (resource) => resource.startsWith(angularCoreResourceRoot) ||
-                        (this.options.additionalLazyModuleResources &&
-                            this.options.additionalLazyModuleResources.includes(resource));
-                    if (!result || !this.done || !isLazyModuleResource(result.resource)) {
-                        return result;
-                    }
-                    await this.done;
+        // Add lazy modules to the context module for @angular/core
+        compiler.hooks.contextModuleFactory.tap('angular-compiler', cmf => {
+            const angularCorePackagePath = require.resolve('@angular/core/package.json');
+            // APFv6 does not have single FESM anymore. Instead of verifying if we're pointing to
+            // FESMs, we resolve the `@angular/core` path and verify that the path for the
+            // module starts with it.
+            // This may be slower but it will be compatible with both APF5, 6 and potential future
+            // versions (until the dynamic import appears outside of core I suppose).
+            // We resolve any symbolic links in order to get the real path that would be used in webpack.
+            const angularCoreResourceRoot = fs.realpathSync(path.dirname(angularCorePackagePath));
+            cmf.hooks.afterResolve.tapPromise('angular-compiler', async (result) => {
+                // Alter only existing request from Angular or one of the additional lazy module resources.
+                const isLazyModuleResource = (resource) => resource.startsWith(angularCoreResourceRoot) ||
+                    (this.options.additionalLazyModuleResources &&
+                        this.options.additionalLazyModuleResources.includes(resource));
+                if (!result || !this.done || !isLazyModuleResource(result.resource)) {
+                    return result;
+                }
+                return this.done.then(() => {
                     // This folder does not exist, but we need to give webpack a resource.
                     // TODO: check if we can't just leave it as is (angularCoreModuleDir).
                     result.resource = path.join(this._basePath, '$$_lazy_route_resource');
@@ -546,9 +520,9 @@ class AngularCompilerPlugin {
                         callback(null, dependencies);
                     };
                     return result;
-                });
+                }, () => undefined);
             });
-        }
+        });
         // Create and destroy forked type checker on watch mode.
         compiler.hooks.watchRun.tap('angular-compiler', () => {
             if (this._forkTypeChecker && !this._typeCheckerProcess) {
@@ -642,10 +616,6 @@ class AngularCompilerPlugin {
         else {
             // Remove unneeded angular decorators.
             this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
-            // Import ngfactory in loadChildren import syntax
-            if (this._importFactories) {
-                this._transformers.push(transformers_1.importFactory(msg => this._warnings.push(msg)));
-            }
         }
         if (this._platformTransformers !== null) {
             this._transformers.push(...this._platformTransformers);
@@ -687,25 +657,23 @@ class AngularCompilerPlugin {
         }
         // Make a new program and load the Angular structure.
         await this._createOrUpdateProgram();
-        if (this._discoverLazyRoutes) {
-            // Try to find lazy routes if we have an entry module.
-            // We need to run the `listLazyRoutes` the first time because it also navigates libraries
-            // and other things that we might miss using the (faster) findLazyRoutesInAst.
-            // Lazy routes modules will be read with compilerHost and added to the changed files.
-            let lazyRouteMap = {};
-            if (!this._JitMode || this._firstRun) {
-                lazyRouteMap = this._listLazyRoutesFromProgram();
-            }
-            else {
-                const changedTsFiles = this._getChangedTsFiles();
-                if (changedTsFiles.length > 0) {
-                    lazyRouteMap = this._findLazyRoutesInAst(changedTsFiles);
-                }
-            }
-            // Find lazy routes
-            lazyRouteMap = Object.assign({}, lazyRouteMap, this._options.additionalLazyModules);
-            this._processLazyRoutes(lazyRouteMap);
+        // Try to find lazy routes if we have an entry module.
+        // We need to run the `listLazyRoutes` the first time because it also navigates libraries
+        // and other things that we might miss using the (faster) findLazyRoutesInAst.
+        // Lazy routes modules will be read with compilerHost and added to the changed files.
+        let lazyRouteMap = {};
+        if (!this._JitMode || this._firstRun) {
+            lazyRouteMap = this._listLazyRoutesFromProgram();
         }
+        else {
+            const changedTsFiles = this._getChangedTsFiles();
+            if (changedTsFiles.length > 0) {
+                lazyRouteMap = this._findLazyRoutesInAst(changedTsFiles);
+            }
+        }
+        // Find lazy routes
+        lazyRouteMap = Object.assign({}, lazyRouteMap, this._options.additionalLazyModules);
+        this._processLazyRoutes(lazyRouteMap);
         // Emit files.
         benchmark_1.time('AngularCompilerPlugin._update._emit');
         const { emitResult, diagnostics } = this._emit();
