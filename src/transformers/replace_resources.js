@@ -13,7 +13,10 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
         const typeChecker = getTypeChecker();
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
-                node.decorators = ts.visitNodes(node.decorators, (node) => visitDecorator(node, typeChecker, directTemplateLoading));
+                const decorators = ts.visitNodes(node.decorators, (node) => visitDecorator(node, typeChecker, directTemplateLoading));
+                // todo: we need to investigate and confirm that using
+                //  `updateClassDeclaration` has no regressions
+                return ts.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
             return ts.visitEachChild(node, visitNode, context);
         };
