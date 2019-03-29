@@ -12,9 +12,10 @@ const ts = require("typescript");
 const compiler_host_1 = require("../compiler_host");
 // Find all nodes from the AST in the subtree of node of SyntaxKind kind.
 function collectDeepNodes(node, kind) {
+    const kinds = Array.isArray(kind) ? kind : [kind];
     const nodes = [];
     const helper = (child) => {
-        if (child.kind === kind) {
+        if (kinds.includes(child.kind)) {
             nodes.push(child);
         }
         ts.forEachChild(child, helper);

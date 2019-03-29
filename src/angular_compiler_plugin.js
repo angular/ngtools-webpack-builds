@@ -799,8 +799,14 @@ class AngularCompilerPlugin {
         const options = this._compilerOptions;
         const host = this._compilerHost;
         const cache = this._moduleResolutionCache;
-        const esImports = ast_helpers_1.collectDeepNodes(sourceFile, ts.SyntaxKind.ImportDeclaration)
+        const esImports = ast_helpers_1.collectDeepNodes(sourceFile, [
+            ts.SyntaxKind.ImportDeclaration,
+            ts.SyntaxKind.ExportDeclaration,
+        ])
             .map(decl => {
+            if (!decl.moduleSpecifier) {
+                return null;
+            }
             const moduleName = decl.moduleSpecifier.text;
             const resolved = ts.resolveModuleName(moduleName, resolvedFileName, options, host, cache);
             if (resolved.resolvedModule) {
