@@ -11,6 +11,7 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./angular_compiler_plugin"));
+__export(require("./interfaces"));
 var loader_1 = require("./loader");
 exports.default = loader_1.ngcLoader;
 exports.NgToolsLoader = __filename;

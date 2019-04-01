@@ -10,12 +10,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@angular-devkit/core");
 const fs_1 = require("fs");
 const ts = require("typescript");
+const utils_1 = require("./utils");
 const dev = Math.floor(Math.random() * 10000);
 class WebpackCompilerHost {
-    constructor(_options, basePath, host, cacheSourceFiles, directTemplateLoading = false) {
+    constructor(_options, basePath, host, cacheSourceFiles, directTemplateLoading = false, ngccProcessor) {
         this._options = _options;
         this.cacheSourceFiles = cacheSourceFiles;
         this.directTemplateLoading = directTemplateLoading;
+        this.ngccProcessor = ngccProcessor;
         this._changedFiles = new Set();
         this._sourceFileCache = new Map();
         this._virtualFileExtensions = [
@@ -220,7 +222,7 @@ class WebpackCompilerHost {
             }
             const content = this.readFile(fileName);
             if (content !== undefined) {
-                const sf = ts.createSourceFile(workaroundResolve(fileName), content, languageVersion, true);
+                const sf = ts.createSourceFile(utils_1.workaroundResolve(fileName), content, languageVersion, true);
                 if (this.cacheSourceFiles) {
                     this._sourceFileCache.set(p, sf);
                 }
@@ -253,7 +255,7 @@ class WebpackCompilerHost {
         };
     }
     getCurrentDirectory() {
-        return workaroundResolve(this._basePath);
+        return utils_1.workaroundResolve(this._basePath);
     }
     getCanonicalFileName(fileName) {
         const path = this.resolve(fileName);
@@ -285,13 +287,23 @@ class WebpackCompilerHost {
     trace(message) {
         console.log(message);
     }
+    resolveModuleNames(moduleNames, containingFile) {
+        return moduleNames.map(moduleName => {
+            const { resolvedModule } = ts.resolveModuleName(moduleName, utils_1.workaroundResolve(containingFile), this._options, this);
+            if (this._options.enableIvy && resolvedModule && this.ngccProcessor) {
+                this.ngccProcessor.processModule(moduleName, resolvedModule);
+            }
+            return resolvedModule;
+        });
+    }
+    resolveTypeReferenceDirectives(typeReferenceDirectiveNames, containingFile, redirectedReference) {
+        return typeReferenceDirectiveNames.map(moduleName => {
+            const { resolvedTypeReferenceDirective } = ts.resolveTypeReferenceDirective(moduleName, utils_1.workaroundResolve(containingFile), this._options, this, redirectedReference);
+            if (this._options.enableIvy && resolvedTypeReferenceDirective && this.ngccProcessor) {
+                this.ngccProcessor.processModule(moduleName, resolvedTypeReferenceDirective);
+            }
+            return resolvedTypeReferenceDirective;
+        });
+    }
 }
 exports.WebpackCompilerHost = WebpackCompilerHost;
-// `TsCompilerAotCompilerTypeCheckHostAdapter` in @angular/compiler-cli seems to resolve module
-// names directly via `resolveModuleName`, which prevents full Path usage.
-// To work around this we must provide the same path format as TS internally uses in
-// the SourceFile paths.
-function workaroundResolve(path) {
-    return core_1.getSystemPath(core_1.normalize(path)).replace(/\\/g, '/');
-}
-exports.workaroundResolve = workaroundResolve;

@@ -9,6 +9,7 @@
 import { Path, virtualFs } from '@angular-devkit/core';
 import { Stats } from 'fs';
 import * as ts from 'typescript';
+import { NgccProcessor } from './ngcc_processor';
 import { WebpackResourceLoader } from './resource_loader';
 export interface OnErrorFn {
     (message: string): void;
@@ -17,6 +18,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _options;
     private readonly cacheSourceFiles;
     private readonly directTemplateLoading;
+    private readonly ngccProcessor?;
     private _syncHost;
     private _memoryHost;
     private _changedFiles;
@@ -24,7 +26,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _resourceLoader?;
     private _sourceFileCache;
     private _virtualFileExtensions;
-    constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host, cacheSourceFiles: boolean, directTemplateLoading?: boolean);
+    constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host, cacheSourceFiles: boolean, directTemplateLoading?: boolean, ngccProcessor?: NgccProcessor | undefined);
     private readonly virtualFiles;
     denormalizePath(path: string): string;
     resolve(path: string): Path;
@@ -49,5 +51,6 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     setResourceLoader(resourceLoader: WebpackResourceLoader): void;
     readResource(fileName: string): string | Promise<string> | undefined;
     trace(message: string): void;
+    resolveModuleNames(moduleNames: string[], containingFile: string): (ts.ResolvedModule | undefined)[];
+    resolveTypeReferenceDirectives(typeReferenceDirectiveNames: string[], containingFile: string, redirectedReference?: ts.ResolvedProjectReference): (ts.ResolvedTypeReferenceDirective | undefined)[];
 }
-export declare function workaroundResolve(path: Path | string): string;

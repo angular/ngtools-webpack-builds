@@ -18,21 +18,19 @@ const benchmark_1 = require("./benchmark");
 const compiler_host_1 = require("./compiler_host");
 const entry_resolver_1 = require("./entry_resolver");
 const gather_diagnostics_1 = require("./gather_diagnostics");
+const interfaces_1 = require("./interfaces");
 const lazy_routes_1 = require("./lazy_routes");
+const ngcc_processor_1 = require("./ngcc_processor");
 const paths_plugin_1 = require("./paths-plugin");
 const resource_loader_1 = require("./resource_loader");
 const transformers_1 = require("./transformers");
 const ast_helpers_1 = require("./transformers/ast_helpers");
 const type_checker_1 = require("./type_checker");
 const type_checker_messages_1 = require("./type_checker_messages");
+const utils_1 = require("./utils");
 const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
 const webpack_input_host_1 = require("./webpack-input-host");
 const treeKill = require('tree-kill');
-var PLATFORM;
-(function (PLATFORM) {
-    PLATFORM[PLATFORM["Browser"] = 0] = "Browser";
-    PLATFORM[PLATFORM["Server"] = 1] = "Server";
-})(PLATFORM = exports.PLATFORM || (exports.PLATFORM = {}));
 class AngularCompilerPlugin {
     constructor(options) {
         this._discoverLazyRoutes = true;
@@ -51,6 +49,7 @@ class AngularCompilerPlugin {
         // TypeChecker process.
         this._forkTypeChecker = true;
         this._forkedTypeCheckerInitialized = false;
+        this._mainFields = [];
         this._options = Object.assign({}, options);
         this._setupOptions(this._options);
     }
@@ -201,7 +200,7 @@ class AngularCompilerPlugin {
             this._entryModule = path.resolve(this._basePath, this._compilerOptions.entryModule); // temporary cast for type issue
         }
         // Set platform.
-        this._platform = options.platform || PLATFORM.Browser;
+        this._platform = options.platform || interfaces_1.PLATFORM.Browser;
         // Make transformers.
         this._makeTransformers();
         benchmark_1.timeEnd('AngularCompilerPlugin._setupOptions');
@@ -311,7 +310,7 @@ class AngularCompilerPlugin {
                 host: this._compilerHost,
             });
             benchmark_1.timeEnd('AngularCompilerPlugin._listLazyRoutesFromProgram.createProgram');
-            entryRoute = compiler_host_1.workaroundResolve(this.entryModule.path) + '#' + this.entryModule.className;
+            entryRoute = utils_1.workaroundResolve(this.entryModule.path) + '#' + this.entryModule.className;
         }
         else {
             ngProgram = this._program;
@@ -359,7 +358,7 @@ class AngularCompilerPlugin {
                 const factoryModuleName = moduleName ? `#${moduleName}NgFactory` : '';
                 moduleKey = `${lazyRouteModule}.ngfactory${factoryModuleName}`;
             }
-            modulePath = compiler_host_1.workaroundResolve(modulePath);
+            modulePath = utils_1.workaroundResolve(modulePath);
             if (moduleKey in this._lazyRoutes) {
                 if (this._lazyRoutes[moduleKey] !== modulePath) {
                     // Found a duplicate, this is an error.
@@ -438,6 +437,15 @@ class AngularCompilerPlugin {
     // Registration hook for webpack plugin.
     // tslint:disable-next-line:no-big-function
     apply(compiler) {
+        // The below is require by NGCC processor
+        // since we need to know which fields we need to process
+        compiler.hooks.environment.tap('angular-compiler', () => {
+            const { options } = compiler;
+            const mainFields = options.resolve && options.resolve.mainFields;
+            if (mainFields) {
+                this._mainFields = utils_1.flattenArray(mainFields);
+            }
+        });
         // cleanup if not watching
         compiler.hooks.thisCompilation.tap('angular-compiler', compilation => {
             compilation.hooks.finishModules.tap('angular-compiler', () => {
@@ -479,8 +487,22 @@ class AngularCompilerPlugin {
                     host = aliasHost;
                 }
             }
+            let ngccProcessor;
+            if (this._compilerOptions.enableIvy) {
+                let ngcc;
+                try {
+                    // this is done for the sole reason that @ngtools/webpack
+                    // support versions of Angular that don't have NGCC API
+                    ngcc = require('@angular/compiler-cli/ngcc');
+                }
+                catch (_a) {
+                }
+                if (ngcc) {
+                    ngccProcessor = new ngcc_processor_1.NgccProcessor(ngcc, this._mainFields, compilerWithFileSystems.inputFileSystem);
+                }
+            }
             // Create the webpack compiler host.
-            const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath, host, true, this._options.directTemplateLoading);
+            const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath, host, true, this._options.directTemplateLoading, ngccProcessor);
             // Create and set a new WebpackResourceLoader in AOT
             if (!this._JitMode) {
                 this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
@@ -565,6 +587,21 @@ class AngularCompilerPlugin {
             this._donePromise = null;
         });
         compiler.hooks.afterResolvers.tap('angular-compiler', compiler => {
+            if (this._compilerOptions.enableIvy) {
+                // When Ivy is enabled we need to add the fields added by NGCC
+                // to take precedence over the provided mainFields.
+                // NGCC adds fields in package.json suffixed with '_ivy_ngcc'
+                // Example: module -> module__ivy_ngcc
+                // tslint:disable-next-line:no-any
+                compiler.resolverFactory.hooks.resolveOptions
+                    .for('normal')
+                    // tslint:disable-next-line:no-any
+                    .tap('WebpackOptionsApply', (resolveOptions) => {
+                    const mainFields = resolveOptions.mainFields
+                        .map(f => [`${f}_ivy_ngcc`, f]);
+                    return Object.assign({}, resolveOptions, { mainFields: utils_1.flattenArray(mainFields) });
+                });
+            }
             // tslint:disable-next-line:no-any
             compiler.resolverFactory.hooks.resolver
                 .for('normal')
@@ -627,9 +664,9 @@ class AngularCompilerPlugin {
     }
     _makeTransformers() {
         const isAppPath = (fileName) => !fileName.endsWith('.ngfactory.ts') && !fileName.endsWith('.ngstyle.ts');
-        const isMainPath = (fileName) => fileName === (this._mainPath ? compiler_host_1.workaroundResolve(this._mainPath) : this._mainPath);
+        const isMainPath = (fileName) => fileName === (this._mainPath ? utils_1.workaroundResolve(this._mainPath) : this._mainPath);
         const getEntryModule = () => this.entryModule
-            ? { path: compiler_host_1.workaroundResolve(this.entryModule.path), className: this.entryModule.className }
+            ? { path: utils_1.workaroundResolve(this.entryModule.path), className: this.entryModule.className }
             : this.entryModule;
         const getLazyRoutes = () => this._lazyRoutes;
         const getTypeChecker = () => this._getTsProgram().getTypeChecker();
@@ -649,7 +686,7 @@ class AngularCompilerPlugin {
             this._transformers.push(...this._platformTransformers);
         }
         else {
-            if (this._platform === PLATFORM.Browser) {
+            if (this._platform === interfaces_1.PLATFORM.Browser) {
                 // If we have a locale, auto import the locale data file.
                 // This transform must go before replaceBootstrap because it looks for the entry module
                 // import, which will be replaced.
@@ -661,7 +698,7 @@ class AngularCompilerPlugin {
                     this._transformers.push(transformers_1.replaceBootstrap(isAppPath, getEntryModule, getTypeChecker, !!this._compilerOptions.enableIvy));
                 }
             }
-            else if (this._platform === PLATFORM.Server) {
+            else if (this._platform === interfaces_1.PLATFORM.Server) {
                 this._transformers.push(transformers_1.exportLazyModuleMap(isMainPath, getLazyRoutes));
                 if (!this._JitMode) {
                     this._transformers.push(transformers_1.exportNgFactory(isMainPath, getEntryModule), transformers_1.replaceServerBootstrap(isMainPath, getEntryModule, getTypeChecker));
