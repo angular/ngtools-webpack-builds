@@ -15,6 +15,9 @@ class VirtualFileSystemDecorator {
         this._inputFileSystem = _inputFileSystem;
         this._webpackCompilerHost = _webpackCompilerHost;
     }
+    getWebpackCompilerHost() {
+        return this._webpackCompilerHost;
+    }
     getVirtualFilesPaths() {
         return this._webpackCompilerHost.getNgFactoryPaths();
     }

@@ -449,8 +449,13 @@ class AngularCompilerPlugin {
         // cleanup if not watching
         compiler.hooks.thisCompilation.tap('angular-compiler', compilation => {
             compilation.hooks.finishModules.tap('angular-compiler', () => {
+                let rootCompiler = compiler;
+                while (rootCompiler.parentCompilation) {
+                    // tslint:disable-next-line:no-any
+                    rootCompiler = compiler.parentCompilation;
+                }
                 // only present for webpack 4.23.0+, assume true otherwise
-                const watchMode = compiler.watchMode === undefined ? true : compiler.watchMode;
+                const watchMode = rootCompiler.watchMode === undefined ? true : rootCompiler.watchMode;
                 if (!watchMode) {
                     this._program = null;
                     this._transformers = [];
@@ -638,6 +643,22 @@ class AngularCompilerPlugin {
         // tslint:disable-next-line:no-any
         if (compilation._ngToolsWebpackPluginInstance) {
             throw new Error('An @ngtools/webpack plugin already exist for this compilation.');
+        }
+        // If there is no compiler host at this point, it means that the environment hook did not run.
+        // This happens in child compilations that inherit the parent compilation file system.
+        // Node: child compilations also do not run most webpack compiler hooks, including almost all
+        // we use here. The child compiler will always run as if it was the first build.
+        if (this._compilerHost === undefined) {
+            const inputFs = compilation.compiler.inputFileSystem;
+            if (!inputFs.getWebpackCompilerHost) {
+                throw new Error('AngularCompilerPlugin is running in a child compilation, but could' +
+                    'not find a WebpackCompilerHost in the parent compilation.');
+            }
+            // Use the existing WebpackCompilerHost to ensure builds and rebuilds work.
+            this._compilerHost = compiler_cli_1.createCompilerHost({
+                options: this._compilerOptions,
+                tsHost: inputFs.getWebpackCompilerHost(),
+            });
         }
         // Set a private variable for this plugin instance.
         // tslint:disable-next-line:no-any

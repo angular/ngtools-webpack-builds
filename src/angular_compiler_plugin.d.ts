@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { Compiler } from 'webpack';
+import { Compiler, compilation } from 'webpack';
 import { AngularCompilerPluginOptions } from './interfaces';
 export declare class AngularCompilerPlugin {
     private _options;
@@ -55,6 +55,7 @@ export declare class AngularCompilerPlugin {
     private _updateForkedTypeChecker;
     apply(compiler: Compiler & {
         watchMode?: boolean;
+        parentCompilation?: compilation.Compilation;
     }): void;
     private _make;
     private pushCompilationErrors;
