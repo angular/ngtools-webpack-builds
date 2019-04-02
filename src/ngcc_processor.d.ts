@@ -11,8 +11,11 @@ export declare class NgccProcessor {
     private readonly ngcc;
     private readonly propertiesToConsider;
     private readonly inputFileSystem;
+    private readonly compilationWarnings;
+    private readonly compilationErrors;
     private _processedModules;
-    constructor(ngcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], inputFileSystem: InputFileSystem);
+    private _logger;
+    constructor(ngcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[]);
     processModule(moduleName: string, resolvedModule: ts.ResolvedModule | ts.ResolvedTypeReferenceDirective): void;
     /**
      * Try resolve a package.json file from the resolved .d.ts file.
