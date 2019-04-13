@@ -35,6 +35,7 @@ class AngularCompilerPlugin {
     constructor(options) {
         this._discoverLazyRoutes = true;
         this._importFactories = false;
+        this._useFactories = false;
         // Contains `moduleImportPath#exportName` => `fullModulePath`.
         this._lazyRoutes = {};
         this._transformers = [];
@@ -95,7 +96,7 @@ class AngularCompilerPlugin {
             throw new Error(compiler_cli_1.formatDiagnostics(config.errors));
         }
         this._rootNames = config.rootNames;
-        this._compilerOptions = Object.assign({}, config.options, options.compilerOptions);
+        this._compilerOptions = { ...config.options, ...options.compilerOptions };
         this._basePath = config.options.basePath || basePath || '';
         // Overwrite outDir so we can find generated files next to their .ts origin in compilerHost.
         this._compilerOptions.outDir = '';
@@ -161,12 +162,8 @@ class AngularCompilerPlugin {
             this._platformTransformers = options.platformTransformers;
         }
         // Determine if lazy route discovery via Compiler CLI private API should be attempted.
-        if (this._compilerOptions.enableIvy) {
-            // Never try to discover lazy routes with Ivy.
-            this._discoverLazyRoutes = false;
-        }
-        else if (options.discoverLazyRoutes !== undefined) {
-            // The default is to discover routes, but it can be overriden.
+        // The default is to discover routes, but it can be overriden.
+        if (options.discoverLazyRoutes !== undefined) {
             this._discoverLazyRoutes = options.discoverLazyRoutes;
         }
         if (this._discoverLazyRoutes === false && this.options.additionalLazyModuleResources
@@ -179,7 +176,11 @@ class AngularCompilerPlugin {
             this._warnings.push(new Error(`Lazy route discovery is disabled but additional lazy modules were provided.`
                 + `These will be ignored.`));
         }
-        if (!this._compilerOptions.enableIvy && options.importFactories === true) {
+        if (!this._JitMode && !this._compilerOptions.enableIvy) {
+            // Only attempt to use factories when AOT and not Ivy.
+            this._useFactories = true;
+        }
+        if (this._useFactories && options.importFactories === true) {
             // Only transform imports to use factories with View Engine.
             this._importFactories = true;
         }
@@ -306,7 +307,7 @@ class AngularCompilerPlugin {
             benchmark_1.time('AngularCompilerPlugin._listLazyRoutesFromProgram.createProgram');
             ngProgram = compiler_cli_1.createProgram({
                 rootNames: this._rootNames,
-                options: Object.assign({}, this._compilerOptions, { genDir: '', collectAllErrors: true }),
+                options: { ...this._compilerOptions, genDir: '', collectAllErrors: true },
                 host: this._compilerHost,
             });
             benchmark_1.timeEnd('AngularCompilerPlugin._listLazyRoutesFromProgram.createProgram');
@@ -345,18 +346,15 @@ class AngularCompilerPlugin {
             }
             const lazyRouteTSFile = discoveredLazyRoutes[lazyRouteKey].replace(/\\/g, '/');
             let modulePath, moduleKey;
-            if (this._JitMode ||
-                // When using Ivy and not using allowEmptyCodegenFiles, factories are not generated.
-                (this._compilerOptions.enableIvy && !this._compilerOptions.allowEmptyCodegenFiles)) {
-                modulePath = lazyRouteTSFile;
-                moduleKey = `${lazyRouteModule}${moduleName ? '#' + moduleName : ''}`;
-            }
-            else {
-                // NgFactories are only used with AOT on ngc (legacy) mode.
+            if (this._useFactories) {
                 modulePath = lazyRouteTSFile.replace(/(\.d)?\.tsx?$/, '');
                 modulePath += '.ngfactory.js';
                 const factoryModuleName = moduleName ? `#${moduleName}NgFactory` : '';
                 moduleKey = `${lazyRouteModule}.ngfactory${factoryModuleName}`;
+            }
+            else {
+                modulePath = lazyRouteTSFile;
+                moduleKey = `${lazyRouteModule}${moduleName ? '#' + moduleName : ''}`;
             }
             modulePath = utils_1.workaroundResolve(modulePath);
             if (moduleKey in this._lazyRoutes) {
@@ -604,7 +602,10 @@ class AngularCompilerPlugin {
                     .tap('WebpackOptionsApply', (resolveOptions) => {
                     const mainFields = resolveOptions.mainFields
                         .map(f => [`${f}_ivy_ngcc`, f]);
-                    return Object.assign({}, resolveOptions, { mainFields: utils_1.flattenArray(mainFields) });
+                    return {
+                        ...resolveOptions,
+                        mainFields: utils_1.flattenArray(mainFields),
+                    };
                 });
             }
             // tslint:disable-next-line:no-any
@@ -714,14 +715,14 @@ class AngularCompilerPlugin {
                 if (this._normalizedLocale) {
                     this._transformers.push(transformers_1.registerLocaleData(isAppPath, getEntryModule, this._normalizedLocale));
                 }
-                if (!this._JitMode) {
+                if (this._useFactories) {
                     // Replace bootstrap in browser AOT.
                     this._transformers.push(transformers_1.replaceBootstrap(isAppPath, getEntryModule, getTypeChecker, !!this._compilerOptions.enableIvy));
                 }
             }
             else if (this._platform === interfaces_1.PLATFORM.Server) {
                 this._transformers.push(transformers_1.exportLazyModuleMap(isMainPath, getLazyRoutes));
-                if (!this._JitMode) {
+                if (this._useFactories) {
                     this._transformers.push(transformers_1.exportNgFactory(isMainPath, getEntryModule), transformers_1.replaceServerBootstrap(isMainPath, getEntryModule, getTypeChecker));
                 }
             }
@@ -759,7 +760,10 @@ class AngularCompilerPlugin {
                 }
             }
             // Find lazy routes
-            lazyRouteMap = Object.assign({}, lazyRouteMap, this._options.additionalLazyModules);
+            lazyRouteMap = {
+                ...lazyRouteMap,
+                ...this._options.additionalLazyModules,
+            };
             this._processLazyRoutes(lazyRouteMap);
         }
         // Emit files.

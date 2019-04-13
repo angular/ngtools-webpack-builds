@@ -43,7 +43,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     getDirectories(path: string): string[];
     getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, onError?: OnErrorFn): ts.SourceFile | undefined;
     getDefaultLibFileName(options: ts.CompilerOptions): string;
-    readonly writeFile: (fileName: string, data: string, _writeByteOrderMark: boolean, onError?: ((message: string) => void) | undefined, _sourceFiles?: ReadonlyArray<ts.SourceFile> | undefined) => void;
+    readonly writeFile: (fileName: string, data: string, _writeByteOrderMark: boolean, onError?: ((message: string) => void) | undefined, _sourceFiles?: readonly ts.SourceFile[] | undefined) => void;
     getCurrentDirectory(): string;
     getCanonicalFileName(fileName: string): string;
     useCaseSensitiveFileNames(): boolean;

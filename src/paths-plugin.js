@@ -53,7 +53,11 @@ class TypeScriptPathsPlugin {
             }
             const replacements = findReplacements(originalRequest, this._options.paths || {});
             for (const potential of replacements) {
-                const potentialRequest = Object.assign({}, request, { request: path.resolve(this._options.baseUrl || '', potential), typescriptPathMapped: true });
+                const potentialRequest = {
+                    ...request,
+                    request: path.resolve(this._options.baseUrl || '', potential),
+                    typescriptPathMapped: true,
+                };
                 const result = await resolveAsync(potentialRequest, resolveContext);
                 if (result) {
                     return result;
