@@ -715,9 +715,9 @@ class AngularCompilerPlugin {
                 if (this._normalizedLocale) {
                     this._transformers.push(transformers_1.registerLocaleData(isAppPath, getEntryModule, this._normalizedLocale));
                 }
-                if (this._useFactories) {
-                    // Replace bootstrap in browser AOT.
-                    this._transformers.push(transformers_1.replaceBootstrap(isAppPath, getEntryModule, getTypeChecker, !!this._compilerOptions.enableIvy));
+                if (!this._JitMode) {
+                    // Replace bootstrap in browser non JIT Mode.
+                    this._transformers.push(transformers_1.replaceBootstrap(isAppPath, getEntryModule, getTypeChecker, this._useFactories));
                 }
             }
             else if (this._platform === interfaces_1.PLATFORM.Server) {

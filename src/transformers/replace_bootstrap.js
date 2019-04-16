@@ -13,7 +13,7 @@ const ast_helpers_1 = require("./ast_helpers");
 const insert_import_1 = require("./insert_import");
 const interfaces_1 = require("./interfaces");
 const make_transform_1 = require("./make_transform");
-function replaceBootstrap(shouldTransform, getEntryModule, getTypeChecker, enableIvy) {
+function replaceBootstrap(shouldTransform, getEntryModule, getTypeChecker, useFactories = true) {
     const standardTransform = function (sourceFile) {
         const ops = [];
         const entryModule = getEntryModule();
@@ -56,7 +56,7 @@ function replaceBootstrap(shouldTransform, getEntryModule, getTypeChecker, enabl
             let className = entryModule.className;
             let modulePath = `./${relativeEntryModulePath}`.replace(/\\/g, '/');
             let bootstrapIdentifier = 'bootstrapModule';
-            if (!enableIvy) {
+            if (useFactories) {
                 className += 'NgFactory';
                 modulePath += '.ngfactory';
                 bootstrapIdentifier = 'bootstrapModuleFactory';
