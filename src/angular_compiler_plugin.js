@@ -34,7 +34,6 @@ const treeKill = require('tree-kill');
 class AngularCompilerPlugin {
     constructor(options) {
         this._discoverLazyRoutes = true;
-        this._importFactories = false;
         this._useFactories = false;
         // Contains `moduleImportPath#exportName` => `fullModulePath`.
         this._lazyRoutes = {};
@@ -179,10 +178,6 @@ class AngularCompilerPlugin {
         if (!this._JitMode && !this._compilerOptions.enableIvy) {
             // Only attempt to use factories when AOT and not Ivy.
             this._useFactories = true;
-        }
-        if (this._useFactories && options.importFactories === true) {
-            // Only transform imports to use factories with View Engine.
-            this._importFactories = true;
         }
         // Default ContextElementDependency to the one we can import from here.
         // Failing to use the right ContextElementDependency will throw the error below:
@@ -700,7 +695,8 @@ class AngularCompilerPlugin {
             // Remove unneeded angular decorators.
             this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
             // Import ngfactory in loadChildren import syntax
-            if (this._importFactories) {
+            if (this._useFactories) {
+                // Only transform imports to use factories with View Engine.
                 this._transformers.push(transformers_1.importFactory(msg => this._warnings.push(msg)));
             }
         }

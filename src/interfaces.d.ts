@@ -43,7 +43,6 @@ export interface AngularCompilerPluginOptions {
     logger?: logging.Logger;
     directTemplateLoading?: boolean;
     discoverLazyRoutes?: boolean;
-    importFactories?: boolean;
     additionalLazyModules?: {
         [module: string]: string;
     };

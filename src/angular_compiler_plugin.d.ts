@@ -10,7 +10,6 @@ export declare class AngularCompilerPlugin {
     private _moduleResolutionCache;
     private _resourceLoader?;
     private _discoverLazyRoutes;
-    private _importFactories;
     private _useFactories;
     private _lazyRoutes;
     private _tsConfigPath;
