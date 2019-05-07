@@ -13,12 +13,15 @@ export declare class NgccProcessor {
     private readonly inputFileSystem;
     private readonly compilationWarnings;
     private readonly compilationErrors;
+    private readonly basePath;
     private _processedModules;
     private _logger;
-    constructor(ngcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[]);
+    private _nodeModulesDirectory;
+    constructor(ngcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string);
     processModule(moduleName: string, resolvedModule: ts.ResolvedModule | ts.ResolvedTypeReferenceDirective): void;
     /**
      * Try resolve a package.json file from the resolved .d.ts file.
      */
     private tryResolvePackage;
+    private findNodeModulesDirectory;
 }
