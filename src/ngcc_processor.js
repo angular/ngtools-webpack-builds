@@ -85,7 +85,10 @@ class NgccLogger {
         this.compilationErrors = compilationErrors;
     }
     debug(..._args) { }
-    info(..._args) { }
+    info(...args) {
+        // Log to stderr because it's a progress-like info message.
+        process.stderr.write(`\n${args.join(' ')}\n`);
+    }
     warn(...args) {
         this.compilationWarnings.push(args.join(' '));
     }
