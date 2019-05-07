@@ -7,8 +7,9 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = require("fs");
+const path = require("path");
 const benchmark_1 = require("./benchmark");
-const utils_1 = require("./utils");
 // We cannot create a plugin for this, because NGTSC requires addition type
 // information which ngcc creates when processing a package which was compiled with NGC.
 // Example of such errors:
@@ -17,14 +18,16 @@ const utils_1 = require("./utils");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(ngcc, propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors) {
+    constructor(ngcc, propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath) {
         this.ngcc = ngcc;
         this.propertiesToConsider = propertiesToConsider;
         this.inputFileSystem = inputFileSystem;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
+        this.basePath = basePath;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
+        this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
     }
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
@@ -40,12 +43,11 @@ class NgccProcessor {
             this._processedModules.add(moduleName);
             return;
         }
-        const normalizedJsonPath = utils_1.workaroundResolve(packageJsonPath);
         const timeLabel = `NgccProcessor.processModule.ngcc.process+${moduleName}`;
         benchmark_1.time(timeLabel);
         this.ngcc.process({
-            basePath: normalizedJsonPath.substring(0, normalizedJsonPath.indexOf(moduleName)),
-            targetEntryPointPath: moduleName,
+            basePath: this._nodeModulesDirectory,
+            targetEntryPointPath: path.dirname(packageJsonPath),
             propertiesToConsider: this.propertiesToConsider,
             compileAllFormats: false,
             createNewEntryPointFormats: true,
@@ -76,6 +78,17 @@ class NgccProcessor {
             // Ex: @angular/compiler/src/i18n/i18n_ast/package.json
             return undefined;
         }
+    }
+    findNodeModulesDirectory(startPoint) {
+        let current = startPoint;
+        while (path.dirname(current) !== current) {
+            const nodePath = path.join(current, 'node_modules');
+            if (fs_1.existsSync(nodePath)) {
+                return nodePath;
+            }
+            current = path.dirname(current);
+        }
+        throw new Error(`Cannot locate the 'node_modules' directory.`);
     }
 }
 exports.NgccProcessor = NgccProcessor;

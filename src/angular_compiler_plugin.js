@@ -496,7 +496,7 @@ class AngularCompilerPlugin {
                 catch (_a) {
                 }
                 if (ngcc) {
-                    ngccProcessor = new ngcc_processor_1.NgccProcessor(ngcc, this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors);
+                    ngccProcessor = new ngcc_processor_1.NgccProcessor(ngcc, this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath);
                 }
             }
             // Create the webpack compiler host.
