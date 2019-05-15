@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const path_1 = require("path");
 const ts = require("typescript");
-const utils_1 = require("../utils");
 const ast_helpers_1 = require("./ast_helpers");
 const insert_import_1 = require("./insert_import");
 const interfaces_1 = require("./interfaces");
@@ -28,7 +27,7 @@ function replaceServerBootstrap(shouldTransform, getEntryModule, getTypeChecker)
             return [];
         }
         const relativeEntryModulePath = path_1.relative(path_1.dirname(sourceFile.fileName), entryModule.path);
-        const normalizedEntryModulePath = utils_1.forwardSlashPath(`./${relativeEntryModulePath}`);
+        const normalizedEntryModulePath = `./${relativeEntryModulePath}`.replace(/\\/g, '/');
         const factoryClassName = entryModule.className + 'NgFactory';
         const factoryModulePath = normalizedEntryModulePath + '.ngfactory';
         // Find the bootstrap calls.

@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const path_1 = require("path");
 const ts = require("typescript");
-const utils_1 = require("../utils");
 const ast_helpers_1 = require("./ast_helpers");
 const insert_import_1 = require("./insert_import");
 const interfaces_1 = require("./interfaces");
@@ -55,7 +54,7 @@ function replaceBootstrap(shouldTransform, getEntryModule, getTypeChecker, useFa
             // Add the transform operations.
             const relativeEntryModulePath = path_1.relative(path_1.dirname(sourceFile.fileName), entryModule.path);
             let className = entryModule.className;
-            let modulePath = utils_1.forwardSlashPath(`./${relativeEntryModulePath}`);
+            let modulePath = `./${relativeEntryModulePath}`.replace(/\\/g, '/');
             let bootstrapIdentifier = 'bootstrapModule';
             if (useFactories) {
                 className += 'NgFactory';

@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const path = require("path");
 const ts = require("typescript");
-const utils_1 = require("../utils");
 const ast_helpers_1 = require("./ast_helpers");
 const interfaces_1 = require("./interfaces");
 const make_transform_1 = require("./make_transform");
@@ -36,7 +35,7 @@ function exportLazyModuleMap(shouldTransform, lazyRoutesCb) {
             if (!modulePath) {
                 return;
             }
-            let relativePath = utils_1.forwardSlashPath(path.relative(dirName, modulePath));
+            let relativePath = path.relative(dirName, modulePath).replace(/\\/g, '/');
             if (!(relativePath.startsWith('./') || relativePath.startsWith('../'))) {
                 // 'a/b/c' is a relative path for Node but an absolute path for TS, so we must convert it.
                 relativePath = `./${relativePath}`;

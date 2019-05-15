@@ -1,3 +1,10 @@
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
 import * as ts from 'typescript';
 /**
  * Given this original source code:
@@ -39,4 +46,4 @@ import * as ts from 'typescript';
  * constructs, like `class` and arrow functions, still remain.
  *
  */
-export declare function importFactory(warningCb: (warning: string) => void, getTypeChecker: () => ts.TypeChecker): ts.TransformerFactory<ts.SourceFile>;
+export declare function importFactory(warningCb: (warning: string) => void): ts.TransformerFactory<ts.SourceFile>;

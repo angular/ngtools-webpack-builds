@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const path = require("path");
 const ts = require("typescript");
-const utils_1 = require("./utils");
 /**
  * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
  * @param node The root node to check, or null if the whole tree should be searched.
@@ -71,7 +70,7 @@ class TypeScriptFileRefactor {
     constructor(fileName, _host, _program, source) {
         let sourceFile = null;
         if (_program) {
-            fileName = utils_1.forwardSlashPath(resolve(fileName, _host, _program.getCompilerOptions()));
+            fileName = resolve(fileName, _host, _program.getCompilerOptions()).replace(/\\/g, '/');
             this._fileName = fileName;
             if (source) {
                 sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);

@@ -9,7 +9,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const path_1 = require("path");
 const ts = require("typescript");
-const utils_1 = require("../utils");
 const ast_helpers_1 = require("./ast_helpers");
 const interfaces_1 = require("./interfaces");
 const make_transform_1 = require("./make_transform");
@@ -27,7 +26,7 @@ function exportNgFactory(shouldTransform, getEntryModule) {
             return [];
         }
         const relativeEntryModulePath = path_1.relative(path_1.dirname(sourceFile.fileName), entryModule.path);
-        const normalizedEntryModulePath = utils_1.forwardSlashPath(`./${relativeEntryModulePath}`);
+        const normalizedEntryModulePath = `./${relativeEntryModulePath}`.replace(/\\/g, '/');
         // Get the module path from the import.
         entryModuleIdentifiers.forEach((entryModuleIdentifier) => {
             if (!entryModuleIdentifier.parent

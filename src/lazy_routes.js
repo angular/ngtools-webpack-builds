@@ -10,7 +10,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
 const ts = require("typescript");
 const refactor_1 = require("./refactor");
-const utils_1 = require("./utils");
 function _getContentOfKeyLiteral(_source, node) {
     if (node.kind == ts.SyntaxKind.Identifier) {
         return node.text;
@@ -29,7 +28,7 @@ function findLazyRoutes(filePath, host, program, compilerOptions) {
         }
         compilerOptions = program.getCompilerOptions();
     }
-    const fileName = utils_1.forwardSlashPath(refactor_1.resolve(filePath, host, compilerOptions));
+    const fileName = refactor_1.resolve(filePath, host, compilerOptions).replace(/\\/g, '/');
     let sourceFile;
     if (program) {
         sourceFile = program.getSourceFile(fileName);
