@@ -79,7 +79,7 @@ class AngularCompilerPlugin {
             throw new Error('Must specify "tsConfigPath" in the configuration of @ngtools/webpack.');
         }
         // TS represents paths internally with '/' and expects the tsconfig path to be in this format
-        this._tsConfigPath = options.tsConfigPath.replace(/\\/g, '/');
+        this._tsConfigPath = utils_1.forwardSlashPath(options.tsConfigPath);
         // Check the base path.
         const maybeBasePath = path.resolve(process.cwd(), this._tsConfigPath);
         let basePath = maybeBasePath;
@@ -339,7 +339,7 @@ class AngularCompilerPlugin {
             if (!lazyRouteModule) {
                 return;
             }
-            const lazyRouteTSFile = discoveredLazyRoutes[lazyRouteKey].replace(/\\/g, '/');
+            const lazyRouteTSFile = utils_1.forwardSlashPath(discoveredLazyRoutes[lazyRouteKey]);
             let modulePath, moduleKey;
             if (this._useFactories) {
                 modulePath = lazyRouteTSFile.replace(/(\.d)?\.tsx?$/, '');
@@ -697,7 +697,7 @@ class AngularCompilerPlugin {
             // Import ngfactory in loadChildren import syntax
             if (this._useFactories) {
                 // Only transform imports to use factories with View Engine.
-                this._transformers.push(transformers_1.importFactory(msg => this._warnings.push(msg)));
+                this._transformers.push(transformers_1.importFactory(msg => this._warnings.push(msg), getTypeChecker));
             }
         }
         if (this._platformTransformers !== null) {
