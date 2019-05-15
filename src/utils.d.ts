@@ -8,3 +8,4 @@
 import { Path } from '@angular-devkit/core';
 export declare function workaroundResolve(path: Path | string): string;
 export declare function flattenArray<T>(value: Array<T | T[]>): T[];
+export declare function forwardSlashPath(path: string): string;
