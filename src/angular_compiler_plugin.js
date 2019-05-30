@@ -70,7 +70,7 @@ class AngularCompilerPlugin {
         return tsProgram ? tsProgram.getTypeChecker() : null;
     }
     static isSupported() {
-        return compiler_cli_1.VERSION && parseInt(compiler_cli_1.VERSION.major) >= 5;
+        return compiler_cli_1.VERSION && parseInt(compiler_cli_1.VERSION.major) >= 8;
     }
     _setupOptions(options) {
         benchmark_1.time('AngularCompilerPlugin._setupOptions');
@@ -488,17 +488,7 @@ class AngularCompilerPlugin {
             }
             let ngccProcessor;
             if (this._compilerOptions.enableIvy) {
-                let ngcc;
-                try {
-                    // this is done for the sole reason that @ngtools/webpack
-                    // support versions of Angular that don't have NGCC API
-                    ngcc = require('@angular/compiler-cli/ngcc');
-                }
-                catch (_a) {
-                }
-                if (ngcc) {
-                    ngccProcessor = new ngcc_processor_1.NgccProcessor(ngcc, this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath);
-                }
+                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath);
             }
             // Create the webpack compiler host.
             const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath, host, true, this._options.directTemplateLoading, ngccProcessor);
