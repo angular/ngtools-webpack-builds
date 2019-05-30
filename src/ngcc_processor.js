@@ -7,6 +7,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+const ngcc_1 = require("@angular/compiler-cli/ngcc");
 const fs_1 = require("fs");
 const path = require("path");
 const benchmark_1 = require("./benchmark");
@@ -18,8 +19,7 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(ngcc, propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath) {
-        this.ngcc = ngcc;
+    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath) {
         this.propertiesToConsider = propertiesToConsider;
         this.inputFileSystem = inputFileSystem;
         this.compilationWarnings = compilationWarnings;
@@ -45,7 +45,7 @@ class NgccProcessor {
         }
         const timeLabel = `NgccProcessor.processModule.ngcc.process+${moduleName}`;
         benchmark_1.time(timeLabel);
-        this.ngcc.process({
+        ngcc_1.process({
             basePath: this._nodeModulesDirectory,
             targetEntryPointPath: path.dirname(packageJsonPath),
             propertiesToConsider: this.propertiesToConsider,
