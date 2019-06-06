@@ -106,13 +106,15 @@ class WebpackCompilerHost {
     readFile(fileName) {
         const filePath = this.resolve(fileName);
         try {
+            let content;
             if (this._memoryHost.isFile(filePath)) {
-                return core_1.virtualFs.fileBufferToString(this._memoryHost.read(filePath));
+                content = this._memoryHost.read(filePath);
             }
             else {
-                const content = this._syncHost.read(filePath);
-                return core_1.virtualFs.fileBufferToString(content);
+                content = this._syncHost.read(filePath);
             }
+            // strip BOM
+            return core_1.virtualFs.fileBufferToString(content).replace(/^\uFEFF/, '');
         }
         catch (_a) {
             return undefined;
