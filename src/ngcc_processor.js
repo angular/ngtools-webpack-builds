@@ -19,15 +19,23 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath) {
+    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath, compilerOptions) {
         this.propertiesToConsider = propertiesToConsider;
         this.inputFileSystem = inputFileSystem;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
         this.basePath = basePath;
+        this.compilerOptions = compilerOptions;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
         this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
+        const { baseUrl, paths } = this.compilerOptions;
+        if (baseUrl && paths) {
+            this._pathMappings = {
+                baseUrl,
+                paths,
+            };
+        }
     }
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
@@ -52,6 +60,7 @@ class NgccProcessor {
             compileAllFormats: false,
             createNewEntryPointFormats: true,
             logger: this._logger,
+            pathMappings: this._pathMappings,
         });
         benchmark_1.timeEnd(timeLabel);
         // Purge this file from cache, since NGCC add new mainFields. Ex: module_ivy_ngcc

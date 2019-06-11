@@ -489,7 +489,7 @@ class AngularCompilerPlugin {
             }
             let ngccProcessor;
             if (this._compilerOptions.enableIvy) {
-                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath);
+                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath, this._compilerOptions);
             }
             // Create the webpack compiler host.
             const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath, host, true, this._options.directTemplateLoading, ngccProcessor);
@@ -627,7 +627,6 @@ class AngularCompilerPlugin {
     }
     async _make(compilation) {
         benchmark_1.time('AngularCompilerPlugin._make');
-        this._emitSkipped = true;
         // tslint:disable-next-line:no-any
         if (compilation._ngToolsWebpackPluginInstance) {
             throw new Error('An @ngtools/webpack plugin already exist for this compilation.');
