@@ -7,6 +7,7 @@
  */
 /// <reference types="node" />
 import { logging, virtualFs } from '@angular-devkit/core';
+import { CompilerOptions } from '@angular/compiler-cli';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 export declare enum PLATFORM {
@@ -48,7 +49,7 @@ export interface AngularCompilerPluginOptions {
     };
     additionalLazyModuleResources?: string[];
     contextElementDependencyConstructor?: ContextElementDependencyConstructor;
-    compilerOptions?: ts.CompilerOptions;
+    compilerOptions?: CompilerOptions;
     host?: virtualFs.Host<fs.Stats>;
     platformTransformers?: ts.TransformerFactory<ts.SourceFile>[];
 }
