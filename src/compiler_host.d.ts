@@ -22,6 +22,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _syncHost;
     private _memoryHost;
     private _changedFiles;
+    private _readResourceFiles;
     private _basePath;
     private _resourceLoader?;
     private _sourceFileCache;
@@ -50,6 +51,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     getNewLine(): string;
     setResourceLoader(resourceLoader: WebpackResourceLoader): void;
     readResource(fileName: string): string | Promise<string> | undefined;
+    getModifiedResourceFiles(): Set<string>;
     trace(message: string): void;
     resolveModuleNames(moduleNames: string[], containingFile: string): (ts.ResolvedModule | undefined)[];
     resolveTypeReferenceDirectives(typeReferenceDirectiveNames: string[], containingFile: string, redirectedReference?: ts.ResolvedProjectReference): (ts.ResolvedTypeReferenceDirective | undefined)[];

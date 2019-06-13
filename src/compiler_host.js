@@ -19,6 +19,7 @@ class WebpackCompilerHost {
         this.directTemplateLoading = directTemplateLoading;
         this.ngccProcessor = ngccProcessor;
         this._changedFiles = new Set();
+        this._readResourceFiles = new Set();
         this._sourceFileCache = new Map();
         this._virtualFileExtensions = [
             '.js', '.js.map',
@@ -273,6 +274,7 @@ class WebpackCompilerHost {
         this._resourceLoader = resourceLoader;
     }
     readResource(fileName) {
+        this._readResourceFiles.add(fileName);
         if (this.directTemplateLoading &&
             (fileName.endsWith('.html') || fileName.endsWith('.svg'))) {
             return this.readFile(fileName);
@@ -285,6 +287,21 @@ class WebpackCompilerHost {
         else {
             return this.readFile(fileName);
         }
+    }
+    getModifiedResourceFiles() {
+        const modifiedFiles = new Set();
+        for (const changedFile of this._changedFiles) {
+            if (this._readResourceFiles.has(changedFile)) {
+                modifiedFiles.add(changedFile);
+            }
+            if (!this._resourceLoader) {
+                continue;
+            }
+            for (const resourcePath of this._resourceLoader.getAffectedResources(changedFile)) {
+                modifiedFiles.add(resourcePath);
+            }
+        }
+        return modifiedFiles;
     }
     trace(message) {
         console.log(message);

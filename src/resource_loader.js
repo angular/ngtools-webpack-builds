@@ -20,6 +20,7 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 class WebpackResourceLoader {
     constructor() {
         this._fileDependencies = new Map();
+        this._reverseDependencies = new Map();
         this._cachedSources = new Map();
         this._cachedEvaluatedSources = new Map();
     }
@@ -29,6 +30,9 @@ class WebpackResourceLoader {
     }
     getResourceDependencies(filePath) {
         return this._fileDependencies.get(filePath) || [];
+    }
+    getAffectedResources(file) {
+        return this._reverseDependencies.get(file) || [];
     }
     _compile(filePath) {
         if (!this._parentCompilation) {
@@ -95,6 +99,15 @@ class WebpackResourceLoader {
                     });
                     // Save the dependencies for this resource.
                     this._fileDependencies.set(filePath, childCompilation.fileDependencies);
+                    for (const file of childCompilation.fileDependencies) {
+                        const entry = this._reverseDependencies.get(file);
+                        if (entry) {
+                            entry.push(filePath);
+                        }
+                        else {
+                            this._reverseDependencies.set(file, [filePath]);
+                        }
+                    }
                     const compilationHash = childCompilation.fullHash;
                     const maybeSource = this._cachedSources.get(compilationHash);
                     if (maybeSource) {
