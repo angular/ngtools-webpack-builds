@@ -21,6 +21,7 @@ export declare class AngularCompilerPlugin {
     private _platform;
     private _JitMode;
     private _emitSkipped;
+    private _hadFullJitEmit;
     private _changedFileExtensions;
     private _firstRun;
     private _donePromise;
