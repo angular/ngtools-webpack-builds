@@ -918,8 +918,9 @@ class AngularCompilerPlugin {
                 }
                 allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(tsProgram, this._JitMode, 'AngularCompilerPlugin._emit.ts', diagMode));
                 if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
-                    if (this._firstRun || changedTsFiles.size > 20 || this._emitSkipped) {
+                    if (this._firstRun || changedTsFiles.size > 20 || !this._hadFullJitEmit) {
                         emitResult = tsProgram.emit(undefined, undefined, undefined, undefined, { before: this._transformers });
+                        this._hadFullJitEmit = !emitResult.emitSkipped;
                         allDiagnostics.push(...emitResult.diagnostics);
                     }
                     else {
