@@ -760,17 +760,48 @@ class AngularCompilerPlugin {
         benchmark_1.time('AngularCompilerPlugin._update._emit');
         const { emitResult, diagnostics } = this._emit();
         benchmark_1.timeEnd('AngularCompilerPlugin._update._emit');
-        // Report diagnostics.
-        const errors = diagnostics
-            .filter((diag) => diag.category === ts.DiagnosticCategory.Error);
-        const warnings = diagnostics
-            .filter((diag) => diag.category === ts.DiagnosticCategory.Warning);
-        if (errors.length > 0) {
-            const message = compiler_cli_1.formatDiagnostics(errors);
+        // Report Diagnostics
+        const tsErrors = [];
+        const tsWarnings = [];
+        const ngErrors = [];
+        const ngWarnings = [];
+        for (const diagnostic of diagnostics) {
+            switch (diagnostic.category) {
+                case ts.DiagnosticCategory.Error:
+                    if (compiler_cli_1.isNgDiagnostic(diagnostic)) {
+                        ngErrors.push(diagnostic);
+                    }
+                    else {
+                        tsErrors.push(diagnostic);
+                    }
+                    break;
+                case ts.DiagnosticCategory.Message:
+                case ts.DiagnosticCategory.Suggestion:
+                // Warnings?
+                case ts.DiagnosticCategory.Warning:
+                    if (compiler_cli_1.isNgDiagnostic(diagnostic)) {
+                        ngWarnings.push(diagnostic);
+                    }
+                    else {
+                        tsWarnings.push(diagnostic);
+                    }
+                    break;
+            }
+        }
+        if (tsErrors.length > 0) {
+            const message = ts.formatDiagnosticsWithColorAndContext(tsErrors, this._compilerHost);
             this._errors.push(new Error(message));
         }
-        if (warnings.length > 0) {
-            const message = compiler_cli_1.formatDiagnostics(warnings);
+        if (tsWarnings.length > 0) {
+            const message = ts.formatDiagnosticsWithColorAndContext(tsWarnings, this._compilerHost);
+            this._warnings.push(message);
+        }
+        if (ngErrors.length > 0) {
+            const message = compiler_cli_1.formatDiagnostics(ngErrors);
+            this._errors.push(new Error(message));
+        }
+        if (ngWarnings.length > 0) {
+            const message = compiler_cli_1.formatDiagnostics(ngWarnings);
             this._warnings.push(message);
         }
         this._emitSkipped = !emitResult || emitResult.emitSkipped;
