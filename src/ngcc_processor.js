@@ -74,14 +74,10 @@ class NgccProcessor {
      */
     tryResolvePackage(moduleName, resolvedFileName) {
         try {
-            let packageJsonPath = path.resolve(resolvedFileName, '../package.json');
-            if (fs_1.existsSync(packageJsonPath)) {
-                return packageJsonPath;
-            }
             // This is based on the logic in the NGCC compiler
             // tslint:disable-next-line:max-line-length
             // See: https://github.com/angular/angular/blob/b93c1dffa17e4e6900b3ab1b9e554b6da92be0de/packages/compiler-cli/src/ngcc/src/packages/dependency_host.ts#L85-L121
-            packageJsonPath = require.resolve(`${moduleName}/package.json`, {
+            const packageJsonPath = require.resolve(`${moduleName}/package.json`, {
                 paths: [resolvedFileName],
             });
             return packageJsonPath;
