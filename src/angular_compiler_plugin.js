@@ -25,6 +25,7 @@ const paths_plugin_1 = require("./paths-plugin");
 const resource_loader_1 = require("./resource_loader");
 const transformers_1 = require("./transformers");
 const ast_helpers_1 = require("./transformers/ast_helpers");
+const ctor_parameters_1 = require("./transformers/ctor-parameters");
 const type_checker_1 = require("./type_checker");
 const type_checker_messages_1 = require("./type_checker_messages");
 const utils_1 = require("./utils");
@@ -680,6 +681,9 @@ class AngularCompilerPlugin {
         if (this._JitMode) {
             // Replace resources in JIT.
             this._transformers.push(transformers_1.replaceResources(isAppPath, getTypeChecker, this._options.directTemplateLoading));
+            // Downlevel constructor parameters for DI support
+            // This is required to support forwardRef in ES2015 due to TDZ issues
+            this._transformers.push(ctor_parameters_1.downlevelConstructorParameters(getTypeChecker));
         }
         else {
             // Remove unneeded angular decorators.
