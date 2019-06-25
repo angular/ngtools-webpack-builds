@@ -75,7 +75,7 @@ function extractMetadataFromSingleDecorator(decorator, diagnostics) {
  *       }]
  *     }];
  */
-function createCtorParametersClassProperty(diagnostics, entityNameToExpression, ctorParameters) {
+function createCtorParametersClassProperty(diagnostics, entityNameToExpression, ctorParameters, typeChecker) {
     const params = [];
     for (const ctorParam of ctorParameters) {
         if (!ctorParam.type && ctorParam.decorators.length === 0) {
@@ -83,7 +83,7 @@ function createCtorParametersClassProperty(diagnostics, entityNameToExpression, 
             continue;
         }
         const paramType = ctorParam.type
-            ? typeReferenceToExpression(entityNameToExpression, ctorParam.type)
+            ? typeReferenceToExpression(entityNameToExpression, ctorParam.type, typeChecker)
             : undefined;
         const members = [
             ts.createPropertyAssignment('type', paramType || ts.createIdentifier('undefined')),
@@ -109,7 +109,7 @@ function createCtorParametersClassProperty(diagnostics, entityNameToExpression, 
  * not being exposed). In practice this implementation is sufficient for Angular's use of type
  * metadata.
  */
-function typeReferenceToExpression(entityNameToExpression, node) {
+function typeReferenceToExpression(entityNameToExpression, node, typeChecker) {
     let kind = node.kind;
     if (ts.isLiteralTypeNode(node)) {
         // Treat literal types like their base type (boolean, string, number).
@@ -137,6 +137,17 @@ function typeReferenceToExpression(entityNameToExpression, node) {
             return ts.createIdentifier('Number');
         case ts.SyntaxKind.TypeReference:
             const typeRef = node;
+            let typeSymbol = typeChecker.getSymbolAtLocation(typeRef.typeName);
+            if (typeSymbol && typeSymbol.flags & ts.SymbolFlags.Alias) {
+                typeSymbol = typeChecker.getAliasedSymbol(typeSymbol);
+            }
+            if (!typeSymbol || !(typeSymbol.flags & ts.SymbolFlags.Value)) {
+                return undefined;
+            }
+            const type = typeChecker.getTypeOfSymbolAtLocation(typeSymbol, typeRef);
+            if (!type || typeChecker.getSignaturesOfType(type, ts.SignatureKind.Construct).length === 0) {
+                return undefined;
+            }
             // Ignore any generic types, just return the base type.
             return entityNameToExpression(typeRef.typeName);
         default:
@@ -197,7 +208,7 @@ function decoratorDownlevelTransformer(typeChecker, diagnostics) {
                 parametersInfo.push(paramInfo);
             }
             if (parametersInfo.length > 0) {
-                const ctorProperty = createCtorParametersClassProperty(diagnostics, entityNameToExpression, parametersInfo);
+                const ctorProperty = createCtorParametersClassProperty(diagnostics, entityNameToExpression, parametersInfo, typeChecker);
                 return [node, ctorProperty];
             }
             else {
