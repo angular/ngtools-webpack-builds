@@ -22,9 +22,12 @@ class WebpackCompilerHost {
         this._readResourceFiles = new Set();
         this._sourceFileCache = new Map();
         this._virtualFileExtensions = [
-            '.js', '.js.map',
-            '.ngfactory.js', '.ngfactory.js.map',
-            '.ngstyle.js', '.ngstyle.js.map',
+            '.js',
+            '.js.map',
+            '.ngfactory.js',
+            '.ngfactory.js.map',
+            '.ngstyle.js',
+            '.ngstyle.js.map',
             '.ngsummary.json',
         ];
         this._syncHost = new core_1.virtualFs.SyncDelegateHost(host);
@@ -32,8 +35,7 @@ class WebpackCompilerHost {
         this._basePath = core_1.normalize(basePath);
     }
     get virtualFiles() {
-        return [...this._memoryHost.delegate
-                ._cache.keys()];
+        return [...this._memoryHost.delegate._cache.keys()];
     }
     denormalizePath(path) {
         return core_1.getSystemPath(core_1.normalize(path));
@@ -54,10 +56,10 @@ class WebpackCompilerHost {
         return [...this._changedFiles];
     }
     getNgFactoryPaths() {
-        return this.virtualFiles
+        return (this.virtualFiles
             .filter(fileName => fileName.endsWith('.ngfactory.js') || fileName.endsWith('.ngstyle.js'))
             // These paths are used by the virtual file system decorator so we must denormalize them.
-            .map(path => this.denormalizePath(path));
+            .map(path => this.denormalizePath(path)));
     }
     invalidate(fileName) {
         const fullPath = this.resolve(fileName);
@@ -72,7 +74,9 @@ class WebpackCompilerHost {
         catch (_a) { }
         // File doesn't exist anymore and is not a factory, so we should delete the related
         // virtual files.
-        if (!exists && fullPath.endsWith('.ts') && !(fullPath.endsWith('.ngfactory.ts') || fullPath.endsWith('.shim.ngstyle.ts'))) {
+        if (!exists &&
+            fullPath.endsWith('.ts') &&
+            !(fullPath.endsWith('.ngfactory.ts') || fullPath.endsWith('.shim.ngstyle.ts'))) {
             this._virtualFileExtensions.forEach(ext => {
                 const virtualFile = (fullPath.slice(0, -3) + ext);
                 if (this._memoryHost.exists(virtualFile)) {
@@ -82,8 +86,8 @@ class WebpackCompilerHost {
         }
         // In case resolveJsonModule and allowJs we also need to remove virtual emitted files
         // both if they exists or not.
-        if ((fullPath.endsWith('.js') || fullPath.endsWith('.json'))
-            && !/(\.(ngfactory|ngstyle)\.js|ngsummary\.json)$/.test(fullPath)) {
+        if ((fullPath.endsWith('.js') || fullPath.endsWith('.json')) &&
+            !/(\.(ngfactory|ngstyle)\.js|ngsummary\.json)$/.test(fullPath)) {
             if (this._memoryHost.exists(fullPath)) {
                 this._memoryHost.delete(fullPath);
             }
@@ -135,11 +139,11 @@ class WebpackCompilerHost {
         return {
             isFile: () => stats.isFile(),
             isDirectory: () => stats.isDirectory(),
-            isBlockDevice: () => stats.isBlockDevice && stats.isBlockDevice() || false,
-            isCharacterDevice: () => stats.isCharacterDevice && stats.isCharacterDevice() || false,
-            isFIFO: () => stats.isFIFO && stats.isFIFO() || false,
-            isSymbolicLink: () => stats.isSymbolicLink && stats.isSymbolicLink() || false,
-            isSocket: () => stats.isSocket && stats.isSocket() || false,
+            isBlockDevice: () => (stats.isBlockDevice && stats.isBlockDevice()) || false,
+            isCharacterDevice: () => (stats.isCharacterDevice && stats.isCharacterDevice()) || false,
+            isFIFO: () => (stats.isFIFO && stats.isFIFO()) || false,
+            isSymbolicLink: () => (stats.isSymbolicLink && stats.isSymbolicLink()) || false,
+            isSocket: () => (stats.isSocket && stats.isSocket()) || false,
             dev: stats.dev === undefined ? dev : stats.dev,
             ino: stats.ino === undefined ? Math.floor(Math.random() * 100000) : stats.ino,
             mode: stats.mode === undefined ? parseInt('777', 8) : stats.mode,
@@ -275,8 +279,7 @@ class WebpackCompilerHost {
     }
     readResource(fileName) {
         this._readResourceFiles.add(fileName);
-        if (this.directTemplateLoading &&
-            (fileName.endsWith('.html') || fileName.endsWith('.svg'))) {
+        if (this.directTemplateLoading && (fileName.endsWith('.html') || fileName.endsWith('.svg'))) {
             return this.readFile(fileName);
         }
         if (this._resourceLoader) {
@@ -304,6 +307,7 @@ class WebpackCompilerHost {
         return modifiedFiles;
     }
     trace(message) {
+        // tslint:disable-next-line: no-console
         console.log(message);
     }
     resolveModuleNames(moduleNames, containingFile) {
