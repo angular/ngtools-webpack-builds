@@ -39,9 +39,7 @@ class NgccProcessor {
     }
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
-        if (!resolvedFileName
-            || moduleName.startsWith('.')
-            || this._processedModules.has(moduleName)) {
+        if (!resolvedFileName || moduleName.startsWith('.') || this._processedModules.has(moduleName)) {
             // Skip when module is unknown, relative or NGCC compiler is not found or already processed.
             return;
         }
@@ -74,22 +72,19 @@ class NgccProcessor {
      */
     tryResolvePackage(moduleName, resolvedFileName) {
         try {
-            let packageJsonPath = path.resolve(resolvedFileName, '../package.json');
-            if (fs_1.existsSync(packageJsonPath)) {
-                return packageJsonPath;
-            }
             // This is based on the logic in the NGCC compiler
             // tslint:disable-next-line:max-line-length
             // See: https://github.com/angular/angular/blob/b93c1dffa17e4e6900b3ab1b9e554b6da92be0de/packages/compiler-cli/src/ngcc/src/packages/dependency_host.ts#L85-L121
-            packageJsonPath = require.resolve(`${moduleName}/package.json`, {
+            return require.resolve(`${moduleName}/package.json`, {
                 paths: [resolvedFileName],
             });
-            return packageJsonPath;
         }
         catch (_a) {
             // if it fails this might be a deep import which doesn't have a package.json
             // Ex: @angular/compiler/src/i18n/i18n_ast/package.json
-            return undefined;
+            // or local libraries which don't reside in node_modules
+            const packageJsonPath = path.resolve(resolvedFileName, '../package.json');
+            return fs_1.existsSync(packageJsonPath) ? packageJsonPath : undefined;
         }
     }
     findNodeModulesDirectory(startPoint) {
