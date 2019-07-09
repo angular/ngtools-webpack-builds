@@ -68,7 +68,7 @@ class WebpackCompilerHost {
         try {
             exists = this._syncHost.isFile(fullPath);
             if (exists) {
-                this._changedFiles.add(fullPath);
+                this._changedFiles.add(utils_1.workaroundResolve(fullPath));
             }
         }
         catch (_a) { }
@@ -278,13 +278,13 @@ class WebpackCompilerHost {
         this._resourceLoader = resourceLoader;
     }
     readResource(fileName) {
-        this._readResourceFiles.add(fileName);
+        // These paths are meant to be used by the loader so we must denormalize them
+        const denormalizedFileName = utils_1.workaroundResolve(fileName);
+        this._readResourceFiles.add(denormalizedFileName);
         if (this.directTemplateLoading && (fileName.endsWith('.html') || fileName.endsWith('.svg'))) {
             return this.readFile(fileName);
         }
         if (this._resourceLoader) {
-            // These paths are meant to be used by the loader so we must denormalize them.
-            const denormalizedFileName = this.denormalizePath(core_1.normalize(fileName));
             return this._resourceLoader.get(denormalizedFileName);
         }
         else {
@@ -294,13 +294,14 @@ class WebpackCompilerHost {
     getModifiedResourceFiles() {
         const modifiedFiles = new Set();
         for (const changedFile of this._changedFiles) {
-            if (this._readResourceFiles.has(changedFile)) {
-                modifiedFiles.add(changedFile);
+            const denormalizedFileName = utils_1.workaroundResolve(changedFile);
+            if (this._readResourceFiles.has(denormalizedFileName)) {
+                modifiedFiles.add(denormalizedFileName);
             }
             if (!this._resourceLoader) {
                 continue;
             }
-            for (const resourcePath of this._resourceLoader.getAffectedResources(changedFile)) {
+            for (const resourcePath of this._resourceLoader.getAffectedResources(denormalizedFileName)) {
                 modifiedFiles.add(resourcePath);
             }
         }
