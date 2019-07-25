@@ -236,8 +236,6 @@ class AngularCompilerPlugin {
         if (this._forkTypeChecker && this._typeCheckerProcess && !this._firstRun) {
             this._updateForkedTypeChecker(this._rootNames, this._getChangedCompilationFiles());
         }
-        // Use an identity function as all our paths are absolute already.
-        this._moduleResolutionCache = ts.createModuleResolutionCache(this._basePath, x => x);
         const oldTsProgram = this._getTsProgram();
         if (this._JitMode) {
             // Create the TypeScript program.
@@ -528,8 +526,10 @@ class AngularCompilerPlugin {
             if (this._compilerOptions.enableIvy) {
                 ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath, this._compilerOptions);
             }
+            // Use an identity function as all our paths are absolute already.
+            this._moduleResolutionCache = ts.createModuleResolutionCache(this._basePath, x => x);
             // Create the webpack compiler host.
-            const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath, host, true, this._options.directTemplateLoading, ngccProcessor);
+            const webpackCompilerHost = new compiler_host_1.WebpackCompilerHost(this._compilerOptions, this._basePath, host, true, this._options.directTemplateLoading, ngccProcessor, this._moduleResolutionCache);
             // Create and set a new WebpackResourceLoader in AOT
             if (!this._JitMode) {
                 this._resourceLoader = new resource_loader_1.WebpackResourceLoader();
