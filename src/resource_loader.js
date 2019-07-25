@@ -78,15 +78,10 @@ class WebpackResourceLoader {
         return new Promise((resolve, reject) => {
             childCompiler.compile((err, childCompilation) => {
                 // Resolve / reject the promise
-                const { warnings, errors } = childCompilation;
-                if (warnings && warnings.length) {
-                    this._parentCompilation.warnings.push(...warnings);
-                }
-                if (errors && errors.length) {
-                    this._parentCompilation.errors.push(...errors);
-                    const errorDetails = errors
-                        .map((error) => error.message + (error.error ? ':\n' + error.error : ''))
-                        .join('\n');
+                if (childCompilation && childCompilation.errors && childCompilation.errors.length) {
+                    const errorDetails = childCompilation.errors.map(function (error) {
+                        return error.message + (error.error ? ':\n' + error.error : '');
+                    }).join('\n');
                     reject(new Error('Child compilation failed:\n' + errorDetails));
                 }
                 else if (err) {

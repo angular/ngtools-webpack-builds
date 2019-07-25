@@ -26,11 +26,9 @@ class WebpackCompilerHost {
             '.js.map',
             '.ngfactory.js',
             '.ngfactory.js.map',
+            '.ngstyle.js',
+            '.ngstyle.js.map',
             '.ngsummary.json',
-        ];
-        this._virtualStyleFileExtensions = [
-            '.shim.ngstyle.js',
-            '.shim.ngstyle.js.map',
         ];
         this._syncHost = new core_1.virtualFs.SyncDelegateHost(host);
         this._memoryHost = new core_1.virtualFs.SyncDelegateHost(new core_1.virtualFs.SimpleMemoryHost());
@@ -86,22 +84,12 @@ class WebpackCompilerHost {
                 }
             });
         }
-        if (fullPath.endsWith('.ts')) {
-            return;
-        }
         // In case resolveJsonModule and allowJs we also need to remove virtual emitted files
         // both if they exists or not.
         if ((fullPath.endsWith('.js') || fullPath.endsWith('.json')) &&
             !/(\.(ngfactory|ngstyle)\.js|ngsummary\.json)$/.test(fullPath)) {
             if (this._memoryHost.exists(fullPath)) {
                 this._memoryHost.delete(fullPath);
-            }
-            return;
-        }
-        for (const ext of this._virtualStyleFileExtensions) {
-            const virtualFile = (fullPath + ext);
-            if (this._memoryHost.exists(virtualFile)) {
-                this._memoryHost.delete(virtualFile);
             }
         }
     }
