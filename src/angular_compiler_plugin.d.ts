@@ -55,7 +55,6 @@ export declare class AngularCompilerPlugin {
     private _createForkedTypeChecker;
     private _killForkedTypeChecker;
     private _updateForkedTypeChecker;
-    private _warnOnUnusedFiles;
     apply(compiler: Compiler & {
         watchMode?: boolean;
         parentCompilation?: compilation.Compilation;
