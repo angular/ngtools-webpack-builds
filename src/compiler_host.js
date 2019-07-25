@@ -13,12 +13,11 @@ const ts = require("typescript");
 const utils_1 = require("./utils");
 const dev = Math.floor(Math.random() * 10000);
 class WebpackCompilerHost {
-    constructor(_options, basePath, host, cacheSourceFiles, directTemplateLoading = false, ngccProcessor, moduleResolutionCache) {
+    constructor(_options, basePath, host, cacheSourceFiles, directTemplateLoading = false, ngccProcessor) {
         this._options = _options;
         this.cacheSourceFiles = cacheSourceFiles;
         this.directTemplateLoading = directTemplateLoading;
         this.ngccProcessor = ngccProcessor;
-        this.moduleResolutionCache = moduleResolutionCache;
         this._changedFiles = new Set();
         this._readResourceFiles = new Set();
         this._sourceFileCache = new Map();
@@ -326,7 +325,7 @@ class WebpackCompilerHost {
     }
     resolveModuleNames(moduleNames, containingFile) {
         return moduleNames.map(moduleName => {
-            const { resolvedModule } = ts.resolveModuleName(moduleName, utils_1.workaroundResolve(containingFile), this._options, this, this.moduleResolutionCache);
+            const { resolvedModule } = ts.resolveModuleName(moduleName, utils_1.workaroundResolve(containingFile), this._options, this);
             if (this._options.enableIvy && resolvedModule && this.ngccProcessor) {
                 this.ngccProcessor.processModule(moduleName, resolvedModule);
             }
