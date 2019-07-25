@@ -19,6 +19,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private readonly cacheSourceFiles;
     private readonly directTemplateLoading;
     private readonly ngccProcessor?;
+    private readonly moduleResolutionCache?;
     private _syncHost;
     private _memoryHost;
     private _changedFiles;
@@ -28,7 +29,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _sourceFileCache;
     private _virtualFileExtensions;
     private _virtualStyleFileExtensions;
-    constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host, cacheSourceFiles: boolean, directTemplateLoading?: boolean, ngccProcessor?: NgccProcessor | undefined);
+    constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host, cacheSourceFiles: boolean, directTemplateLoading?: boolean, ngccProcessor?: NgccProcessor | undefined, moduleResolutionCache?: ts.ModuleResolutionCache | undefined);
     private readonly virtualFiles;
     denormalizePath(path: string): string;
     resolve(path: string): Path;
