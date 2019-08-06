@@ -42,6 +42,7 @@ class AngularCompilerPlugin {
         this._platformTransformers = null;
         this._JitMode = false;
         this._emitSkipped = true;
+        this._unusedFiles = new Set();
         this._changedFileExtensions = new Set(['ts', 'tsx', 'html', 'css', 'js', 'json']);
         // Webpack plugin.
         this._firstRun = true;
@@ -456,11 +457,15 @@ class AngularCompilerPlugin {
                 usedFiles.add(utils_1.forwardSlashPath(dependency));
             }
         }
-        const unusedFilesWarning = program.getSourceFiles()
-            .filter(({ fileName }) => !fileExcludeRegExp.test(fileName) && !usedFiles.has(fileName))
-            .map(({ fileName }) => `${fileName} is part of the TypeScript compilation but it's unused.`);
-        if (unusedFilesWarning.length) {
-            compilation.warnings.push(...unusedFilesWarning);
+        const sourceFiles = program.getSourceFiles();
+        for (const { fileName } of sourceFiles) {
+            if (fileExcludeRegExp.test(fileName)
+                || usedFiles.has(fileName)
+                || this._unusedFiles.has(fileName)) {
+                continue;
+            }
+            compilation.warnings.push(`${fileName} is part of the TypeScript compilation but it's unused.`);
+            this._unusedFiles.add(fileName);
         }
     }
     // Registration hook for webpack plugin.
