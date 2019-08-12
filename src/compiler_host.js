@@ -34,19 +34,11 @@ class WebpackCompilerHost {
             '.shim.ngstyle.js.map',
         ];
         this._syncHost = new core_1.virtualFs.SyncDelegateHost(host);
-        this._innerMemoryHost = new core_1.virtualFs.SimpleMemoryHost();
-        this._memoryHost = new core_1.virtualFs.SyncDelegateHost(this._innerMemoryHost);
+        this._memoryHost = new core_1.virtualFs.SyncDelegateHost(new core_1.virtualFs.SimpleMemoryHost());
         this._basePath = core_1.normalize(basePath);
     }
     get virtualFiles() {
         return [...this._memoryHost.delegate._cache.keys()];
-    }
-    reset() {
-        this._innerMemoryHost.reset();
-        this._changedFiles.clear();
-        this._readResourceFiles.clear();
-        this._sourceFileCache.clear();
-        this._resourceLoader = undefined;
     }
     denormalizePath(path) {
         return core_1.getSystemPath(core_1.normalize(path));

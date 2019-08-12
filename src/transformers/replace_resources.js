@@ -7,7 +7,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-const core_1 = require("@angular-devkit/core");
 const ts = require("typescript");
 function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false) {
     return (context) => {
@@ -19,22 +18,9 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
             }
             return ts.visitEachChild(node, visitNode, context);
         };
-        // emit helper for `import Name from "foo"`
-        const importDefaultHelper = {
-            name: 'typescript:commonjsimportdefault',
-            scoped: false,
-            text: core_1.tags.stripIndent `
-      var __importDefault = (this && this.__importDefault) || function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-      };`,
-        };
-        return (sourceFile) => {
-            if (shouldTransform(sourceFile.fileName)) {
-                context.requestEmitHelper(importDefaultHelper);
-                return ts.visitNode(sourceFile, visitNode);
-            }
-            return sourceFile;
-        };
+        return (sourceFile) => (shouldTransform(sourceFile.fileName)
+            ? ts.visitNode(sourceFile, visitNode)
+            : sourceFile);
     };
 }
 exports.replaceResources = replaceResources;
@@ -114,13 +100,12 @@ function isComponentDecorator(node, typeChecker) {
     }
     return false;
 }
-function createRequireExpression(node, loader) {
+function createRequireExpression(node, loader = '') {
     const url = getResourceUrl(node, loader);
     if (!url) {
         return node;
     }
-    const callExpression = ts.createCall(ts.createIdentifier('require'), undefined, [ts.createLiteral(url)]);
-    return ts.createPropertyAccess(ts.createCall(ts.setEmitFlags(ts.createIdentifier('__importDefault'), ts.EmitFlags.HelperName | ts.EmitFlags.AdviseOnEmitNode), undefined, [callExpression]), 'default');
+    return ts.createCall(ts.createIdentifier('require'), undefined, [ts.createLiteral(url)]);
 }
 function getDecoratorOrigin(decorator, typeChecker) {
     if (!ts.isCallExpression(decorator.expression)) {

@@ -128,16 +128,18 @@ class WebpackResourceLoader {
             });
         });
     }
-    async _evaluate({ outputName, source }) {
-        // Evaluate code
-        const evaluatedSource = vm.runInNewContext(source, undefined, { filename: outputName });
-        if (typeof evaluatedSource === 'object' && typeof evaluatedSource.default === 'string') {
-            return evaluatedSource.default;
+    _evaluate({ outputName, source }) {
+        try {
+            // Evaluate code
+            const evaluatedSource = vm.runInNewContext(source, undefined, { filename: outputName });
+            if (typeof evaluatedSource == 'string') {
+                return Promise.resolve(evaluatedSource);
+            }
+            return Promise.reject('The loader "' + outputName + '" didn\'t return a string.');
         }
-        if (typeof evaluatedSource === 'string') {
-            return evaluatedSource;
+        catch (e) {
+            return Promise.reject(e);
         }
-        throw new Error(`The loader "${outputName}" didn't return a string.`);
     }
     get(filePath) {
         return this._compile(filePath)
