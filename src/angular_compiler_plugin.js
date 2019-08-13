@@ -464,8 +464,7 @@ class AngularCompilerPlugin {
                 || this._unusedFiles.has(fileName)) {
                 continue;
             }
-            compilation.warnings.push(`${fileName} is part of the TypeScript compilation but it's unused.\n` +
-                `Add only entry points to the 'files' or 'include' properties in your tsconfig.`);
+            compilation.warnings.push(`${fileName} is part of the TypeScript compilation but it's unused.`);
             this._unusedFiles.add(fileName);
         }
     }
