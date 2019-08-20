@@ -44,7 +44,7 @@ exports.getLastNode = getLastNode;
 const basePath = '/project/src/';
 const fileName = basePath + 'test-file.ts';
 const tsLibFiles = loadTsLibFiles();
-function createTypescriptContext(content, additionalFiles, useLibs = false, importHelpers = true) {
+function createTypescriptContext(content, additionalFiles, useLibs = false) {
     // Set compiler options.
     const compilerOptions = {
         noEmitOnError: useLibs,
@@ -55,7 +55,7 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, impo
         target: ts.ScriptTarget.ESNext,
         skipLibCheck: true,
         sourceMap: false,
-        importHelpers,
+        importHelpers: true,
     };
     // Create compiler host.
     const compilerHost = new compiler_host_1.WebpackCompilerHost(compilerOptions, basePath, new core_1.virtualFs.SimpleMemoryHost(), false);
@@ -83,12 +83,8 @@ function transformTypescript(content, transformers, program, compilerHost) {
     // Use given context or create a new one.
     if (content !== undefined) {
         const typescriptContext = createTypescriptContext(content);
-        if (!program) {
-            program = typescriptContext.program;
-        }
-        if (!compilerHost) {
-            compilerHost = typescriptContext.compilerHost;
-        }
+        program = typescriptContext.program;
+        compilerHost = typescriptContext.compilerHost;
     }
     else if (!program || !compilerHost) {
         throw new Error('transformTypescript needs either `content` or a `program` and `compilerHost');
