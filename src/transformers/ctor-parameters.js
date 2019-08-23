@@ -215,7 +215,7 @@ function decoratorDownlevelTransformer(typeChecker, diagnostics) {
             }
         }
         function visitor(node) {
-            if (ts.isClassDeclaration(node)) {
+            if (ts.isClassDeclaration(node) && node.decorators && node.decorators.length > 0) {
                 return ts.updateClassDeclaration(node, node.decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, ts.visitNodes(node.members, classMemberVisitor));
             }
             else {
