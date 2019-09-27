@@ -107,16 +107,10 @@ class WebpackCompilerHost {
             }
             return;
         }
-        if (!exists) {
-            // At this point we're only looking at resource files (html/css/scss/etc).
-            // If the original was deleted, we should delete the virtual files too.
-            // If the original wasn't deleted we should leave them to be overwritten, because webpack
-            // might begin the loading process before our plugin has re-emitted them.
-            for (const ext of this._virtualStyleFileExtensions) {
-                const virtualFile = (fullPath + ext);
-                if (this._memoryHost.exists(virtualFile)) {
-                    this._memoryHost.delete(virtualFile);
-                }
+        for (const ext of this._virtualStyleFileExtensions) {
+            const virtualFile = (fullPath + ext);
+            if (this._memoryHost.exists(virtualFile)) {
+                this._memoryHost.delete(virtualFile);
             }
         }
     }
