@@ -20,8 +20,10 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
             return ts.visitEachChild(node, visitNode, context);
         };
         // emit helper for `import Name from "foo"`
+        // importName is marked as an internal property but is needed for the tslib import.
         const importDefaultHelper = {
             name: 'typescript:commonjsimportdefault',
+            importName: '__importDefault',
             scoped: false,
             text: core_1.tags.stripIndent `
       var __importDefault = (this && this.__importDefault) || function (mod) {

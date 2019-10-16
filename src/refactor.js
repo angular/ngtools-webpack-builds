@@ -66,8 +66,6 @@ function resolve(filePath, _host, compilerOptions) {
 }
 exports.resolve = resolve;
 class TypeScriptFileRefactor {
-    get fileName() { return this._fileName; }
-    get sourceFile() { return this._sourceFile; }
     constructor(fileName, _host, _program, source) {
         let sourceFile = null;
         if (_program) {
@@ -91,6 +89,8 @@ class TypeScriptFileRefactor {
         }
         this._sourceFile = sourceFile;
     }
+    get fileName() { return this._fileName; }
+    get sourceFile() { return this._sourceFile; }
     /**
      * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
      * @param node The root node to check, or null if the whole tree should be searched.
