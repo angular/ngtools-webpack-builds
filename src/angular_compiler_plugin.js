@@ -494,7 +494,7 @@ class AngularCompilerPlugin {
                 // only present for webpack 4.23.0+, assume true otherwise
                 const watchMode = rootCompiler.watchMode === undefined ? true : rootCompiler.watchMode;
                 if (!watchMode) {
-                    this._program = null;
+                    this._program = undefined;
                     this._transformers = [];
                     this._resourceLoader = undefined;
                     this._compilerHost.reset();
@@ -1072,7 +1072,7 @@ class AngularCompilerPlugin {
             else {
                 errMsg = e.stack;
                 // It is not a syntax error we might have a program with unknown state, discard it.
-                this._program = null;
+                this._program = undefined;
                 code = compiler_cli_1.UNKNOWN_ERROR_CODE;
             }
             allDiagnostics.push({ category: ts.DiagnosticCategory.Error, messageText: errMsg, code, source: compiler_cli_1.SOURCE });
