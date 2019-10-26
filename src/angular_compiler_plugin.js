@@ -31,7 +31,6 @@ const type_checker_messages_1 = require("./type_checker_messages");
 const utils_1 = require("./utils");
 const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
 const webpack_input_host_1 = require("./webpack-input-host");
-const treeKill = require('tree-kill');
 class AngularCompilerPlugin {
     constructor(options) {
         this._discoverLazyRoutes = true;
@@ -409,8 +408,11 @@ class AngularCompilerPlugin {
         });
     }
     _killForkedTypeChecker() {
-        if (this._typeCheckerProcess && this._typeCheckerProcess.pid) {
-            treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
+        if (this._typeCheckerProcess && !this._typeCheckerProcess.killed) {
+            try {
+                this._typeCheckerProcess.kill();
+            }
+            catch (_a) { }
             this._typeCheckerProcess = null;
         }
     }
