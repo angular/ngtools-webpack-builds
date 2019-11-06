@@ -965,9 +965,7 @@ class AngularCompilerPlugin {
         if (!this._resourceLoader) {
             return [];
         }
-        // The source loader uses TS-style forward slash paths for all platforms.
-        const resolvedFileName = utils_1.forwardSlashPath(fileName);
-        return this._resourceLoader.getResourceDependencies(resolvedFileName);
+        return this._resourceLoader.getResourceDependencies(fileName);
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,
