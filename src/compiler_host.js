@@ -13,26 +13,40 @@ const ts = require("typescript");
 const utils_1 = require("./utils");
 const dev = Math.floor(Math.random() * 10000);
 class WebpackCompilerHost {
-    constructor(_options, basePath, host, cacheSourceFiles, directTemplateLoading = false, ngccProcessor) {
+    constructor(_options, basePath, host, cacheSourceFiles, directTemplateLoading = false, ngccProcessor, moduleResolutionCache) {
         this._options = _options;
         this.cacheSourceFiles = cacheSourceFiles;
         this.directTemplateLoading = directTemplateLoading;
         this.ngccProcessor = ngccProcessor;
+        this.moduleResolutionCache = moduleResolutionCache;
         this._changedFiles = new Set();
+        this._readResourceFiles = new Set();
         this._sourceFileCache = new Map();
         this._virtualFileExtensions = [
-            '.js', '.js.map',
-            '.ngfactory.js', '.ngfactory.js.map',
-            '.ngstyle.js', '.ngstyle.js.map',
+            '.js',
+            '.js.map',
+            '.ngfactory.js',
+            '.ngfactory.js.map',
             '.ngsummary.json',
         ];
+        this._virtualStyleFileExtensions = [
+            '.shim.ngstyle.js',
+            '.shim.ngstyle.js.map',
+        ];
         this._syncHost = new core_1.virtualFs.SyncDelegateHost(host);
-        this._memoryHost = new core_1.virtualFs.SyncDelegateHost(new core_1.virtualFs.SimpleMemoryHost());
+        this._innerMemoryHost = new core_1.virtualFs.SimpleMemoryHost();
+        this._memoryHost = new core_1.virtualFs.SyncDelegateHost(this._innerMemoryHost);
         this._basePath = core_1.normalize(basePath);
     }
     get virtualFiles() {
-        return [...this._memoryHost.delegate
-                ._cache.keys()];
+        return [...this._memoryHost.delegate._cache.keys()];
+    }
+    reset() {
+        this._innerMemoryHost.reset();
+        this._changedFiles.clear();
+        this._readResourceFiles.clear();
+        this._sourceFileCache.clear();
+        this._resourceLoader = undefined;
     }
     denormalizePath(path) {
         return core_1.getSystemPath(core_1.normalize(path));
@@ -53,10 +67,10 @@ class WebpackCompilerHost {
         return [...this._changedFiles];
     }
     getNgFactoryPaths() {
-        return this.virtualFiles
+        return (this.virtualFiles
             .filter(fileName => fileName.endsWith('.ngfactory.js') || fileName.endsWith('.ngstyle.js'))
             // These paths are used by the virtual file system decorator so we must denormalize them.
-            .map(path => this.denormalizePath(path));
+            .map(path => this.denormalizePath(path)));
     }
     invalidate(fileName) {
         const fullPath = this.resolve(fileName);
@@ -65,13 +79,15 @@ class WebpackCompilerHost {
         try {
             exists = this._syncHost.isFile(fullPath);
             if (exists) {
-                this._changedFiles.add(fullPath);
+                this._changedFiles.add(utils_1.workaroundResolve(fullPath));
             }
         }
         catch (_a) { }
         // File doesn't exist anymore and is not a factory, so we should delete the related
         // virtual files.
-        if (!exists && fullPath.endsWith('.ts') && !(fullPath.endsWith('.ngfactory.ts') || fullPath.endsWith('.shim.ngstyle.ts'))) {
+        if (!exists &&
+            fullPath.endsWith('.ts') &&
+            !(fullPath.endsWith('.ngfactory.ts') || fullPath.endsWith('.shim.ngstyle.ts'))) {
             this._virtualFileExtensions.forEach(ext => {
                 const virtualFile = (fullPath.slice(0, -3) + ext);
                 if (this._memoryHost.exists(virtualFile)) {
@@ -79,12 +95,28 @@ class WebpackCompilerHost {
                 }
             });
         }
+        if (fullPath.endsWith('.ts')) {
+            return;
+        }
         // In case resolveJsonModule and allowJs we also need to remove virtual emitted files
         // both if they exists or not.
-        if ((fullPath.endsWith('.js') || fullPath.endsWith('.json'))
-            && !/(\.(ngfactory|ngstyle)\.js|ngsummary\.json)$/.test(fullPath)) {
+        if ((fullPath.endsWith('.js') || fullPath.endsWith('.json')) &&
+            !/(\.(ngfactory|ngstyle)\.js|ngsummary\.json)$/.test(fullPath)) {
             if (this._memoryHost.exists(fullPath)) {
                 this._memoryHost.delete(fullPath);
+            }
+            return;
+        }
+        if (!exists) {
+            // At this point we're only looking at resource files (html/css/scss/etc).
+            // If the original was deleted, we should delete the virtual files too.
+            // If the original wasn't deleted we should leave them to be overwritten, because webpack
+            // might begin the loading process before our plugin has re-emitted them.
+            for (const ext of this._virtualStyleFileExtensions) {
+                const virtualFile = (fullPath + ext);
+                if (this._memoryHost.exists(virtualFile)) {
+                    this._memoryHost.delete(virtualFile);
+                }
             }
         }
     }
@@ -106,13 +138,15 @@ class WebpackCompilerHost {
     readFile(fileName) {
         const filePath = this.resolve(fileName);
         try {
+            let content;
             if (this._memoryHost.isFile(filePath)) {
-                return core_1.virtualFs.fileBufferToString(this._memoryHost.read(filePath));
+                content = this._memoryHost.read(filePath);
             }
             else {
-                const content = this._syncHost.read(filePath);
-                return core_1.virtualFs.fileBufferToString(content);
+                content = this._syncHost.read(filePath);
             }
+            // strip BOM
+            return core_1.virtualFs.fileBufferToString(content).replace(/^\uFEFF/, '');
         }
         catch (_a) {
             return undefined;
@@ -132,11 +166,11 @@ class WebpackCompilerHost {
         return {
             isFile: () => stats.isFile(),
             isDirectory: () => stats.isDirectory(),
-            isBlockDevice: () => stats.isBlockDevice && stats.isBlockDevice() || false,
-            isCharacterDevice: () => stats.isCharacterDevice && stats.isCharacterDevice() || false,
-            isFIFO: () => stats.isFIFO && stats.isFIFO() || false,
-            isSymbolicLink: () => stats.isSymbolicLink && stats.isSymbolicLink() || false,
-            isSocket: () => stats.isSocket && stats.isSocket() || false,
+            isBlockDevice: () => (stats.isBlockDevice && stats.isBlockDevice()) || false,
+            isCharacterDevice: () => (stats.isCharacterDevice && stats.isCharacterDevice()) || false,
+            isFIFO: () => (stats.isFIFO && stats.isFIFO()) || false,
+            isSymbolicLink: () => (stats.isSymbolicLink && stats.isSymbolicLink()) || false,
+            isSocket: () => (stats.isSocket && stats.isSocket()) || false,
             dev: stats.dev === undefined ? dev : stats.dev,
             ino: stats.ino === undefined ? Math.floor(Math.random() * 100000) : stats.ino,
             mode: stats.mode === undefined ? parseInt('777', 8) : stats.mode,
@@ -271,25 +305,42 @@ class WebpackCompilerHost {
         this._resourceLoader = resourceLoader;
     }
     readResource(fileName) {
-        if (this.directTemplateLoading &&
-            (fileName.endsWith('.html') || fileName.endsWith('.svg'))) {
+        // These paths are meant to be used by the loader so we must denormalize them
+        const denormalizedFileName = utils_1.workaroundResolve(fileName);
+        this._readResourceFiles.add(denormalizedFileName);
+        if (this.directTemplateLoading && (fileName.endsWith('.html') || fileName.endsWith('.svg'))) {
             return this.readFile(fileName);
         }
         if (this._resourceLoader) {
-            // These paths are meant to be used by the loader so we must denormalize them.
-            const denormalizedFileName = this.denormalizePath(core_1.normalize(fileName));
             return this._resourceLoader.get(denormalizedFileName);
         }
         else {
             return this.readFile(fileName);
         }
     }
+    getModifiedResourceFiles() {
+        const modifiedFiles = new Set();
+        for (const changedFile of this._changedFiles) {
+            const denormalizedFileName = utils_1.workaroundResolve(changedFile);
+            if (this._readResourceFiles.has(denormalizedFileName)) {
+                modifiedFiles.add(denormalizedFileName);
+            }
+            if (!this._resourceLoader) {
+                continue;
+            }
+            for (const resourcePath of this._resourceLoader.getAffectedResources(denormalizedFileName)) {
+                modifiedFiles.add(resourcePath);
+            }
+        }
+        return modifiedFiles;
+    }
     trace(message) {
+        // tslint:disable-next-line: no-console
         console.log(message);
     }
     resolveModuleNames(moduleNames, containingFile) {
         return moduleNames.map(moduleName => {
-            const { resolvedModule } = ts.resolveModuleName(moduleName, utils_1.workaroundResolve(containingFile), this._options, this);
+            const { resolvedModule } = ts.resolveModuleName(moduleName, utils_1.workaroundResolve(containingFile), this._options, this, this.moduleResolutionCache);
             if (this._options.enableIvy && resolvedModule && this.ngccProcessor) {
                 this.ngccProcessor.processModule(moduleName, resolvedModule);
             }

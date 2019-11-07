@@ -10,7 +10,6 @@ export declare class AngularCompilerPlugin {
     private _moduleResolutionCache;
     private _resourceLoader?;
     private _discoverLazyRoutes;
-    private _importFactories;
     private _useFactories;
     private _lazyRoutes;
     private _tsConfigPath;
@@ -22,6 +21,8 @@ export declare class AngularCompilerPlugin {
     private _platform;
     private _JitMode;
     private _emitSkipped;
+    private _hadFullJitEmit;
+    private _unusedFiles;
     private _changedFileExtensions;
     private _firstRun;
     private _donePromise;
@@ -42,6 +43,7 @@ export declare class AngularCompilerPlugin {
         className: string;
     } | null;
     readonly typeChecker: ts.TypeChecker | null;
+    /** @deprecated  From 8.0.2 */
     static isSupported(): boolean;
     private _setupOptions;
     private _getTsProgram;
@@ -54,6 +56,7 @@ export declare class AngularCompilerPlugin {
     private _createForkedTypeChecker;
     private _killForkedTypeChecker;
     private _updateForkedTypeChecker;
+    private _warnOnUnusedFiles;
     apply(compiler: Compiler & {
         watchMode?: boolean;
         parentCompilation?: compilation.Compilation;

@@ -8,17 +8,21 @@
 import * as ts from 'typescript';
 import { InputFileSystem } from 'webpack';
 export declare class NgccProcessor {
-    private readonly ngcc;
     private readonly propertiesToConsider;
     private readonly inputFileSystem;
     private readonly compilationWarnings;
     private readonly compilationErrors;
+    private readonly basePath;
+    private readonly compilerOptions;
     private _processedModules;
     private _logger;
-    constructor(ngcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[]);
+    private _nodeModulesDirectory;
+    private _pathMappings;
+    constructor(propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, compilerOptions: ts.CompilerOptions);
     processModule(moduleName: string, resolvedModule: ts.ResolvedModule | ts.ResolvedTypeReferenceDirective): void;
     /**
      * Try resolve a package.json file from the resolved .d.ts file.
      */
     private tryResolvePackage;
+    private findNodeModulesDirectory;
 }

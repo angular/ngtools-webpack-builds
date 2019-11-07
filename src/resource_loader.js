@@ -20,6 +20,7 @@ const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 class WebpackResourceLoader {
     constructor() {
         this._fileDependencies = new Map();
+        this._reverseDependencies = new Map();
         this._cachedSources = new Map();
         this._cachedEvaluatedSources = new Map();
     }
@@ -29,6 +30,9 @@ class WebpackResourceLoader {
     }
     getResourceDependencies(filePath) {
         return this._fileDependencies.get(filePath) || [];
+    }
+    getAffectedResources(file) {
+        return this._reverseDependencies.get(file) || [];
     }
     _compile(filePath) {
         if (!this._parentCompilation) {
@@ -73,15 +77,21 @@ class WebpackResourceLoader {
         // Compile and return a promise
         return new Promise((resolve, reject) => {
             childCompiler.compile((err, childCompilation) => {
-                // Resolve / reject the promise
-                if (childCompilation && childCompilation.errors && childCompilation.errors.length) {
-                    const errorDetails = childCompilation.errors.map(function (error) {
-                        return error.message + (error.error ? ':\n' + error.error : '');
-                    }).join('\n');
-                    reject(new Error('Child compilation failed:\n' + errorDetails));
-                }
-                else if (err) {
+                if (err) {
                     reject(err);
+                    return;
+                }
+                // Resolve / reject the promise
+                const { warnings, errors } = childCompilation;
+                if (warnings && warnings.length) {
+                    this._parentCompilation.warnings.push(...warnings);
+                }
+                if (errors && errors.length) {
+                    this._parentCompilation.errors.push(...errors);
+                    const errorDetails = errors
+                        .map((error) => error.message + (error.error ? ':\n' + error.error : ''))
+                        .join('\n');
+                    reject(new Error('Child compilation failed:\n' + errorDetails));
                 }
                 else {
                     Object.keys(childCompilation.assets).forEach(assetName => {
@@ -95,6 +105,15 @@ class WebpackResourceLoader {
                     });
                     // Save the dependencies for this resource.
                     this._fileDependencies.set(filePath, childCompilation.fileDependencies);
+                    for (const file of childCompilation.fileDependencies) {
+                        const entry = this._reverseDependencies.get(file);
+                        if (entry) {
+                            entry.push(filePath);
+                        }
+                        else {
+                            this._reverseDependencies.set(file, [filePath]);
+                        }
+                    }
                     const compilationHash = childCompilation.fullHash;
                     const maybeSource = this._cachedSources.get(compilationHash);
                     if (maybeSource) {
@@ -109,18 +128,16 @@ class WebpackResourceLoader {
             });
         });
     }
-    _evaluate({ outputName, source }) {
-        try {
-            // Evaluate code
-            const evaluatedSource = vm.runInNewContext(source, undefined, { filename: outputName });
-            if (typeof evaluatedSource == 'string') {
-                return Promise.resolve(evaluatedSource);
-            }
-            return Promise.reject('The loader "' + outputName + '" didn\'t return a string.');
+    async _evaluate({ outputName, source }) {
+        // Evaluate code
+        const evaluatedSource = vm.runInNewContext(source, undefined, { filename: outputName });
+        if (typeof evaluatedSource === 'object' && typeof evaluatedSource.default === 'string') {
+            return evaluatedSource.default;
         }
-        catch (e) {
-            return Promise.reject(e);
+        if (typeof evaluatedSource === 'string') {
+            return evaluatedSource;
         }
+        throw new Error(`The loader "${outputName}" didn't return a string.`);
     }
     get(filePath) {
         return this._compile(filePath)

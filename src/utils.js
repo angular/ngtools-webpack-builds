@@ -13,10 +13,15 @@ const core_1 = require("@angular-devkit/core");
 // To work around this we must provide the same path format as TS internally uses in
 // the SourceFile paths.
 function workaroundResolve(path) {
-    return core_1.getSystemPath(core_1.normalize(path)).replace(/\\/g, '/');
+    return forwardSlashPath(core_1.getSystemPath(core_1.normalize(path)));
 }
 exports.workaroundResolve = workaroundResolve;
 function flattenArray(value) {
     return [].concat.apply([], value);
 }
 exports.flattenArray = flattenArray;
+// TS represents paths internally with '/' and expects paths to be in this format.
+function forwardSlashPath(path) {
+    return path.replace(/\\/g, '/');
+}
+exports.forwardSlashPath = forwardSlashPath;

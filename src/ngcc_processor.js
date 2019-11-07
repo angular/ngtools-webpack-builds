@@ -7,8 +7,10 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+const ngcc_1 = require("@angular/compiler-cli/ngcc");
+const fs_1 = require("fs");
+const path = require("path");
 const benchmark_1 = require("./benchmark");
-const utils_1 = require("./utils");
 // We cannot create a plugin for this, because NGTSC requires addition type
 // information which ngcc creates when processing a package which was compiled with NGC.
 // Example of such errors:
@@ -17,20 +19,27 @@ const utils_1 = require("./utils");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(ngcc, propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors) {
-        this.ngcc = ngcc;
+    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath, compilerOptions) {
         this.propertiesToConsider = propertiesToConsider;
         this.inputFileSystem = inputFileSystem;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
+        this.basePath = basePath;
+        this.compilerOptions = compilerOptions;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
+        this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
+        const { baseUrl, paths } = this.compilerOptions;
+        if (baseUrl && paths) {
+            this._pathMappings = {
+                baseUrl,
+                paths,
+            };
+        }
     }
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
-        if (!resolvedFileName
-            || moduleName.startsWith('.')
-            || this._processedModules.has(moduleName)) {
+        if (!resolvedFileName || moduleName.startsWith('.') || this._processedModules.has(moduleName)) {
             // Skip when module is unknown, relative or NGCC compiler is not found or already processed.
             return;
         }
@@ -40,16 +49,26 @@ class NgccProcessor {
             this._processedModules.add(moduleName);
             return;
         }
-        const normalizedJsonPath = utils_1.workaroundResolve(packageJsonPath);
+        // If the package.json is read only we should skip calling NGCC.
+        // With Bazel when running under sandbox the filesystem is read-only.
+        try {
+            fs_1.accessSync(packageJsonPath, fs_1.constants.W_OK);
+        }
+        catch (_a) {
+            // add it to processed so the second time round we skip this.
+            this._processedModules.add(moduleName);
+            return;
+        }
         const timeLabel = `NgccProcessor.processModule.ngcc.process+${moduleName}`;
         benchmark_1.time(timeLabel);
-        this.ngcc.process({
-            basePath: normalizedJsonPath.substring(0, normalizedJsonPath.indexOf(moduleName)),
-            targetEntryPointPath: moduleName,
+        ngcc_1.process({
+            basePath: this._nodeModulesDirectory,
+            targetEntryPointPath: path.dirname(packageJsonPath),
             propertiesToConsider: this.propertiesToConsider,
             compileAllFormats: false,
             createNewEntryPointFormats: true,
             logger: this._logger,
+            pathMappings: this._pathMappings,
         });
         benchmark_1.timeEnd(timeLabel);
         // Purge this file from cache, since NGCC add new mainFields. Ex: module_ivy_ngcc
@@ -66,16 +85,28 @@ class NgccProcessor {
             // This is based on the logic in the NGCC compiler
             // tslint:disable-next-line:max-line-length
             // See: https://github.com/angular/angular/blob/b93c1dffa17e4e6900b3ab1b9e554b6da92be0de/packages/compiler-cli/src/ngcc/src/packages/dependency_host.ts#L85-L121
-            const packageJsonPath = require.resolve(`${moduleName}/package.json`, {
+            return require.resolve(`${moduleName}/package.json`, {
                 paths: [resolvedFileName],
             });
-            return packageJsonPath;
         }
         catch (_a) {
             // if it fails this might be a deep import which doesn't have a package.json
             // Ex: @angular/compiler/src/i18n/i18n_ast/package.json
-            return undefined;
+            // or local libraries which don't reside in node_modules
+            const packageJsonPath = path.resolve(resolvedFileName, '../package.json');
+            return fs_1.existsSync(packageJsonPath) ? packageJsonPath : undefined;
         }
+    }
+    findNodeModulesDirectory(startPoint) {
+        let current = startPoint;
+        while (path.dirname(current) !== current) {
+            const nodePath = path.join(current, 'node_modules');
+            if (fs_1.existsSync(nodePath)) {
+                return nodePath;
+            }
+            current = path.dirname(current);
+        }
+        throw new Error(`Cannot locate the 'node_modules' directory.`);
     }
 }
 exports.NgccProcessor = NgccProcessor;
@@ -85,7 +116,10 @@ class NgccLogger {
         this.compilationErrors = compilationErrors;
     }
     debug(..._args) { }
-    info(..._args) { }
+    info(...args) {
+        // Log to stderr because it's a progress-like info message.
+        process.stderr.write(`\n${args.join(' ')}\n`);
+    }
     warn(...args) {
         this.compilationWarnings.push(args.join(' '));
     }

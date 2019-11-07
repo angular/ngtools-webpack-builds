@@ -7,6 +7,7 @@
  */
 /// <reference types="node" />
 import { logging, virtualFs } from '@angular-devkit/core';
+import { CompilerOptions } from '@angular/compiler-cli';
 import * as fs from 'fs';
 import * as ts from 'typescript';
 export declare enum PLATFORM {
@@ -42,14 +43,26 @@ export interface AngularCompilerPluginOptions {
     nameLazyFiles?: boolean;
     logger?: logging.Logger;
     directTemplateLoading?: boolean;
+    /**
+     * When using the loadChildren string syntax, @ngtools/webpack must query @angular/compiler-cli
+     * via a private API to know which lazy routes exist. This increases build and rebuild time.
+     * When using Ivy, the string syntax is not supported at all. Thus we shouldn't attempt that
+     * This option is also used for when the compilation doesn't need this sort of processing at all.
+     * @deprecated SystemJsNgModuleLoader is deprecated, and this is part of its usage.
+     */
     discoverLazyRoutes?: boolean;
-    importFactories?: boolean;
+    /** added to the list of lazy routes
+     * @deprecated SystemJsNgModuleLoader is deprecated, and this is part of its usage.
+     */
     additionalLazyModules?: {
         [module: string]: string;
     };
+    /**
+     * @deprecated SystemJsNgModuleLoader is deprecated, and this is part of its usage.
+     */
     additionalLazyModuleResources?: string[];
     contextElementDependencyConstructor?: ContextElementDependencyConstructor;
-    compilerOptions?: ts.CompilerOptions;
+    compilerOptions?: CompilerOptions;
     host?: virtualFs.Host<fs.Stats>;
     platformTransformers?: ts.TransformerFactory<ts.SourceFile>[];
 }
