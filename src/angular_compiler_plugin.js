@@ -733,8 +733,11 @@ class AngularCompilerPlugin {
             this._transformers.push(ctor_parameters_1.downlevelConstructorParameters(getTypeChecker));
         }
         else {
-            // Remove unneeded angular decorators.
-            this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            if (!this._compilerOptions.enableIvy) {
+                // Remove unneeded angular decorators in VE.
+                // In Ivy they are removed in ngc directly.
+                this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            }
             // Import ngfactory in loadChildren import syntax
             if (this._useFactories) {
                 // Only transform imports to use factories with View Engine.
