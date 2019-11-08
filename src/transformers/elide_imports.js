@@ -25,8 +25,8 @@ function elideImports(sourceFile, removedNodes, getTypeChecker) {
     const usedSymbols = new Set();
     const imports = [];
     ts.forEachChild(sourceFile, function visit(node) {
-        // Skip removed nodes
-        if (removedNodes.includes(node)) {
+        // Skip type references and removed nodes. We consider both unused.
+        if (node.kind == ts.SyntaxKind.TypeReference || removedNodes.includes(node)) {
             return;
         }
         // Record import and skip
