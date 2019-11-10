@@ -31,7 +31,6 @@ const type_checker_messages_1 = require("./type_checker_messages");
 const utils_1 = require("./utils");
 const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
 const webpack_input_host_1 = require("./webpack-input-host");
-const treeKill = require('tree-kill');
 class AngularCompilerPlugin {
     constructor(options) {
         this._discoverLazyRoutes = true;
@@ -409,8 +408,11 @@ class AngularCompilerPlugin {
         });
     }
     _killForkedTypeChecker() {
-        if (this._typeCheckerProcess && this._typeCheckerProcess.pid) {
-            treeKill(this._typeCheckerProcess.pid, 'SIGTERM');
+        if (this._typeCheckerProcess && !this._typeCheckerProcess.killed) {
+            try {
+                this._typeCheckerProcess.kill();
+            }
+            catch (_a) { }
             this._typeCheckerProcess = null;
         }
     }
@@ -731,8 +733,11 @@ class AngularCompilerPlugin {
             this._transformers.push(ctor_parameters_1.downlevelConstructorParameters(getTypeChecker));
         }
         else {
-            // Remove unneeded angular decorators.
-            this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            if (!this._compilerOptions.enableIvy) {
+                // Remove unneeded angular decorators in VE.
+                // In Ivy they are removed in ngc directly.
+                this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            }
             // Import ngfactory in loadChildren import syntax
             if (this._useFactories) {
                 // Only transform imports to use factories with View Engine.
@@ -963,7 +968,9 @@ class AngularCompilerPlugin {
         if (!this._resourceLoader) {
             return [];
         }
-        return this._resourceLoader.getResourceDependencies(fileName);
+        // The source loader uses TS-style forward slash paths for all platforms.
+        const resolvedFileName = utils_1.forwardSlashPath(fileName);
+        return this._resourceLoader.getResourceDependencies(resolvedFileName);
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,
