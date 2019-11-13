@@ -72,7 +72,7 @@ export declare class AngularCompilerPlugin {
         sourceMap: string | undefined;
         errorDependencies: string[];
     };
-    getDependencies(fileName: string): string[];
+    getDependencies(fileName: string, includeResources?: boolean): string[];
     getResourceDependencies(fileName: string): string[];
     private _emit;
     private _validateLocale;
