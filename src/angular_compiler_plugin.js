@@ -42,9 +42,7 @@ class AngularCompilerPlugin {
         this._JitMode = false;
         this._emitSkipped = true;
         this._unusedFiles = new Set();
-        this._typeDeps = new Set();
         this._changedFileExtensions = new Set(['ts', 'tsx', 'html', 'css', 'js', 'json']);
-        this._nodeModulesRegExp = /[\\\/]node_modules[\\\/]/;
         // Webpack plugin.
         this._firstRun = true;
         this._warnings = [];
@@ -432,7 +430,7 @@ class AngularCompilerPlugin {
             this._typeCheckerProcess.send(new type_checker_messages_1.UpdateMessage(rootNames, changedCompilationFiles));
         }
     }
-    _checkUnusedFiles(compilation) {
+    _warnOnUnusedFiles(compilation) {
         // Only do the unused TS files checks when under Ivy
         // since previously we did include unused files in the compilation
         // See: https://github.com/angular/angular-cli/pull/15030
@@ -440,7 +438,6 @@ class AngularCompilerPlugin {
         if (!this._compilerOptions.enableIvy || compilation.errors.length > 0) {
             return;
         }
-        // Bail if there's no TS program. Nothing to do in that case.
         const program = this._getTsProgram();
         if (!program) {
             return;
@@ -448,46 +445,29 @@ class AngularCompilerPlugin {
         // Exclude the following files from unused checks
         // - ngfactories & ngstyle might not have a correspondent
         //   JS file example `@angular/core/core.ngfactory.ts`.
+        // - .d.ts files might not have a correspondent JS file due to bundling.
         // - __ng_typecheck__.ts will never be requested.
-        const fileExcludeRegExp = /(\.(ngfactory|ngstyle|ngsummary)\.ts|ng_typecheck__\.ts)$/;
-        // Start all the source file names we care about.
-        // Ignore matches to the regexp above, files we've already reported once before, and
-        // node_modules.
-        const sourceFiles = program.getSourceFiles()
+        const fileExcludeRegExp = /(\.(d|ngfactory|ngstyle|ngsummary)\.ts|ng_typecheck__\.ts)$/;
+        // Start with a set of all the source file names we care about.
+        const unusedSourceFileNames = new Set(program.getSourceFiles()
             .map(x => this._compilerHost.denormalizePath(x.fileName))
-            .filter(f => !(fileExcludeRegExp.test(f) || this._unusedFiles.has(f)
-            || this._nodeModulesRegExp.test(f)));
-        // Make a set with the sources, but exclude .d.ts files since those are type-only.
-        const unusedSourceFileNames = new Set(sourceFiles.filter(f => !f.endsWith('.d.ts')));
-        // Separately keep track of type-only deps.
-        const typeDepFileNames = new Set(sourceFiles);
+            .filter(f => !(fileExcludeRegExp.test(f) || this._unusedFiles.has(f))));
         // This function removes a source file name and all its dependencies from the set.
-        const removeSourceFile = (fileName, originalModule = false) => {
-            if (unusedSourceFileNames.has(fileName)
-                || (originalModule && typeDepFileNames.has(fileName))) {
+        const removeSourceFile = (fileName) => {
+            if (unusedSourceFileNames.has(fileName)) {
                 unusedSourceFileNames.delete(fileName);
-                if (originalModule) {
-                    typeDepFileNames.delete(fileName);
-                }
                 this.getDependencies(fileName, false).forEach(f => removeSourceFile(f));
             }
         };
-        // Go over all the modules in the webpack compilation and remove them from the sets.
-        compilation.modules.forEach(m => m.resource ? removeSourceFile(m.resource, true) : null);
+        // Go over all the modules in the webpack compilation and remove them from the set.
+        compilation.modules.forEach(m => m.resource ? removeSourceFile(m.resource) : null);
         // Anything that remains is unused, because it wasn't referenced directly or transitively
         // on the files in the compilation.
         for (const fileName of unusedSourceFileNames) {
             compilation.warnings.push(`${fileName} is part of the TypeScript compilation but it's unused.\n` +
                 `Add only entry points to the 'files' or 'include' properties in your tsconfig.`);
             this._unusedFiles.add(fileName);
-            // Remove the truly unused from the type dep list.
-            typeDepFileNames.delete(fileName);
         }
-        // At this point we know what the type deps are.
-        // These are the TS files that weren't part of the compilation modules, aren't unused, but were
-        // part of the TS original source list.
-        // Next build we add them to the TS entry points so that they trigger rebuilds.
-        this._typeDeps = typeDepFileNames;
     }
     // Registration hook for webpack plugin.
     // tslint:disable-next-line:no-big-function
@@ -504,7 +484,7 @@ class AngularCompilerPlugin {
         // cleanup if not watching
         compiler.hooks.thisCompilation.tap('angular-compiler', compilation => {
             compilation.hooks.finishModules.tap('angular-compiler', () => {
-                this._checkUnusedFiles(compilation);
+                this._warnOnUnusedFiles(compilation);
                 let rootCompiler = compiler;
                 while (rootCompiler.parentCompilation) {
                     // tslint:disable-next-line:no-any
@@ -931,7 +911,7 @@ class AngularCompilerPlugin {
                 || !this._compilerHost.fileExists(outputFile, false)) {
                 let msg = `${fileName} is missing from the TypeScript compilation. `
                     + `Please make sure it is in your tsconfig via the 'files' or 'include' property.`;
-                if (this._nodeModulesRegExp.test(fileName)) {
+                if (/(\\|\/)node_modules(\\|\/)/.test(fileName)) {
                     msg += '\nThe missing file seems to be part of a third party library. '
                         + 'TS files in published libraries are often a sign of a badly packaged library. '
                         + 'Please open an issue in the library repository to alert its author and ask them '
@@ -993,16 +973,6 @@ class AngularCompilerPlugin {
         // The source loader uses TS-style forward slash paths for all platforms.
         const resolvedFileName = utils_1.forwardSlashPath(fileName);
         return this._resourceLoader.getResourceDependencies(resolvedFileName);
-    }
-    getTypeDependencies(fileName) {
-        // We currently add all type deps directly to the main path.
-        // If there's no main path or the lookup isn't the main path, bail.
-        if (!this._mainPath || this._compilerHost.resolve(fileName) != this._mainPath) {
-            return [];
-        }
-        // Note: this set is always for the previous build, not the current build.
-        // It should be better than not having rebuilds on type deps but isn't 100% correct.
-        return Array.from(this._typeDeps);
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,

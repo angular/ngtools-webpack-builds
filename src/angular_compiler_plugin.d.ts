@@ -23,9 +23,7 @@ export declare class AngularCompilerPlugin {
     private _emitSkipped;
     private _hadFullJitEmit;
     private _unusedFiles;
-    private _typeDeps;
     private _changedFileExtensions;
-    private _nodeModulesRegExp;
     private _firstRun;
     private _donePromise;
     private _normalizedLocale;
@@ -58,7 +56,7 @@ export declare class AngularCompilerPlugin {
     private _createForkedTypeChecker;
     private _killForkedTypeChecker;
     private _updateForkedTypeChecker;
-    private _checkUnusedFiles;
+    private _warnOnUnusedFiles;
     apply(compiler: Compiler & {
         watchMode?: boolean;
         parentCompilation?: compilation.Compilation;
@@ -76,7 +74,6 @@ export declare class AngularCompilerPlugin {
     };
     getDependencies(fileName: string, includeResources?: boolean): string[];
     getResourceDependencies(fileName: string): string[];
-    getTypeDependencies(fileName: string): string[];
     private _emit;
     private _validateLocale;
 }

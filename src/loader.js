@@ -86,9 +86,6 @@ function ngcLoader() {
             const styleDependencies = plugin.getResourceDependencies(styleFile);
             styleDependencies.forEach(dep => this.addDependency(dep));
         }
-        // Add type-only dependencies that should trigger a rebuild when they change.
-        const typeDependencies = plugin.getTypeDependencies(sourceFileName);
-        typeDependencies.forEach(dep => this.addDependency(dep));
         benchmark_1.timeEnd(timeLabel);
         cb(null, result.outputText, result.sourceMap);
     })
