@@ -447,26 +447,23 @@ class AngularCompilerPlugin {
         //   JS file example `@angular/core/core.ngfactory.ts`.
         // - .d.ts files might not have a correspondent JS file due to bundling.
         // - __ng_typecheck__.ts will never be requested.
-        const fileExcludeRegExp = /(\.(d|ngfactory|ngstyle)\.ts|ng_typecheck__\.ts)$/;
-        const usedFiles = new Set();
-        for (const compilationModule of compilation.modules) {
-            if (!compilationModule.resource) {
-                continue;
+        const fileExcludeRegExp = /(\.(d|ngfactory|ngstyle|ngsummary)\.ts|ng_typecheck__\.ts)$/;
+        // Start with a set of all the source file names we care about.
+        const unusedSourceFileNames = new Set(program.getSourceFiles()
+            .map(x => this._compilerHost.denormalizePath(x.fileName))
+            .filter(f => !(fileExcludeRegExp.test(f) || this._unusedFiles.has(f))));
+        // This function removes a source file name and all its dependencies from the set.
+        const removeSourceFile = (fileName) => {
+            if (unusedSourceFileNames.has(fileName)) {
+                unusedSourceFileNames.delete(fileName);
+                this.getDependencies(fileName, false).forEach(f => removeSourceFile(f));
             }
-            usedFiles.add(utils_1.forwardSlashPath(compilationModule.resource));
-            // We need the below for dependencies which
-            // are not emitted such as type only TS files
-            for (const dependency of compilationModule.buildInfo.fileDependencies) {
-                usedFiles.add(utils_1.forwardSlashPath(dependency));
-            }
-        }
-        const sourceFiles = program.getSourceFiles();
-        for (const { fileName } of sourceFiles) {
-            if (fileExcludeRegExp.test(fileName)
-                || usedFiles.has(fileName)
-                || this._unusedFiles.has(fileName)) {
-                continue;
-            }
+        };
+        // Go over all the modules in the webpack compilation and remove them from the set.
+        compilation.modules.forEach(m => m.resource ? removeSourceFile(m.resource) : null);
+        // Anything that remains is unused, because it wasn't referenced directly or transitively
+        // on the files in the compilation.
+        for (const fileName of unusedSourceFileNames) {
             compilation.warnings.push(`${fileName} is part of the TypeScript compilation but it's unused.\n` +
                 `Add only entry points to the 'files' or 'include' properties in your tsconfig.`);
             this._unusedFiles.add(fileName);
@@ -733,8 +730,11 @@ class AngularCompilerPlugin {
             this._transformers.push(ctor_parameters_1.downlevelConstructorParameters(getTypeChecker));
         }
         else {
-            // Remove unneeded angular decorators.
-            this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            if (!this._compilerOptions.enableIvy) {
+                // Remove unneeded angular decorators in VE.
+                // In Ivy they are removed in ngc directly.
+                this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            }
             // Import ngfactory in loadChildren import syntax
             if (this._useFactories) {
                 // Only transform imports to use factories with View Engine.
@@ -924,7 +924,7 @@ class AngularCompilerPlugin {
         }
         return { outputText, sourceMap, errorDependencies };
     }
-    getDependencies(fileName) {
+    getDependencies(fileName, includeResources = true) {
         const resolvedFileName = this._compilerHost.resolve(fileName);
         const sourceFile = this._compilerHost.getSourceFile(resolvedFileName, ts.ScriptTarget.Latest);
         if (!sourceFile) {
@@ -951,13 +951,18 @@ class AngularCompilerPlugin {
             }
         })
             .filter(x => x);
-        const resourceImports = transformers_1.findResources(sourceFile)
-            .map(resourcePath => core_1.resolve(core_1.dirname(resolvedFileName), core_1.normalize(resourcePath)));
+        let resourceImports = [], resourceDependencies = [];
+        if (includeResources) {
+            resourceImports = transformers_1.findResources(sourceFile)
+                .map(resourcePath => core_1.resolve(core_1.dirname(resolvedFileName), core_1.normalize(resourcePath)));
+            resourceDependencies =
+                this.getResourceDependencies(this._compilerHost.denormalizePath(resolvedFileName));
+        }
         // These paths are meant to be used by the loader so we must denormalize them.
         const uniqueDependencies = new Set([
             ...esImports,
             ...resourceImports,
-            ...this.getResourceDependencies(this._compilerHost.denormalizePath(resolvedFileName)),
+            ...resourceDependencies,
         ].map((p) => p && this._compilerHost.denormalizePath(p)));
         return [...uniqueDependencies];
     }
@@ -965,7 +970,9 @@ class AngularCompilerPlugin {
         if (!this._resourceLoader) {
             return [];
         }
-        return this._resourceLoader.getResourceDependencies(fileName);
+        // The source loader uses TS-style forward slash paths for all platforms.
+        const resolvedFileName = utils_1.forwardSlashPath(fileName);
+        return this._resourceLoader.getResourceDependencies(resolvedFileName);
     }
     // This code mostly comes from `performCompilation` in `@angular/compiler-cli`.
     // It skips the program creation because we need to use `loadNgStructureAsync()`,
