@@ -578,7 +578,9 @@ class AngularCompilerPlugin {
         if (this._discoverLazyRoutes) {
             // Add lazy modules to the context module for @angular/core
             compiler.hooks.contextModuleFactory.tap('angular-compiler', cmf => {
-                const angularCorePackagePath = require.resolve('@angular/core/package.json');
+                const angularCorePackagePath = require.resolve('@angular/core/package.json', {
+                    paths: [this._basePath],
+                });
                 // APFv6 does not have single FESM anymore. Instead of verifying if we're pointing to
                 // FESMs, we resolve the `@angular/core` path and verify that the path for the
                 // module starts with it.
