@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const process = require("process");
 const benchmark_1 = require("./benchmark");
-const gather_diagnostics_1 = require("./gather_diagnostics");
+const diagnostics_1 = require("./diagnostics");
 const type_checker_1 = require("./type_checker");
 const type_checker_messages_1 = require("./type_checker_messages");
 let typeChecker;
@@ -33,7 +33,7 @@ if (process.argv.indexOf(type_checker_1.AUTO_START_ARG) >= 0) {
                     lastCancellationToken.requestCancellation();
                 }
                 const updateMessage = message;
-                lastCancellationToken = new gather_diagnostics_1.CancellationToken();
+                lastCancellationToken = new diagnostics_1.CancellationToken();
                 typeChecker.update(updateMessage.rootNames, updateMessage.changedCompilationFiles, lastCancellationToken);
                 break;
             default:
