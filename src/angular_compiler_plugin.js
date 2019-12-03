@@ -16,8 +16,8 @@ const path = require("path");
 const ts = require("typescript");
 const benchmark_1 = require("./benchmark");
 const compiler_host_1 = require("./compiler_host");
-const diagnostics_1 = require("./diagnostics");
 const entry_resolver_1 = require("./entry_resolver");
+const gather_diagnostics_1 = require("./gather_diagnostics");
 const interfaces_1 = require("./interfaces");
 const lazy_routes_1 = require("./lazy_routes");
 const ngcc_processor_1 = require("./ngcc_processor");
@@ -833,8 +833,50 @@ class AngularCompilerPlugin {
         benchmark_1.time('AngularCompilerPlugin._update._emit');
         const { emitResult, diagnostics } = this._emit();
         benchmark_1.timeEnd('AngularCompilerPlugin._update._emit');
-        // Report any diagnostics.
-        diagnostics_1.reportDiagnostics(diagnostics, this._compilerHost, msg => this._errors.push(new Error(msg)), msg => this._warnings.push(msg));
+        // Report Diagnostics
+        const tsErrors = [];
+        const tsWarnings = [];
+        const ngErrors = [];
+        const ngWarnings = [];
+        for (const diagnostic of diagnostics) {
+            switch (diagnostic.category) {
+                case ts.DiagnosticCategory.Error:
+                    if (compiler_cli_1.isNgDiagnostic(diagnostic)) {
+                        ngErrors.push(diagnostic);
+                    }
+                    else {
+                        tsErrors.push(diagnostic);
+                    }
+                    break;
+                case ts.DiagnosticCategory.Message:
+                case ts.DiagnosticCategory.Suggestion:
+                // Warnings?
+                case ts.DiagnosticCategory.Warning:
+                    if (compiler_cli_1.isNgDiagnostic(diagnostic)) {
+                        ngWarnings.push(diagnostic);
+                    }
+                    else {
+                        tsWarnings.push(diagnostic);
+                    }
+                    break;
+            }
+        }
+        if (tsErrors.length > 0) {
+            const message = ts.formatDiagnosticsWithColorAndContext(tsErrors, this._compilerHost);
+            this._errors.push(new Error(message));
+        }
+        if (tsWarnings.length > 0) {
+            const message = ts.formatDiagnosticsWithColorAndContext(tsWarnings, this._compilerHost);
+            this._warnings.push(message);
+        }
+        if (ngErrors.length > 0) {
+            const message = compiler_cli_1.formatDiagnostics(ngErrors);
+            this._errors.push(new Error(message));
+        }
+        if (ngWarnings.length > 0) {
+            const message = compiler_cli_1.formatDiagnostics(ngWarnings);
+            this._warnings.push(message);
+        }
         this._emitSkipped = !emitResult || emitResult.emitSkipped;
         // Reset changed files on successful compilation.
         if (!this._emitSkipped && this._errors.length === 0) {
@@ -972,7 +1014,7 @@ class AngularCompilerPlugin {
         const program = this._program;
         const allDiagnostics = [];
         const diagMode = (this._firstRun || !this._forkTypeChecker) ?
-            diagnostics_1.DiagnosticMode.All : diagnostics_1.DiagnosticMode.Syntactic;
+            gather_diagnostics_1.DiagnosticMode.All : gather_diagnostics_1.DiagnosticMode.Syntactic;
         let emitResult;
         try {
             if (this._JitMode) {
@@ -998,8 +1040,8 @@ class AngularCompilerPlugin {
                         changedTsFiles.add(changedFile);
                     }
                 }
-                allDiagnostics.push(...diagnostics_1.gatherDiagnostics(tsProgram, this._JitMode, 'AngularCompilerPlugin._emit.ts', diagMode));
-                if (!diagnostics_1.hasErrors(allDiagnostics)) {
+                allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(tsProgram, this._JitMode, 'AngularCompilerPlugin._emit.ts', diagMode));
+                if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
                     if (this._firstRun || changedTsFiles.size > 20 || !this._hadFullJitEmit) {
                         emitResult = tsProgram.emit(undefined, undefined, undefined, undefined, { before: this._transformers });
                         this._hadFullJitEmit = !emitResult.emitSkipped;
@@ -1036,8 +1078,8 @@ class AngularCompilerPlugin {
                     allDiagnostics.push(...angularProgram.getNgOptionDiagnostics());
                     benchmark_1.timeEnd('AngularCompilerPlugin._emit.ng.getNgOptionDiagnostics');
                 }
-                allDiagnostics.push(...diagnostics_1.gatherDiagnostics(angularProgram, this._JitMode, 'AngularCompilerPlugin._emit.ng', diagMode));
-                if (!diagnostics_1.hasErrors(allDiagnostics)) {
+                allDiagnostics.push(...gather_diagnostics_1.gatherDiagnostics(angularProgram, this._JitMode, 'AngularCompilerPlugin._emit.ng', diagMode));
+                if (!gather_diagnostics_1.hasErrors(allDiagnostics)) {
                     benchmark_1.time('AngularCompilerPlugin._emit.ng.emit');
                     const extractI18n = !!this._compilerOptions.i18nOutFile;
                     const emitFlags = extractI18n ? compiler_cli_1.EmitFlags.I18nBundle : compiler_cli_1.EmitFlags.Default;
