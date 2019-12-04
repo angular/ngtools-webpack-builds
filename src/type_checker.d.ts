@@ -1,5 +1,5 @@
 import { CompilerOptions } from '@angular/compiler-cli';
-import { CancellationToken } from './gather_diagnostics';
+import { CancellationToken } from './diagnostics';
 export declare const AUTO_START_ARG = "9d93e901-158a-4cf9-ba1b-2f0582ffcfeb";
 export declare class TypeChecker {
     private _compilerOptions;
