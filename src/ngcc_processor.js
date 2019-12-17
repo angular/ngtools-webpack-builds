@@ -39,14 +39,15 @@ class NgccProcessor {
     }
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
-        if (!resolvedFileName || moduleName.startsWith('.') || this._processedModules.has(moduleName)) {
+        if (!resolvedFileName || moduleName.startsWith('.')
+            || this._processedModules.has(resolvedFileName)) {
             // Skip when module is unknown, relative or NGCC compiler is not found or already processed.
             return;
         }
         const packageJsonPath = this.tryResolvePackage(moduleName, resolvedFileName);
         if (!packageJsonPath) {
             // add it to processed so the second time round we skip this.
-            this._processedModules.add(moduleName);
+            this._processedModules.add(resolvedFileName);
             return;
         }
         // If the package.json is read only we should skip calling NGCC.
@@ -56,7 +57,7 @@ class NgccProcessor {
         }
         catch (_a) {
             // add it to processed so the second time round we skip this.
-            this._processedModules.add(moduleName);
+            this._processedModules.add(resolvedFileName);
             return;
         }
         const timeLabel = `NgccProcessor.processModule.ngcc.process+${moduleName}`;
@@ -75,7 +76,10 @@ class NgccProcessor {
         // which are unknown in the cached file.
         // tslint:disable-next-line:no-any
         this.inputFileSystem.purge(packageJsonPath);
-        this._processedModules.add(moduleName);
+        this._processedModules.add(resolvedFileName);
+    }
+    invalidate(fileName) {
+        this._processedModules.delete(fileName);
     }
     /**
      * Try resolve a package.json file from the resolved .d.ts file.
