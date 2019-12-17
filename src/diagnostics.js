@@ -1,5 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
+const compiler_cli_1 = require("@angular/compiler-cli");
 const ts = require("typescript");
 const benchmark_1 = require("./benchmark");
 var DiagnosticMode;
@@ -81,3 +89,49 @@ function gatherDiagnostics(program, jitMode, benchmarkLabel, mode = DiagnosticMo
     return allDiagnostics;
 }
 exports.gatherDiagnostics = gatherDiagnostics;
+function reportDiagnostics(diagnostics, compilerHost, reportError, reportWarning) {
+    const tsErrors = [];
+    const tsWarnings = [];
+    const ngErrors = [];
+    const ngWarnings = [];
+    for (const diagnostic of diagnostics) {
+        switch (diagnostic.category) {
+            case ts.DiagnosticCategory.Error:
+                if (compiler_cli_1.isNgDiagnostic(diagnostic)) {
+                    ngErrors.push(diagnostic);
+                }
+                else {
+                    tsErrors.push(diagnostic);
+                }
+                break;
+            case ts.DiagnosticCategory.Message:
+            case ts.DiagnosticCategory.Suggestion:
+            // Warnings?
+            case ts.DiagnosticCategory.Warning:
+                if (compiler_cli_1.isNgDiagnostic(diagnostic)) {
+                    ngWarnings.push(diagnostic);
+                }
+                else {
+                    tsWarnings.push(diagnostic);
+                }
+                break;
+        }
+    }
+    if (tsErrors.length > 0) {
+        const message = ts.formatDiagnosticsWithColorAndContext(tsErrors, compilerHost);
+        reportError(message);
+    }
+    if (tsWarnings.length > 0) {
+        const message = ts.formatDiagnosticsWithColorAndContext(tsWarnings, compilerHost);
+        reportWarning(message);
+    }
+    if (ngErrors.length > 0) {
+        const message = compiler_cli_1.formatDiagnostics(ngErrors);
+        reportError(message);
+    }
+    if (ngWarnings.length > 0) {
+        const message = compiler_cli_1.formatDiagnostics(ngWarnings);
+        reportWarning(message);
+    }
+}
+exports.reportDiagnostics = reportDiagnostics;
