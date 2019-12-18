@@ -75,10 +75,6 @@ class WebpackCompilerHost {
     invalidate(fileName) {
         const fullPath = this.resolve(fileName);
         this._sourceFileCache.delete(fullPath);
-        if (this.ngccProcessor) {
-            // Delete the ngcc processor cache using the TS-format file names.
-            this.ngccProcessor.invalidate(utils_1.forwardSlashPath(fileName));
-        }
         let exists = false;
         try {
             exists = this._syncHost.isFile(fullPath);

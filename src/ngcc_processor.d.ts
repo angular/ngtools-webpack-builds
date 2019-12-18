@@ -20,7 +20,6 @@ export declare class NgccProcessor {
     private _pathMappings;
     constructor(propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, compilerOptions: ts.CompilerOptions);
     processModule(moduleName: string, resolvedModule: ts.ResolvedModule | ts.ResolvedTypeReferenceDirective): void;
-    invalidate(fileName: string): void;
     /**
      * Try resolve a package.json file from the resolved .d.ts file.
      */
