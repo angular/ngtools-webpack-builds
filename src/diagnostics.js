@@ -118,11 +118,11 @@ function reportDiagnostics(diagnostics, compilerHost, reportError, reportWarning
         }
     }
     if (tsErrors.length > 0) {
-        const message = compiler_cli_1.formatDiagnostics(tsErrors);
+        const message = ts.formatDiagnosticsWithColorAndContext(tsErrors, compilerHost);
         reportError(message);
     }
     if (tsWarnings.length > 0) {
-        const message = compiler_cli_1.formatDiagnostics(tsWarnings);
+        const message = ts.formatDiagnosticsWithColorAndContext(tsWarnings, compilerHost);
         reportWarning(message);
     }
     if (ngErrors.length > 0) {
