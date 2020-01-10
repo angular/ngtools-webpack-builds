@@ -13,7 +13,7 @@ import { InputFileSystem } from 'webpack';
 export declare class WebpackInputHost implements virtualFs.Host<Stats> {
     readonly inputFileSystem: InputFileSystem;
     constructor(inputFileSystem: InputFileSystem);
-    readonly capabilities: virtualFs.HostCapabilities;
+    get capabilities(): virtualFs.HostCapabilities;
     write(_path: Path, _content: virtualFs.FileBufferLike): Observable<never>;
     delete(_path: Path): Observable<never>;
     rename(_from: Path, _to: Path): Observable<never>;
