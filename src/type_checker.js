@@ -13,7 +13,7 @@ const compiler_cli_1 = require("@angular/compiler-cli");
 const ts = require("typescript");
 const benchmark_1 = require("./benchmark");
 const compiler_host_1 = require("./compiler_host");
-const gather_diagnostics_1 = require("./gather_diagnostics");
+const diagnostics_1 = require("./diagnostics");
 const type_checker_messages_1 = require("./type_checker_messages");
 // This file should run in a child process with the AUTO_START_ARG argument
 exports.AUTO_START_ARG = '9d93e901-158a-4cf9-ba1b-2f0582ffcfeb';
@@ -70,23 +70,10 @@ class TypeChecker {
         }
     }
     _diagnose(cancellationToken) {
-        const allDiagnostics = gather_diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'TypeChecker', gather_diagnostics_1.DiagnosticMode.Semantic, cancellationToken);
+        const allDiagnostics = diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'TypeChecker', diagnostics_1.DiagnosticMode.Semantic, cancellationToken);
         // Report diagnostics.
         if (!cancellationToken.isCancellationRequested()) {
-            const errors = allDiagnostics.filter((d) => d.category === ts.DiagnosticCategory.Error);
-            const warnings = allDiagnostics.filter((d) => d.category === ts.DiagnosticCategory.Warning);
-            if (errors.length > 0) {
-                const message = compiler_cli_1.formatDiagnostics(errors);
-                this.sendMessage(new type_checker_messages_1.LogMessage('error', 'ERROR in ' + message));
-            }
-            else {
-                // Reset the changed file tracker only if there are no errors.
-                this._compilerHost.resetChangedFileTracker();
-            }
-            if (warnings.length > 0) {
-                const message = compiler_cli_1.formatDiagnostics(warnings);
-                this.sendMessage(new type_checker_messages_1.LogMessage('warn', 'WARNING in ' + message));
-            }
+            diagnostics_1.reportDiagnostics(allDiagnostics, this._compilerHost, msg => this.sendMessage(new type_checker_messages_1.LogMessage('error', 'ERROR in ' + msg)), msg => this.sendMessage(new type_checker_messages_1.LogMessage('warn', 'WARNING in ' + msg)));
         }
     }
     sendMessage(msg) {
