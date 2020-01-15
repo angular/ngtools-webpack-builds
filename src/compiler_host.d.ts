@@ -31,7 +31,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     private _virtualFileExtensions;
     private _virtualStyleFileExtensions;
     constructor(_options: ts.CompilerOptions, basePath: string, host: virtualFs.Host, cacheSourceFiles: boolean, directTemplateLoading?: boolean, ngccProcessor?: NgccProcessor | undefined, moduleResolutionCache?: ts.ModuleResolutionCache | undefined);
-    private get virtualFiles();
+    private readonly virtualFiles;
     reset(): void;
     denormalizePath(path: string): string;
     resolve(path: string): Path;
@@ -48,7 +48,7 @@ export declare class WebpackCompilerHost implements ts.CompilerHost {
     getDirectories(path: string): string[];
     getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, onError?: OnErrorFn): ts.SourceFile | undefined;
     getDefaultLibFileName(options: ts.CompilerOptions): string;
-    get writeFile(): (fileName: string, data: string, _writeByteOrderMark: boolean, onError?: ((message: string) => void) | undefined, _sourceFiles?: readonly ts.SourceFile[] | undefined) => void;
+    readonly writeFile: (fileName: string, data: string, _writeByteOrderMark: boolean, onError?: ((message: string) => void) | undefined, _sourceFiles?: readonly ts.SourceFile[] | undefined) => void;
     getCurrentDirectory(): string;
     getCanonicalFileName(fileName: string): string;
     useCaseSensitiveFileNames(): boolean;
