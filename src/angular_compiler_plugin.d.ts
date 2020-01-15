@@ -38,13 +38,13 @@ export declare class AngularCompilerPlugin {
     private _logger;
     private _mainFields;
     constructor(options: AngularCompilerPluginOptions);
-    readonly options: AngularCompilerPluginOptions;
-    readonly done: Promise<void> | null;
-    readonly entryModule: {
+    get options(): AngularCompilerPluginOptions;
+    get done(): Promise<void> | null;
+    get entryModule(): {
         path: string;
         className: string;
     } | null;
-    readonly typeChecker: ts.TypeChecker | null;
+    get typeChecker(): ts.TypeChecker | null;
     /** @deprecated  From 8.0.2 */
     static isSupported(): boolean;
     private _setupOptions;
