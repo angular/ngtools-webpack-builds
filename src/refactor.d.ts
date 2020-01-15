@@ -13,8 +13,8 @@ export declare function resolve(filePath: string, _host: ts.CompilerHost, compil
 export declare class TypeScriptFileRefactor {
     private _fileName;
     private _sourceFile;
-    readonly fileName: string;
-    readonly sourceFile: ts.SourceFile;
+    get fileName(): string;
+    get sourceFile(): ts.SourceFile;
     constructor(fileName: string, _host: ts.CompilerHost, _program?: ts.Program, source?: string | null);
     /**
      * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
