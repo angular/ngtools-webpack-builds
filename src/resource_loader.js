@@ -13,7 +13,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const vm = require("vm");
 const webpack_sources_1 = require("webpack-sources");
-const utils_1 = require("./utils");
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LoaderTargetPlugin = require('webpack/lib/LoaderTargetPlugin');
@@ -104,15 +103,14 @@ class WebpackResourceLoader {
             }
         });
         // Save the dependencies for this resource.
-        this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
+        this._fileDependencies.set(filePath, childCompilation.fileDependencies);
         for (const file of childCompilation.fileDependencies) {
-            const resolvedFile = utils_1.forwardSlashPath(file);
-            const entry = this._reverseDependencies.get(resolvedFile);
+            const entry = this._reverseDependencies.get(file);
             if (entry) {
-                entry.add(filePath);
+                entry.push(filePath);
             }
             else {
-                this._reverseDependencies.set(resolvedFile, new Set([filePath]));
+                this._reverseDependencies.set(file, [filePath]);
             }
         }
         const compilationHash = childCompilation.fullHash;

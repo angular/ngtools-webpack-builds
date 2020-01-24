@@ -7,8 +7,8 @@ export declare class WebpackResourceLoader {
     private _cachedEvaluatedSources;
     constructor();
     update(parentCompilation: any): void;
-    getResourceDependencies(filePath: string): never[] | Set<string>;
-    getAffectedResources(file: string): never[] | Set<string>;
+    getResourceDependencies(filePath: string): string[];
+    getAffectedResources(file: string): string[];
     private _compile;
     private _evaluate;
     get(filePath: string): Promise<string>;

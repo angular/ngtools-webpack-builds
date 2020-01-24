@@ -83,9 +83,8 @@ function ngcLoader() {
         const ngStyleRe = /(?:\.shim)?\.ngstyle\.js$/;
         if (ngStyleRe.test(sourceFileName)) {
             const styleFile = sourceFileName.replace(ngStyleRe, '');
-            for (const dep of plugin.getResourceDependencies(styleFile)) {
-                this.addDependency(dep);
-            }
+            const styleDependencies = plugin.getResourceDependencies(styleFile);
+            styleDependencies.forEach(dep => this.addDependency(dep));
         }
         // Add type-only dependencies that should trigger a rebuild when they change.
         const typeDependencies = plugin.getTypeDependencies(sourceFileName);

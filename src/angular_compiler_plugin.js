@@ -931,16 +931,12 @@ class AngularCompilerPlugin {
             }
         })
             .filter(x => x);
-        let resourceImports = [];
-        const resourceDependencies = [];
+        let resourceImports = [], resourceDependencies = [];
         if (includeResources) {
             resourceImports = transformers_1.findResources(sourceFile)
                 .map(resourcePath => core_1.resolve(core_1.dirname(resolvedFileName), core_1.normalize(resourcePath)));
-            for (const resource of resourceImports) {
-                for (const dep of this.getResourceDependencies(this._compilerHost.denormalizePath(resource))) {
-                    resourceDependencies.push(dep);
-                }
-            }
+            resourceDependencies =
+                this.getResourceDependencies(this._compilerHost.denormalizePath(resolvedFileName));
         }
         // These paths are meant to be used by the loader so we must denormalize them.
         const uniqueDependencies = new Set([
