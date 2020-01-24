@@ -75,7 +75,7 @@ export declare class AngularCompilerPlugin {
         errorDependencies: string[];
     };
     getDependencies(fileName: string, includeResources?: boolean): string[];
-    getResourceDependencies(fileName: string): string[];
+    getResourceDependencies(fileName: string): never[] | Set<string>;
     getTypeDependencies(fileName: string): string[];
     private _emit;
     private _validateLocale;
