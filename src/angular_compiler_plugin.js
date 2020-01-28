@@ -26,6 +26,7 @@ const resource_loader_1 = require("./resource_loader");
 const transformers_1 = require("./transformers");
 const ast_helpers_1 = require("./transformers/ast_helpers");
 const ctor_parameters_1 = require("./transformers/ctor-parameters");
+const remove_ivy_jit_support_calls_1 = require("./transformers/remove-ivy-jit-support-calls");
 const type_checker_1 = require("./type_checker");
 const type_checker_messages_1 = require("./type_checker_messages");
 const utils_1 = require("./utils");
@@ -756,6 +757,14 @@ class AngularCompilerPlugin {
                 // Remove unneeded angular decorators in VE.
                 // In Ivy they are removed in ngc directly.
                 this._transformers.push(transformers_1.removeDecorators(isAppPath, getTypeChecker));
+            }
+            else {
+                // Default for both options is to emit (undefined means true)
+                const removeClassMetadata = this._options.emitClassMetadata === false;
+                const removeNgModuleScope = this._options.emitNgModuleScope === false;
+                if (removeClassMetadata || removeNgModuleScope) {
+                    this._transformers.push(remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls(removeClassMetadata, removeNgModuleScope, getTypeChecker));
+                }
             }
             // Import ngfactory in loadChildren import syntax
             if (this._useFactories) {

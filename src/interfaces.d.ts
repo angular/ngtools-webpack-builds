@@ -43,6 +43,8 @@ export interface AngularCompilerPluginOptions {
     nameLazyFiles?: boolean;
     logger?: logging.Logger;
     directTemplateLoading?: boolean;
+    emitClassMetadata?: boolean;
+    emitNgModuleScope?: boolean;
     /**
      * When using the loadChildren string syntax, @ngtools/webpack must query @angular/compiler-cli
      * via a private API to know which lazy routes exist. This increases build and rebuild time.
