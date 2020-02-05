@@ -15,7 +15,7 @@ const interfaces_1 = require("./interfaces");
 // Doesn't use the `symbol.declarations` because that previous transforms might have removed nodes
 // but the type checker doesn't know.
 // See https://github.com/Microsoft/TypeScript/issues/17552 for more information.
-function elideImports(sourceFile, removedNodes, getTypeChecker) {
+function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions) {
     const ops = [];
     if (removedNodes.length === 0) {
         return [];
@@ -25,8 +25,9 @@ function elideImports(sourceFile, removedNodes, getTypeChecker) {
     const usedSymbols = new Set();
     const imports = [];
     ts.forEachChild(sourceFile, function visit(node) {
-        // Skip type references and removed nodes. We consider both unused.
-        if (node.kind == ts.SyntaxKind.TypeReference || removedNodes.includes(node)) {
+        var _a, _b, _c, _d;
+        // Skip removed nodes.
+        if (removedNodes.includes(node)) {
             return;
         }
         // Record import and skip
@@ -35,16 +36,48 @@ function elideImports(sourceFile, removedNodes, getTypeChecker) {
             return;
         }
         let symbol;
-        switch (node.kind) {
-            case ts.SyntaxKind.Identifier:
+        if (ts.isTypeReferenceNode(node)) {
+            if (!compilerOptions.emitDecoratorMetadata) {
+                // Skip and mark as unused if emitDecoratorMetadata is disabled.
+                return;
+            }
+            const parent = node.parent;
+            let isTypeReferenceForDecoratoredNode = false;
+            switch (parent.kind) {
+                case ts.SyntaxKind.GetAccessor:
+                case ts.SyntaxKind.PropertyDeclaration:
+                case ts.SyntaxKind.MethodDeclaration:
+                    isTypeReferenceForDecoratoredNode = !!((_a = parent.decorators) === null || _a === void 0 ? void 0 : _a.length);
+                    break;
+                case ts.SyntaxKind.Parameter:
+                    // - A constructor parameter can be decorated or the class itself is decorated.
+                    // - The parent of the parameter is decorated example a method declaration or a set accessor.
+                    // In all cases we need the type reference not to be elided.
+                    isTypeReferenceForDecoratoredNode = !!(((_b = parent.decorators) === null || _b === void 0 ? void 0 : _b.length) ||
+                        (ts.isSetAccessor(parent.parent) && !!((_c = parent.parent.decorators) === null || _c === void 0 ? void 0 : _c.length)) ||
+                        (ts.isConstructorDeclaration(parent.parent) && !!((_d = parent.parent.parent.decorators) === null || _d === void 0 ? void 0 : _d.length)));
+                    break;
+            }
+            if (isTypeReferenceForDecoratoredNode) {
                 symbol = typeChecker.getSymbolAtLocation(node);
-                break;
-            case ts.SyntaxKind.ExportSpecifier:
-                symbol = typeChecker.getExportSpecifierLocalTargetSymbol(node);
-                break;
-            case ts.SyntaxKind.ShorthandPropertyAssignment:
-                symbol = typeChecker.getShorthandAssignmentValueSymbol(node);
-                break;
+            }
+            else {
+                // If type reference is not for Decorator skip and marked as unused.
+                return;
+            }
+        }
+        else {
+            switch (node.kind) {
+                case ts.SyntaxKind.Identifier:
+                    symbol = typeChecker.getSymbolAtLocation(node);
+                    break;
+                case ts.SyntaxKind.ExportSpecifier:
+                    symbol = typeChecker.getExportSpecifierLocalTargetSymbol(node);
+                    break;
+                case ts.SyntaxKind.ShorthandPropertyAssignment:
+                    symbol = typeChecker.getShorthandAssignmentValueSymbol(node);
+                    break;
+            }
         }
         if (symbol) {
             usedSymbols.add(symbol);

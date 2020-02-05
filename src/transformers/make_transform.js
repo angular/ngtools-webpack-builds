@@ -24,7 +24,7 @@ function makeTransform(standardTransform, getTypeChecker) {
             // replace_resources), but may not be true for new transforms.
             if (getTypeChecker && removeOps.length + replaceOps.length > 0) {
                 const removedNodes = removeOps.concat(replaceOps).map(op => op.target);
-                removeOps.push(...elide_imports_1.elideImports(sf, removedNodes, getTypeChecker));
+                removeOps.push(...elide_imports_1.elideImports(sf, removedNodes, getTypeChecker, context.getCompilerOptions()));
             }
             const visitor = node => {
                 let modified = false;
