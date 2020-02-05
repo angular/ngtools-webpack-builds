@@ -43,8 +43,9 @@ exports.getLastNode = getLastNode;
 // Test transform helpers.
 const basePath = '/project/src/';
 const fileName = basePath + 'test-file.ts';
+const typeScriptLibFiles = loadTypeScriptLibFiles();
 const tsLibFiles = loadTsLibFiles();
-function createTypescriptContext(content, additionalFiles, useLibs = false, importHelpers = true) {
+function createTypescriptContext(content, additionalFiles, useLibs = false, extraCompilerOptions = {}) {
     // Set compiler options.
     const compilerOptions = {
         noEmitOnError: useLibs,
@@ -55,7 +56,9 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, impo
         target: ts.ScriptTarget.ESNext,
         skipLibCheck: true,
         sourceMap: false,
-        importHelpers,
+        importHelpers: true,
+        experimentalDecorators: true,
+        ...extraCompilerOptions,
     };
     // Create compiler host.
     const compilerHost = new compiler_host_1.WebpackCompilerHost(compilerOptions, basePath, new core_1.virtualFs.SimpleMemoryHost(), false);
@@ -65,8 +68,13 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, impo
         // Write the default libs.
         // These are needed for tests that use import(), because it relies on a Promise being there.
         const compilerLibFolder = path_1.dirname(compilerHost.getDefaultLibFileName(compilerOptions));
-        for (const [k, v] of Object.entries(tsLibFiles)) {
+        for (const [k, v] of Object.entries(typeScriptLibFiles)) {
             compilerHost.writeFile(path_1.join(compilerLibFolder, k), v, false);
+        }
+    }
+    if (compilerOptions.importHelpers) {
+        for (const [k, v] of Object.entries(tsLibFiles)) {
+            compilerHost.writeFile(k, v, false);
         }
     }
     if (additionalFiles) {
@@ -103,13 +111,24 @@ function transformTypescript(content, transformers, program, compilerHost) {
     return compilerHost.readFile(fileName.replace(/\.tsx?$/, '.js'));
 }
 exports.transformTypescript = transformTypescript;
-function loadTsLibFiles() {
+function loadTypeScriptLibFiles() {
     const libFolderPath = path_1.dirname(require.resolve('typescript/lib/lib.d.ts'));
     const libFolderFiles = fs_1.readdirSync(libFolderPath);
     const libFileNames = libFolderFiles.filter(f => f.startsWith('lib.') && f.endsWith('.d.ts'));
     // Return a map of the lib names to their content.
-    return libFileNames.reduce((map, f) => {
-        map[f] = fs_1.readFileSync(path_1.join(libFolderPath, f), 'utf-8');
-        return map;
-    }, {});
+    const libs = {};
+    for (const f of libFileNames) {
+        libs[f] = fs_1.readFileSync(path_1.join(libFolderPath, f), 'utf-8');
+    }
+    return libs;
+}
+function loadTsLibFiles() {
+    const libFolderPath = path_1.dirname(require.resolve('tslib/package.json'));
+    const libFolderFiles = fs_1.readdirSync(libFolderPath);
+    // Return a map of the lib names to their content.
+    const libs = {};
+    for (const f of libFolderFiles) {
+        libs[path_1.join('node_modules/tslib', f)] = fs_1.readFileSync(path_1.join(libFolderPath, f), 'utf-8');
+    }
+    return libs;
 }
