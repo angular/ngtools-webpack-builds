@@ -229,6 +229,7 @@ class AngularCompilerPlugin {
         });
     }
     async _createOrUpdateProgram() {
+        var _a, _b;
         // Get the root files from the ts config.
         // When a new root name (like a lazy route) is added, it won't be available from
         // following imports on the existing files, so we need to get the new list of root files.
@@ -261,13 +262,35 @@ class AngularCompilerPlugin {
             benchmark_1.timeEnd('AngularCompilerPlugin._createOrUpdateProgram.ng.loadNgStructureAsync');
         }
         const newTsProgram = this._getTsProgram();
-        if (oldTsProgram && newTsProgram) {
+        const newProgramSourceFiles = (_a = newTsProgram) === null || _a === void 0 ? void 0 : _a.getSourceFiles();
+        const localDtsFiles = new Set((_b = newProgramSourceFiles) === null || _b === void 0 ? void 0 : _b.filter(f => f.isDeclarationFile && !this._nodeModulesRegExp.test(f.fileName)).map(f => this._compilerHost.denormalizePath(f.fileName)));
+        if (!oldTsProgram) {
+            // Add all non node package dts files as depedencies when not having an old program
+            for (const dts of localDtsFiles) {
+                this._typeDeps.add(dts);
+            }
+        }
+        else if (oldTsProgram && newProgramSourceFiles) {
             // The invalidation should only happen if we have an old program
             // as otherwise we will invalidate all the sourcefiles.
             const oldFiles = new Set(oldTsProgram.getSourceFiles().map(sf => sf.fileName));
-            const newFiles = newTsProgram.getSourceFiles().filter(sf => !oldFiles.has(sf.fileName));
-            for (const newFile of newFiles) {
-                this._compilerHost.invalidate(newFile.fileName);
+            const newProgramFiles = new Set(newProgramSourceFiles.map(sf => sf.fileName));
+            for (const dependency of this._typeDeps) {
+                // Remove type dependencies of no longer existing files
+                if (!newProgramFiles.has(utils_1.forwardSlashPath(dependency))) {
+                    this._typeDeps.delete(dependency);
+                }
+            }
+            for (const fileName of newProgramFiles) {
+                if (oldFiles.has(fileName)) {
+                    continue;
+                }
+                this._compilerHost.invalidate(fileName);
+                const denormalizedFileName = this._compilerHost.denormalizePath(fileName);
+                if (localDtsFiles.has(denormalizedFileName)) {
+                    // Add new dts file as a type depedency
+                    this._typeDeps.add(denormalizedFileName);
+                }
             }
         }
         // If there's still no entryModule try to resolve from mainPath.
@@ -464,8 +487,7 @@ class AngularCompilerPlugin {
         const typeDepFileNames = new Set(sourceFiles);
         // This function removes a source file name and all its dependencies from the set.
         const removeSourceFile = (fileName, originalModule = false) => {
-            if (unusedSourceFileNames.has(fileName)
-                || (originalModule && typeDepFileNames.has(fileName))) {
+            if (unusedSourceFileNames.has(fileName) || (originalModule && typeDepFileNames.has(fileName))) {
                 unusedSourceFileNames.delete(fileName);
                 if (originalModule) {
                     typeDepFileNames.delete(fileName);
@@ -488,7 +510,9 @@ class AngularCompilerPlugin {
         // These are the TS files that weren't part of the compilation modules, aren't unused, but were
         // part of the TS original source list.
         // Next build we add them to the TS entry points so that they trigger rebuilds.
-        this._typeDeps = typeDepFileNames;
+        for (const fileName of typeDepFileNames) {
+            this._typeDeps.add(fileName);
+        }
     }
     // Registration hook for webpack plugin.
     // tslint:disable-next-line:no-big-function
