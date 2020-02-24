@@ -96,7 +96,8 @@ function loadTypeScriptLibFiles() {
 }
 function loadTsLibFiles() {
     const libFolderPath = path_1.dirname(require.resolve('tslib/package.json'));
-    const libFolderFiles = fs_1.readdirSync(libFolderPath);
+    const libFolderFiles = fs_1.readdirSync(libFolderPath)
+        .filter(p => fs_1.statSync(path_1.join(libFolderPath, p)).isFile());
     // Return a map of the lib names to their content.
     const libs = {};
     for (const f of libFolderFiles) {
