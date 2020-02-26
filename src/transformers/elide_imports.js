@@ -65,7 +65,11 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
                     break;
             }
             if (isTypeReferenceForDecoratoredNode) {
-                symbol = typeChecker.getSymbolAtLocation(node.typeName);
+                symbol = typeChecker.getSymbolAtLocation(node);
+            }
+            else {
+                // If type reference is not for Decorator skip and marked as unused.
+                return;
             }
         }
         else {
