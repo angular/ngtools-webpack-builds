@@ -229,7 +229,6 @@ class AngularCompilerPlugin {
         });
     }
     async _createOrUpdateProgram() {
-        var _a, _b;
         // Get the root files from the ts config.
         // When a new root name (like a lazy route) is added, it won't be available from
         // following imports on the existing files, so we need to get the new list of root files.
@@ -262,8 +261,8 @@ class AngularCompilerPlugin {
             benchmark_1.timeEnd('AngularCompilerPlugin._createOrUpdateProgram.ng.loadNgStructureAsync');
         }
         const newTsProgram = this._getTsProgram();
-        const newProgramSourceFiles = (_a = newTsProgram) === null || _a === void 0 ? void 0 : _a.getSourceFiles();
-        const localDtsFiles = new Set((_b = newProgramSourceFiles) === null || _b === void 0 ? void 0 : _b.filter(f => f.isDeclarationFile && !this._nodeModulesRegExp.test(f.fileName)).map(f => this._compilerHost.denormalizePath(f.fileName)));
+        const newProgramSourceFiles = newTsProgram === null || newTsProgram === void 0 ? void 0 : newTsProgram.getSourceFiles();
+        const localDtsFiles = new Set(newProgramSourceFiles === null || newProgramSourceFiles === void 0 ? void 0 : newProgramSourceFiles.filter(f => f.isDeclarationFile && !this._nodeModulesRegExp.test(f.fileName)).map(f => this._compilerHost.denormalizePath(f.fileName)));
         if (!oldTsProgram) {
             // Add all non node package dts files as depedencies when not having an old program
             for (const dts of localDtsFiles) {
