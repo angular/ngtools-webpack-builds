@@ -8,6 +8,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const ngcc_1 = require("@angular/compiler-cli/ngcc");
+const child_process_1 = require("child_process");
 const fs_1 = require("fs");
 const path = require("path");
 const benchmark_1 = require("./benchmark");
@@ -37,6 +38,41 @@ class NgccProcessor {
             };
         }
     }
+    /** Process the entire node modules tree. */
+    process() {
+        const timeLabel = 'NgccProcessor.process';
+        benchmark_1.time(timeLabel);
+        const corePackage = this.tryResolvePackage('@angular/core', this._nodeModulesDirectory);
+        // If the package.json is read only we should skip calling NGCC.
+        // With Bazel when running under sandbox the filesystem is read-only.
+        if (corePackage && isReadOnlyFile(corePackage)) {
+            benchmark_1.timeEnd(timeLabel);
+            return;
+        }
+        // We spawn instead of using the API because:
+        // - NGCC Async uses clustering which is problematic when used via the API which means
+        // that we cannot setup multiple cluster masters with different options.
+        // - We will not be able to have concurrent builds otherwise Ex: App-Shell,
+        // as NGCC will create a lock file for both builds and it will cause builds to fails.
+        const { status, error } = child_process_1.spawnSync(process.execPath, [
+            require.resolve('@angular/compiler-cli/ngcc/main-ngcc.js'),
+            '--source',
+            this._nodeModulesDirectory,
+            '--properties',
+            ...this.propertiesToConsider,
+            '--first-only',
+            '--create-ivy-entry-points',
+            '--async',
+        ], {
+            stdio: ['inherit', process.stderr, process.stderr],
+        });
+        if (status !== 0) {
+            const errorMessage = (error === null || error === void 0 ? void 0 : error.message) || '';
+            throw new Error(errorMessage + `NGCC failed${errorMessage ? ', see above' : ''}.`);
+        }
+        benchmark_1.timeEnd(timeLabel);
+    }
+    /** Process a module and it's depedencies. */
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
         if (!resolvedFileName || moduleName.startsWith('.')
@@ -45,17 +81,9 @@ class NgccProcessor {
             return;
         }
         const packageJsonPath = this.tryResolvePackage(moduleName, resolvedFileName);
-        if (!packageJsonPath) {
-            // add it to processed so the second time round we skip this.
-            this._processedModules.add(resolvedFileName);
-            return;
-        }
         // If the package.json is read only we should skip calling NGCC.
         // With Bazel when running under sandbox the filesystem is read-only.
-        try {
-            fs_1.accessSync(packageJsonPath, fs_1.constants.W_OK);
-        }
-        catch (_a) {
+        if (!packageJsonPath || isReadOnlyFile(packageJsonPath)) {
             // add it to processed so the second time round we skip this.
             this._processedModules.add(resolvedFileName);
             return;
@@ -118,6 +146,7 @@ class NgccLogger {
     constructor(compilationWarnings, compilationErrors) {
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
+        this.level = ngcc_1.LogLevel.info;
     }
     debug(..._args) { }
     info(...args) {
@@ -129,5 +158,14 @@ class NgccLogger {
     }
     error(...args) {
         this.compilationErrors.push(new Error(args.join(' ')));
+    }
+}
+function isReadOnlyFile(fileName) {
+    try {
+        fs_1.accessSync(fileName, fs_1.constants.W_OK);
+        return false;
+    }
+    catch (_a) {
+        return true;
     }
 }

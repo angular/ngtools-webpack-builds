@@ -19,6 +19,9 @@ export declare class NgccProcessor {
     private _nodeModulesDirectory;
     private _pathMappings;
     constructor(propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, compilerOptions: ts.CompilerOptions);
+    /** Process the entire node modules tree. */
+    process(): void;
+    /** Process a module and it's depedencies. */
     processModule(moduleName: string, resolvedModule: ts.ResolvedModule | ts.ResolvedTypeReferenceDirective): void;
     invalidate(fileName: string): void;
     /**
