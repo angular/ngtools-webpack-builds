@@ -40,15 +40,17 @@ class NgccProcessor {
     }
     /** Process the entire node modules tree. */
     process() {
-        const timeLabel = 'NgccProcessor.process';
-        benchmark_1.time(timeLabel);
-        const corePackage = this.tryResolvePackage('@angular/core', this._nodeModulesDirectory);
-        // If the package.json is read only we should skip calling NGCC.
-        // With Bazel when running under sandbox the filesystem is read-only.
-        if (corePackage && isReadOnlyFile(corePackage)) {
-            benchmark_1.timeEnd(timeLabel);
+        // Under Bazel when running in sandbox mode parts of the filesystem is read-only.
+        if (process.env.BAZEL_TARGET) {
             return;
         }
+        // Skip if node_modules are read-only
+        const corePackage = this.tryResolvePackage('@angular/core', this._nodeModulesDirectory);
+        if (corePackage && isReadOnlyFile(corePackage)) {
+            return;
+        }
+        const timeLabel = 'NgccProcessor.process';
+        benchmark_1.time(timeLabel);
         // We spawn instead of using the API because:
         // - NGCC Async uses clustering which is problematic when used via the API which means
         // that we cannot setup multiple cluster masters with different options.
