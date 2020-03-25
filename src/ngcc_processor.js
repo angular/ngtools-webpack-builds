@@ -20,13 +20,14 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath, compilerOptions) {
+    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath, compilerOptions, tsConfigPath) {
         this.propertiesToConsider = propertiesToConsider;
         this.inputFileSystem = inputFileSystem;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
         this.basePath = basePath;
         this.compilerOptions = compilerOptions;
+        this.tsConfigPath = tsConfigPath;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
         this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
@@ -65,6 +66,8 @@ class NgccProcessor {
             '--first-only',
             '--create-ivy-entry-points',
             '--async',
+            '--tsconfig',
+            this.tsConfigPath,
         ], {
             stdio: ['inherit', process.stderr, process.stderr],
         });
@@ -99,7 +102,10 @@ class NgccProcessor {
             compileAllFormats: false,
             createNewEntryPointFormats: true,
             logger: this._logger,
+            // Path mappings are not longer required since NGCC 9.1
+            // We keep using them to be backward compatible with NGCC 9.0
             pathMappings: this._pathMappings,
+            tsConfigPath: this.tsConfigPath,
         });
         benchmark_1.timeEnd(timeLabel);
         // Purge this file from cache, since NGCC add new mainFields. Ex: module_ivy_ngcc
