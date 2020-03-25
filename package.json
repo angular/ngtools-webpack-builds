@@ -25,10 +25,10 @@
   },
   "homepage": "https://github.com/angular/angular-cli",
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#cc645b3",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#7662529",
     "enhanced-resolve": "4.1.0",
     "rxjs": "6.3.3",
-    "tree-kill": "1.2.1",
+    "tree-kill": "1.2.2",
     "webpack-sources": "1.3.0"
   },
   "peerDependencies": {
