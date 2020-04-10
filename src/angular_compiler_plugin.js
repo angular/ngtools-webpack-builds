@@ -672,17 +672,17 @@ class AngularCompilerPlugin {
                 // When Ivy is enabled we need to add the fields added by NGCC
                 // to take precedence over the provided mainFields.
                 // NGCC adds fields in package.json suffixed with '_ivy_ngcc'
-                // Example: module -> module__ivy_ngcc
+                // Example: module -> module_ivy_ngcc
                 // tslint:disable-next-line:no-any
                 compiler.resolverFactory.hooks.resolveOptions
                     .for('normal')
                     // tslint:disable-next-line:no-any
                     .tap('WebpackOptionsApply', (resolveOptions) => {
-                    const mainFields = resolveOptions.mainFields
-                        .map(f => [`${f}_ivy_ngcc`, f]);
+                    const originalMainFields = resolveOptions.mainFields;
+                    const ivyMainFields = originalMainFields.map(f => `${f}_ivy_ngcc`);
                     return {
                         ...resolveOptions,
-                        mainFields: utils_1.flattenArray(mainFields),
+                        mainFields: [...ivyMainFields, ...originalMainFields],
                     };
                 });
             }
