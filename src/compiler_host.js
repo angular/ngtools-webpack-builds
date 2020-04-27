@@ -297,7 +297,7 @@ class WebpackCompilerHost {
     }
     getCanonicalFileName(fileName) {
         const path = this.resolve(fileName);
-        return this.useCaseSensitiveFileNames ? path : path.toLowerCase();
+        return this.useCaseSensitiveFileNames() ? path : path.toLowerCase();
     }
     useCaseSensitiveFileNames() {
         return !process.platform.startsWith('win32');
