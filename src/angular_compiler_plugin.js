@@ -392,11 +392,7 @@ class AngularCompilerPlugin {
         });
     }
     _createForkedTypeChecker() {
-        // Bootstrap type checker is using local CLI.
-        const g = typeof global !== 'undefined' ? global : {}; // tslint:disable-line:no-any
-        const typeCheckerFile = g['_DevKitIsLocal']
-            ? './type_checker_bootstrap.js'
-            : './type_checker_worker.js';
+        const typeCheckerFile = './type_checker_worker.js';
         const debugArgRegex = /--inspect(?:-brk|-port)?|--debug(?:-brk|-port)/;
         const execArgv = process.execArgv.filter((arg) => {
             // Remove debug args.

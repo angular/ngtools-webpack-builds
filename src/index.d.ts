@@ -9,3 +9,4 @@ export * from './angular_compiler_plugin';
 export * from './interfaces';
 export { ngcLoader as default } from './loader';
 export declare const NgToolsLoader: string;
+export type { VirtualFileSystemDecorator } from './virtual_file_system_decorator';
