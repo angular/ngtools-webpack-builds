@@ -7,32 +7,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-const core_1 = require("@angular-devkit/core");
 const ts = require("typescript");
+// emit helper for `import Name from "foo"`
+// importName is marked as an internal property but is needed for the tslib import.
+const importDefaultHelper = {
+    name: 'typescript:commonjsimportdefault',
+    importName: '__importDefault',
+    scoped: false,
+    text: `
+    var __importDefault = (this && this.__importDefault) || function (mod) {
+      return (mod && mod.__esModule) ? mod : { "default": mod };
+    };`,
+};
 function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false) {
     return (context) => {
         const typeChecker = getTypeChecker();
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
-                const decorators = ts.visitNodes(node.decorators, (node) => visitDecorator(node, typeChecker, directTemplateLoading));
+                const decorators = ts.visitNodes(node.decorators, (node) => visitDecorator(context, node, typeChecker, directTemplateLoading));
                 return ts.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
             return ts.visitEachChild(node, visitNode, context);
         };
-        // emit helper for `import Name from "foo"`
-        // importName is marked as an internal property but is needed for the tslib import.
-        const importDefaultHelper = {
-            name: 'typescript:commonjsimportdefault',
-            importName: '__importDefault',
-            scoped: false,
-            text: core_1.tags.stripIndent `
-      var __importDefault = (this && this.__importDefault) || function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-      };`,
-        };
         return (sourceFile) => {
             if (shouldTransform(sourceFile.fileName)) {
-                context.requestEmitHelper(importDefaultHelper);
                 return ts.visitNode(sourceFile, visitNode);
             }
             return sourceFile;
@@ -40,7 +38,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
     };
 }
 exports.replaceResources = replaceResources;
-function visitDecorator(node, typeChecker, directTemplateLoading) {
+function visitDecorator(context, node, typeChecker, directTemplateLoading) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
     }
@@ -56,15 +54,17 @@ function visitDecorator(node, typeChecker, directTemplateLoading) {
     const objectExpression = args[0];
     const styleReplacements = [];
     // visit all properties
-    let properties = ts.visitNodes(objectExpression.properties, (node) => visitComponentMetadata(node, styleReplacements, directTemplateLoading));
+    let properties = ts.visitNodes(objectExpression.properties, (node) => visitComponentMetadata(context, node, styleReplacements, directTemplateLoading));
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
         const styleProperty = ts.createPropertyAssignment(ts.createIdentifier('styles'), ts.createArrayLiteral(styleReplacements));
         properties = ts.createNodeArray([...properties, styleProperty]);
     }
-    return ts.updateDecorator(node, ts.updateCall(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [ts.updateObjectLiteral(objectExpression, properties)]));
+    return ts.updateDecorator(node, ts.updateCall(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [
+        ts.updateObjectLiteral(objectExpression, properties),
+    ]));
 }
-function visitComponentMetadata(node, styleReplacements, directTemplateLoading) {
+function visitComponentMetadata(context, node, styleReplacements, directTemplateLoading) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -73,7 +73,7 @@ function visitComponentMetadata(node, styleReplacements, directTemplateLoading) 
         case 'moduleId':
             return undefined;
         case 'templateUrl':
-            return ts.updatePropertyAssignment(node, ts.createIdentifier('template'), createRequireExpression(node.initializer, directTemplateLoading ? '!raw-loader!' : ''));
+            return ts.updatePropertyAssignment(node, ts.createIdentifier('template'), createRequireExpression(context, node.initializer, directTemplateLoading ? '!raw-loader!' : ''));
         case 'styles':
         case 'styleUrls':
             if (!ts.isArrayLiteralExpression(node.initializer)) {
@@ -84,7 +84,9 @@ function visitComponentMetadata(node, styleReplacements, directTemplateLoading) 
                 if (!ts.isStringLiteral(node) && !ts.isNoSubstitutionTemplateLiteral(node)) {
                     return node;
                 }
-                return isInlineStyles ? ts.createLiteral(node.text) : createRequireExpression(node);
+                return isInlineStyles
+                    ? ts.createLiteral(node.text)
+                    : createRequireExpression(context, node);
             });
             // Styles should be placed first
             if (isInlineStyles) {
@@ -116,12 +118,15 @@ function isComponentDecorator(node, typeChecker) {
     }
     return false;
 }
-function createRequireExpression(node, loader) {
+function createRequireExpression(context, node, loader) {
     const url = getResourceUrl(node, loader);
     if (!url) {
         return node;
     }
-    const callExpression = ts.createCall(ts.createIdentifier('require'), undefined, [ts.createLiteral(url)]);
+    context.requestEmitHelper(importDefaultHelper);
+    const callExpression = ts.createCall(ts.createIdentifier('require'), undefined, [
+        ts.createLiteral(url),
+    ]);
     return ts.createPropertyAccess(ts.createCall(ts.setEmitFlags(ts.createIdentifier('__importDefault'), ts.EmitFlags.HelperName | ts.EmitFlags.AdviseOnEmitNode), undefined, [callExpression]), 'default');
 }
 function getDecoratorOrigin(decorator, typeChecker) {
