@@ -72,10 +72,6 @@ class AngularCompilerPlugin {
         const tsProgram = this._getTsProgram();
         return tsProgram ? tsProgram.getTypeChecker() : null;
     }
-    /** @deprecated  From 8.0.2 */
-    static isSupported() {
-        return compiler_cli_1.VERSION && parseInt(compiler_cli_1.VERSION.major) >= 8;
-    }
     _setupOptions(options) {
         benchmark_1.time('AngularCompilerPlugin._setupOptions');
         this._logger = options.logger || node_1.createConsoleLogger();

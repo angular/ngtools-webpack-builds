@@ -45,8 +45,6 @@ export declare class AngularCompilerPlugin {
         className: string;
     } | null;
     get typeChecker(): ts.TypeChecker | null;
-    /** @deprecated  From 8.0.2 */
-    static isSupported(): boolean;
     private _setupOptions;
     private _getTsProgram;
     updateChangedFileExtensions(extension: string): void;
