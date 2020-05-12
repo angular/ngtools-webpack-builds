@@ -296,7 +296,7 @@ class WebpackCompilerHost {
         return utils_1.workaroundResolve(this._basePath);
     }
     getCanonicalFileName(fileName) {
-        const path = this.resolve(fileName);
+        const path = utils_1.workaroundResolve(this.resolve(fileName));
         return this.useCaseSensitiveFileNames() ? path : path.toLowerCase();
     }
     useCaseSensitiveFileNames() {
