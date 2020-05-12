@@ -10,6 +10,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@angular-devkit/core");
 // `TsCompilerAotCompilerTypeCheckHostAdapter` in @angular/compiler-cli seems to resolve module
 // names directly via `resolveModuleName`, which prevents full Path usage.
+// NSTSC also uses Node.JS `path.resolve` which will result in incorrect paths in Windows
+// Example: `/D/MyPath/MyProject` -> `D:/d/mypath/myproject`
 // To work around this we must provide the same path format as TS internally uses in
 // the SourceFile paths.
 function workaroundResolve(path) {
