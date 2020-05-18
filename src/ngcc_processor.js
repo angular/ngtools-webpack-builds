@@ -7,6 +7,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.NgccProcessor = void 0;
 const ngcc_1 = require("@angular/compiler-cli/ngcc");
 const child_process_1 = require("child_process");
 const fs_1 = require("fs");

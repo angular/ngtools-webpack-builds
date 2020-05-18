@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ReplaceNodeOperation = exports.AddNodeOperation = exports.RemoveNodeOperation = exports.TransformOperation = exports.OPERATION_KIND = void 0;
 var OPERATION_KIND;
 (function (OPERATION_KIND) {
     OPERATION_KIND[OPERATION_KIND["Remove"] = 0] = "Remove";

@@ -1,6 +1,13 @@
 "use strict";
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !exports.hasOwnProperty(p)) __createBinding(exports, m, p);
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
@@ -10,17 +17,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-__export(require("./interfaces"));
-__export(require("./ast_helpers"));
-__export(require("./make_transform"));
-__export(require("./insert_import"));
-__export(require("./elide_imports"));
-__export(require("./replace_bootstrap"));
-__export(require("./replace_server_bootstrap"));
-__export(require("./export_ngfactory"));
-__export(require("./export_lazy_module_map"));
-__export(require("./register_locale_data"));
-__export(require("./replace_resources"));
-__export(require("./remove_decorators"));
-__export(require("./find_resources"));
-__export(require("./import_factory"));
+__exportStar(require("./interfaces"), exports);
+__exportStar(require("./ast_helpers"), exports);
+__exportStar(require("./make_transform"), exports);
+__exportStar(require("./insert_import"), exports);
+__exportStar(require("./elide_imports"), exports);
+__exportStar(require("./replace_bootstrap"), exports);
+__exportStar(require("./replace_server_bootstrap"), exports);
+__exportStar(require("./export_ngfactory"), exports);
+__exportStar(require("./export_lazy_module_map"), exports);
+__exportStar(require("./register_locale_data"), exports);
+__exportStar(require("./replace_resources"), exports);
+__exportStar(require("./remove_decorators"), exports);
+__exportStar(require("./find_resources"), exports);
+__exportStar(require("./import_factory"), exports);

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.LogMessage = exports.UpdateMessage = exports.InitMessage = exports.TypeCheckerMessage = exports.MESSAGE_KIND = void 0;
 var MESSAGE_KIND;
 (function (MESSAGE_KIND) {
     MESSAGE_KIND[MESSAGE_KIND["Init"] = 0] = "Init";

@@ -7,6 +7,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveEntryModuleFromMain = void 0;
 const core_1 = require("@angular-devkit/core");
 const ts = require("typescript");
 const refactor_1 = require("./refactor");

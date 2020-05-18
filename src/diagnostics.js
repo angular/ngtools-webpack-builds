@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.reportDiagnostics = exports.gatherDiagnostics = exports.hasErrors = exports.CancellationToken = exports.DiagnosticMode = void 0;
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
