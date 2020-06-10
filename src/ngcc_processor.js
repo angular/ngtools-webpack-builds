@@ -21,24 +21,16 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath, compilerOptions, tsConfigPath) {
+    constructor(propertiesToConsider, inputFileSystem, compilationWarnings, compilationErrors, basePath, tsConfigPath) {
         this.propertiesToConsider = propertiesToConsider;
         this.inputFileSystem = inputFileSystem;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
         this.basePath = basePath;
-        this.compilerOptions = compilerOptions;
         this.tsConfigPath = tsConfigPath;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
         this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
-        const { baseUrl, paths } = this.compilerOptions;
-        if (baseUrl && paths) {
-            this._pathMappings = {
-                baseUrl,
-                paths,
-            };
-        }
     }
     /** Process the entire node modules tree. */
     process() {
@@ -103,9 +95,6 @@ class NgccProcessor {
             compileAllFormats: false,
             createNewEntryPointFormats: true,
             logger: this._logger,
-            // Path mappings are not longer required since NGCC 9.1
-            // We keep using them to be backward compatible with NGCC 9.0
-            pathMappings: this._pathMappings,
             tsConfigPath: this.tsConfigPath,
         });
         benchmark_1.timeEnd(timeLabel);
