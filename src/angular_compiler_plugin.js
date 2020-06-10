@@ -568,7 +568,7 @@ class AngularCompilerPlugin {
             }
             let ngccProcessor;
             if (this._compilerOptions.enableIvy) {
-                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath, this._compilerOptions, this._tsConfigPath);
+                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath, this._tsConfigPath);
                 ngccProcessor.process();
             }
             // Use an identity function as all our paths are absolute already.

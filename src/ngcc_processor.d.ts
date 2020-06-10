@@ -13,13 +13,11 @@ export declare class NgccProcessor {
     private readonly compilationWarnings;
     private readonly compilationErrors;
     private readonly basePath;
-    private readonly compilerOptions;
     private readonly tsConfigPath;
     private _processedModules;
     private _logger;
     private _nodeModulesDirectory;
-    private _pathMappings;
-    constructor(propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, compilerOptions: ts.CompilerOptions, tsConfigPath: string);
+    constructor(propertiesToConsider: string[], inputFileSystem: InputFileSystem, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string);
     /** Process the entire node modules tree. */
     process(): void;
     /** Process a module and it's depedencies. */
