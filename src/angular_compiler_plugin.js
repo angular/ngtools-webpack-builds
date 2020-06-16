@@ -11,6 +11,7 @@ exports.AngularCompilerPlugin = void 0;
 const core_1 = require("@angular-devkit/core");
 const node_1 = require("@angular-devkit/core/node");
 const compiler_cli_1 = require("@angular/compiler-cli");
+const tooling_1 = require("@angular/compiler-cli/src/tooling");
 const child_process_1 = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -26,7 +27,6 @@ const paths_plugin_1 = require("./paths-plugin");
 const resource_loader_1 = require("./resource_loader");
 const transformers_1 = require("./transformers");
 const ast_helpers_1 = require("./transformers/ast_helpers");
-const ctor_parameters_1 = require("./transformers/ctor-parameters");
 const remove_ivy_jit_support_calls_1 = require("./transformers/remove-ivy-jit-support-calls");
 const type_checker_1 = require("./type_checker");
 const type_checker_messages_1 = require("./type_checker_messages");
@@ -153,6 +153,10 @@ class AngularCompilerPlugin {
             this._compilerOptions.i18nInMissingTranslations =
                 options.missingTranslation;
         }
+        // For performance, disable AOT decorator downleveling transformer for applications in the CLI.
+        // The transformer is not needed for VE or Ivy in this plugin since Angular decorators are removed.
+        // While the transformer would make no changes, it would still need to walk each source file AST.
+        this._compilerOptions.annotationsAs = 'decorators';
         // Process forked type checker options.
         if (options.forkTypeChecker !== undefined) {
             this._forkTypeChecker = options.forkTypeChecker;
@@ -767,7 +771,12 @@ class AngularCompilerPlugin {
             this._transformers.push(transformers_1.replaceResources(isAppPath, getTypeChecker, this._options.directTemplateLoading));
             // Downlevel constructor parameters for DI support
             // This is required to support forwardRef in ES2015 due to TDZ issues
-            this._transformers.push(ctor_parameters_1.downlevelConstructorParameters(getTypeChecker));
+            // This wrapper is needed here due to the program not being available until after the transformers are created.
+            const downlevelFactory = (context) => {
+                const factory = tooling_1.constructorParametersDownlevelTransform(this._getTsProgram());
+                return factory(context);
+            };
+            this._transformers.push(downlevelFactory);
         }
         else {
             if (!this._compilerOptions.enableIvy) {
