@@ -61,6 +61,7 @@ class NgccProcessor {
             '--async',
             '--tsconfig',
             this.tsConfigPath,
+            '--use-program-dependencies',
         ], {
             stdio: ['inherit', process.stderr, process.stderr],
         });
