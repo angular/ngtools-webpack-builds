@@ -10,6 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NgccProcessor = void 0;
 const ngcc_1 = require("@angular/compiler-cli/ngcc");
 const child_process_1 = require("child_process");
+const crypto_1 = require("crypto");
 const fs_1 = require("fs");
 const path = require("path");
 const benchmark_1 = require("./benchmark");
@@ -43,6 +44,54 @@ class NgccProcessor {
         if (corePackage && isReadOnlyFile(corePackage)) {
             return;
         }
+        // Perform a ngcc run check to determine if an initial execution is required.
+        // If a run hash file exists that matches the current package manager lock file and the
+        // project's tsconfig, then an initial ngcc run has already been performed.
+        let skipProcessing = false;
+        let runHashFilePath;
+        const runHashBasePath = path.join(this._nodeModulesDirectory, '.cli-ngcc');
+        const projectBasePath = path.join(this._nodeModulesDirectory, '..');
+        try {
+            let lockData;
+            let lockFile = 'yarn.lock';
+            try {
+                lockData = fs_1.readFileSync(path.join(projectBasePath, lockFile));
+            }
+            catch (_a) {
+                lockFile = 'package-lock.json';
+                lockData = fs_1.readFileSync(path.join(projectBasePath, lockFile));
+            }
+            let ngccConfigData;
+            try {
+                ngccConfigData = fs_1.readFileSync(path.join(projectBasePath, 'ngcc.config.js'));
+            }
+            catch (_b) {
+                ngccConfigData = '';
+            }
+            const relativeTsconfigPath = path.relative(projectBasePath, this.tsConfigPath);
+            const tsconfigData = fs_1.readFileSync(this.tsConfigPath);
+            // Generate a hash that represents the state of the package lock file and used tsconfig
+            const runHash = crypto_1.createHash('sha256')
+                .update(lockData)
+                .update(lockFile)
+                .update(ngccConfigData)
+                .update(tsconfigData)
+                .update(relativeTsconfigPath)
+                .digest('hex');
+            // The hash is used directly in the file name to mitigate potential read/write race
+            // conditions as well as to only require a file existence check
+            runHashFilePath = path.join(runHashBasePath, runHash + '.lock');
+            // If the run hash lock file exists, then ngcc was already run against this project state
+            if (fs_1.existsSync(runHashFilePath)) {
+                skipProcessing = true;
+            }
+        }
+        catch (_c) {
+            // Any error means an ngcc execution is needed
+        }
+        if (skipProcessing) {
+            return;
+        }
         const timeLabel = 'NgccProcessor.process';
         benchmark_1.time(timeLabel);
         // We spawn instead of using the API because:
@@ -70,6 +119,18 @@ class NgccProcessor {
             throw new Error(errorMessage + `NGCC failed${errorMessage ? ', see above' : ''}.`);
         }
         benchmark_1.timeEnd(timeLabel);
+        // ngcc was successful so if a run hash was generated, write it for next time
+        if (runHashFilePath) {
+            try {
+                if (!fs_1.existsSync(runHashBasePath)) {
+                    fs_1.mkdirSync(runHashBasePath, { recursive: true });
+                }
+                fs_1.writeFileSync(runHashFilePath, '');
+            }
+            catch (_d) {
+                // Errors are non-fatal
+            }
+        }
     }
     /** Process a module and it's depedencies. */
     processModule(moduleName, resolvedModule) {
