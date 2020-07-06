@@ -72,7 +72,16 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
         else {
             switch (node.kind) {
                 case ts.SyntaxKind.Identifier:
-                    symbol = typeChecker.getSymbolAtLocation(node);
+                    const parent = node.parent;
+                    if (parent && ts.isShorthandPropertyAssignment(parent)) {
+                        const shorthandSymbol = typeChecker.getShorthandAssignmentValueSymbol(parent);
+                        if (shorthandSymbol) {
+                            symbol = shorthandSymbol;
+                        }
+                    }
+                    else {
+                        symbol = typeChecker.getSymbolAtLocation(node);
+                    }
                     break;
                 case ts.SyntaxKind.ExportSpecifier:
                     symbol = typeChecker.getExportSpecifierLocalTargetSymbol(node);
