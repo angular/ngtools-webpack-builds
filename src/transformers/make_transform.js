@@ -78,7 +78,9 @@ exports.makeTransform = makeTransform;
 // If TS sees an empty decorator array, it will still emit a `__decorate` call.
 //    This seems to be a TS bug.
 function cleanupDecorators(node) {
-    if (node.decorators && node.decorators.length === 0) {
+    var _a;
+    if (((_a = node.decorators) === null || _a === void 0 ? void 0 : _a.length) === 0) {
+        // tslint:disable-next-line:no-any
         node.decorators = undefined;
     }
     ts.forEachChild(node, node => cleanupDecorators(node));
