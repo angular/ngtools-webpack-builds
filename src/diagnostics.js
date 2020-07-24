@@ -90,7 +90,7 @@ function gatherDiagnostics(program, jitMode, benchmarkLabel, mode = DiagnosticMo
     return allDiagnostics;
 }
 exports.gatherDiagnostics = gatherDiagnostics;
-function reportDiagnostics(diagnostics, compilerHost, reportError, reportWarning) {
+function reportDiagnostics(diagnostics, reportError, reportWarning) {
     const tsErrors = [];
     const tsWarnings = [];
     const ngErrors = [];

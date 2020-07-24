@@ -869,7 +869,7 @@ class AngularCompilerPlugin {
         const { emitResult, diagnostics } = this._emit();
         benchmark_1.timeEnd('AngularCompilerPlugin._update._emit');
         // Report any diagnostics.
-        diagnostics_1.reportDiagnostics(diagnostics, this._compilerHost, msg => this._errors.push(new Error(msg)), msg => this._warnings.push(msg));
+        diagnostics_1.reportDiagnostics(diagnostics, msg => this._errors.push(new Error(msg)), msg => this._warnings.push(msg));
         this._emitSkipped = !emitResult || emitResult.emitSkipped;
         // Reset changed files on successful compilation.
         if (!this._emitSkipped && this._errors.length === 0) {
