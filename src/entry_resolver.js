@@ -13,7 +13,7 @@ const ts = require("typescript");
 const refactor_1 = require("./refactor");
 function _recursiveSymbolExportLookup(refactor, symbolName, host, program) {
     // Check this file.
-    const hasSymbol = refactor.findAstNodes(null, ts.SyntaxKind.ClassDeclaration)
+    const hasSymbol = refactor_1.findAstNodes(null, refactor.sourceFile, ts.isClassDeclaration)
         .some((cd) => {
         return cd.name != undefined && cd.name.text == symbolName;
     });
@@ -58,7 +58,7 @@ function _recursiveSymbolExportLookup(refactor, symbolName, host, program) {
                 }
                 // Create the source and verify that the symbol is at least a class.
                 const source = new refactor_1.TypeScriptFileRefactor(module, host, program);
-                const hasSymbol = source.findAstNodes(null, ts.SyntaxKind.ClassDeclaration)
+                const hasSymbol = refactor_1.findAstNodes(null, source.sourceFile, ts.isClassDeclaration)
                     .some((cd) => {
                     return cd.name != undefined && cd.name.text == symbolName;
                 });

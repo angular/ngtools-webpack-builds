@@ -25,7 +25,9 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
         const typeChecker = getTypeChecker();
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
-                const decorators = ts.visitNodes(node.decorators, (node) => visitDecorator(context, node, typeChecker, directTemplateLoading));
+                const decorators = ts.visitNodes(node.decorators, (node) => ts.isDecorator(node)
+                    ? visitDecorator(context, node, typeChecker, directTemplateLoading)
+                    : node);
                 return ts.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
             return ts.visitEachChild(node, visitNode, context);
@@ -55,7 +57,9 @@ function visitDecorator(context, node, typeChecker, directTemplateLoading) {
     const objectExpression = args[0];
     const styleReplacements = [];
     // visit all properties
-    let properties = ts.visitNodes(objectExpression.properties, (node) => visitComponentMetadata(context, node, styleReplacements, directTemplateLoading));
+    let properties = ts.visitNodes(objectExpression.properties, (node) => ts.isObjectLiteralElementLike(node)
+        ? visitComponentMetadata(context, node, styleReplacements, directTemplateLoading)
+        : node);
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
         const styleProperty = ts.createPropertyAssignment(ts.createIdentifier('styles'), ts.createArrayLiteral(styleReplacements));

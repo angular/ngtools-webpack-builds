@@ -11,17 +11,7 @@ exports.TypeScriptFileRefactor = exports.resolve = exports.findAstNodes = void 0
 const path = require("path");
 const ts = require("typescript");
 const utils_1 = require("./utils");
-/**
- * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
- * @param node The root node to check, or null if the whole tree should be searched.
- * @param sourceFile The source file where the node is.
- * @param kind The kind of nodes to find.
- * @param recursive Whether to go in matched nodes to keep matching.
- * @param max The maximum number of items to return.
- * @return all nodes of kind, or [] if none is found
- */
-// TODO: replace this with collectDeepNodes and add limits to collectDeepNodes
-function findAstNodes(node, sourceFile, kind, recursive = false, max = Infinity) {
+function findAstNodes(node, sourceFile, kindOrGuard, recursive = false, max = Infinity) {
     // TODO: refactor operations that only need `refactor.findAstNodes()` to use this instead.
     if (max == 0) {
         return [];
@@ -29,8 +19,11 @@ function findAstNodes(node, sourceFile, kind, recursive = false, max = Infinity)
     if (!node) {
         node = sourceFile;
     }
+    const test = typeof kindOrGuard === 'function'
+        ? kindOrGuard
+        : (node) => node.kind === kindOrGuard;
     const arr = [];
-    if (node.kind === kind) {
+    if (test(node)) {
         // If we're not recursively looking for children, stop here.
         if (!recursive) {
             return [node];
@@ -40,7 +33,7 @@ function findAstNodes(node, sourceFile, kind, recursive = false, max = Infinity)
     }
     if (max > 0) {
         for (const child of node.getChildren(sourceFile)) {
-            findAstNodes(child, sourceFile, kind, recursive, max)
+            findAstNodes(child, sourceFile, test, recursive, max)
                 .forEach((node) => {
                 if (max > 0) {
                     arr.push(node);

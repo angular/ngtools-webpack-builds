@@ -8,7 +8,17 @@ import * as ts from 'typescript';
  * @param max The maximum number of items to return.
  * @return all nodes of kind, or [] if none is found
  */
-export declare function findAstNodes<T extends ts.Node>(node: ts.Node | null, sourceFile: ts.SourceFile, kind: ts.SyntaxKind, recursive?: boolean, max?: number): T[];
+export declare function findAstNodes(node: ts.Node | null, sourceFile: ts.SourceFile, kind: ts.SyntaxKind, recursive?: boolean, max?: number): ts.Node[];
+/**
+ * Find all nodes from the AST in the subtree of node of SyntaxKind kind.
+ * @param node The root node to check, or null if the whole tree should be searched.
+ * @param sourceFile The source file where the node is.
+ * @param guard
+ * @param recursive Whether to go in matched nodes to keep matching.
+ * @param max The maximum number of items to return.
+ * @return all nodes of kind, or [] if none is found
+ */
+export declare function findAstNodes<T extends ts.Node>(node: ts.Node | null, sourceFile: ts.SourceFile, guard: (node: ts.Node) => node is T, recursive?: boolean, max?: number): T[];
 export declare function resolve(filePath: string, _host: ts.CompilerHost, compilerOptions: ts.CompilerOptions): string;
 export declare class TypeScriptFileRefactor {
     private _fileName;

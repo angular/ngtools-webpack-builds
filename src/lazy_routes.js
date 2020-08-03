@@ -45,11 +45,9 @@ function findLazyRoutes(filePath, host, program, compilerOptions) {
         throw new Error(`Source file not found: '${fileName}'.`);
     }
     const sf = sourceFile;
-    return refactor_1.findAstNodes(null, sourceFile, ts.SyntaxKind.ObjectLiteralExpression, true)
+    return refactor_1.findAstNodes(null, sourceFile, ts.isObjectLiteralExpression, true)
         // Get all their property assignments.
-        .map((node) => {
-        return refactor_1.findAstNodes(node, sf, ts.SyntaxKind.PropertyAssignment, false);
-    })
+        .map((node) => refactor_1.findAstNodes(node, sf, ts.isPropertyAssignment, false))
         // Take all `loadChildren` elements.
         .reduce((acc, props) => {
         return acc.concat(props.filter(literal => {
@@ -57,12 +55,11 @@ function findLazyRoutes(filePath, host, program, compilerOptions) {
         }));
     }, [])
         // Get only string values.
-        .filter((node) => node.initializer.kind == ts.SyntaxKind.StringLiteral)
-        // Get the string value.
-        .map((node) => node.initializer.text)
+        .map((node) => node.initializer)
+        .filter(ts.isStringLiteral)
         // Map those to either [path, absoluteModulePath], or [path, null] if the module pointing to
         // does not exist.
-        .map((routePath) => {
+        .map(({ text: routePath }) => {
         const moduleName = routePath.split('#')[0];
         const compOptions = (program && program.getCompilerOptions()) || compilerOptions || {};
         const resolvedModuleName = moduleName[0] == '.'

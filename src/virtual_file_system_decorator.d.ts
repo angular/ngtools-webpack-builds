@@ -22,7 +22,7 @@ export declare class VirtualFileSystemDecorator implements InputFileSystem {
     readdir(path: string, callback: Callback<string[]>): void;
     readFile(path: string, callback: (err: Error, contents: Buffer) => void): void;
     readJson(path: string, callback: Callback<{}>): void;
-    readlink(path: string, callback: (err: Error, linkString: string) => void): void;
+    readlink(path: string, callback: (err: Error | null | undefined, linkString: string) => void): void;
     statSync(path: string): Stats;
     readdirSync(path: string): string[];
     readFileSync(path: string): Buffer;

@@ -41,6 +41,7 @@ function insertImport(sourceFile, symbolName, modulePath) {
     // Find all imports.
     const allImports = ast_helpers_1.collectDeepNodes(sourceFile, ts.SyntaxKind.ImportDeclaration);
     const maybeImports = allImports
+        .filter(ts.isImportDeclaration)
         .filter((node) => {
         // Filter all imports that do not match the modulePath.
         return node.moduleSpecifier.kind == ts.SyntaxKind.StringLiteral
