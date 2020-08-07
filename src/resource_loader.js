@@ -17,7 +17,7 @@ const webpack_sources_1 = require("webpack-sources");
 const utils_1 = require("./utils");
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
-const LoaderTargetPlugin = require('webpack/lib/LoaderTargetPlugin');
+const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 class WebpackResourceLoader {
     constructor() {
@@ -51,7 +51,7 @@ class WebpackResourceLoader {
         new NodeTemplatePlugin(outputOptions).apply(childCompiler);
         new NodeTargetPlugin().apply(childCompiler);
         new SingleEntryPlugin(this._context, filePath).apply(childCompiler);
-        new LoaderTargetPlugin('node').apply(childCompiler);
+        new LibraryTemplatePlugin('resource', 'var').apply(childCompiler);
         childCompiler.hooks.thisCompilation.tap('ngtools-webpack', (compilation) => {
             compilation.hooks.additionalAssets.tapAsync('ngtools-webpack', (callback) => {
                 if (this._cachedEvaluatedSources.has(compilation.fullHash)) {
@@ -128,13 +128,15 @@ class WebpackResourceLoader {
         }
     }
     async _evaluate({ outputName, source }) {
+        var _a;
         // Evaluate code
-        const evaluatedSource = vm.runInNewContext(source, undefined, { filename: outputName });
-        if (typeof evaluatedSource === 'object' && typeof evaluatedSource.default === 'string') {
-            return evaluatedSource.default;
+        const context = {};
+        vm.runInNewContext(source, context, { filename: outputName });
+        if (typeof context.resource === 'string') {
+            return context.resource;
         }
-        if (typeof evaluatedSource === 'string') {
-            return evaluatedSource;
+        else if (typeof ((_a = context.resource) === null || _a === void 0 ? void 0 : _a.default) === 'string') {
+            return context.resource.default;
         }
         throw new Error(`The loader "${outputName}" didn't return a string.`);
     }
