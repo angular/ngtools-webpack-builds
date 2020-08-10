@@ -5,7 +5,7 @@ export declare class TypeChecker {
     private _compilerOptions;
     private _JitMode;
     private _rootNames;
-    private _program?;
+    private _program;
     private _compilerHost;
     constructor(_compilerOptions: CompilerOptions, _basePath: string, _JitMode: boolean, _rootNames: string[], hostReplacementPaths: {
         [path: string]: string;

@@ -21,7 +21,6 @@ const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 class WebpackResourceLoader {
     constructor() {
-        this._context = '';
         this._fileDependencies = new Map();
         this._reverseDependencies = new Map();
         this._cachedSources = new Map();

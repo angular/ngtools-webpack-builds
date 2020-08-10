@@ -30,5 +30,6 @@ export declare class AddNodeOperation extends TransformOperation {
 }
 export declare class ReplaceNodeOperation extends TransformOperation {
     replacement: ts.Node;
+    kind: OPERATION_KIND.Replace;
     constructor(sourceFile: ts.SourceFile, target: ts.Node, replacement: ts.Node);
 }

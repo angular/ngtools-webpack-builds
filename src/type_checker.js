@@ -71,9 +71,6 @@ class TypeChecker {
         }
     }
     _diagnose(cancellationToken) {
-        if (!this._program) {
-            return;
-        }
         const allDiagnostics = diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'TypeChecker', diagnostics_1.DiagnosticMode.Semantic, cancellationToken);
         // Report diagnostics.
         if (!cancellationToken.isCancellationRequested()) {
