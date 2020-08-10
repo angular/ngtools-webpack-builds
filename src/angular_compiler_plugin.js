@@ -39,6 +39,7 @@ class AngularCompilerPlugin {
         this._useFactories = false;
         // Contains `moduleImportPath#exportName` => `fullModulePath`.
         this._lazyRoutes = {};
+        this._entryModule = null;
         this._transformers = [];
         this._platformTransformers = null;
         this._JitMode = false;
@@ -49,13 +50,17 @@ class AngularCompilerPlugin {
         this._nodeModulesRegExp = /[\\\/]node_modules[\\\/]/;
         // Webpack plugin.
         this._firstRun = true;
+        this._donePromise = null;
+        this._normalizedLocale = null;
         this._warnings = [];
         this._errors = [];
         // TypeChecker process.
         this._forkTypeChecker = true;
+        this._typeCheckerProcess = null;
         this._forkedTypeCheckerInitialized = false;
         this._mainFields = [];
         this._options = Object.assign({}, options);
+        this._logger = options.logger || node_1.createConsoleLogger();
         this._setupOptions(this._options);
     }
     get options() { return this._options; }
@@ -75,7 +80,6 @@ class AngularCompilerPlugin {
     }
     _setupOptions(options) {
         benchmark_1.time('AngularCompilerPlugin._setupOptions');
-        this._logger = options.logger || node_1.createConsoleLogger();
         // Fill in the missing options.
         if (!options.hasOwnProperty('tsConfigPath')) {
             throw new Error('Must specify "tsConfigPath" in the configuration of @ngtools/webpack.');
