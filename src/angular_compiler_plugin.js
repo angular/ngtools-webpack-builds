@@ -176,6 +176,9 @@ class AngularCompilerPlugin {
             this._warnings.push(new Error(`Lazy route discovery is disabled but additional Lazy Module Resources were`
                 + ` provided. These will be ignored.`));
         }
+        if (this._compilerOptions.strictMetadataEmit) {
+            this._warnings.push(new Error(`Using Angular compiler option 'strictMetadataEmit' for applications might cause undefined behavior.`));
+        }
         if (this._discoverLazyRoutes === false && this.options.additionalLazyModules
             && Object.keys(this.options.additionalLazyModules).length > 0) {
             this._warnings.push(new Error(`Lazy route discovery is disabled but additional lazy modules were provided.`
