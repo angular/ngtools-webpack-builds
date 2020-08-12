@@ -23,7 +23,8 @@ function ngcLoader() {
         throw new Error('This loader needs to support asynchronous webpack compilations.');
     }
     benchmark_1.time(timeLabel);
-    const plugin = this._compilation._ngToolsWebpackPluginInstance;
+    const plugin = this._compilation
+        ._ngToolsWebpackPluginInstance;
     if (!plugin) {
         throw new Error('The AngularCompilerPlugin was not found. '
             + 'The @ngtools/webpack loader requires the plugin.');

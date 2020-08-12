@@ -39,6 +39,7 @@ class AngularCompilerPlugin {
         this._useFactories = false;
         // Contains `moduleImportPath#exportName` => `fullModulePath`.
         this._lazyRoutes = {};
+        this._entryModule = null;
         this._transformers = [];
         this._platformTransformers = null;
         this._JitMode = false;
@@ -49,13 +50,17 @@ class AngularCompilerPlugin {
         this._nodeModulesRegExp = /[\\\/]node_modules[\\\/]/;
         // Webpack plugin.
         this._firstRun = true;
+        this._donePromise = null;
+        this._normalizedLocale = null;
         this._warnings = [];
         this._errors = [];
         // TypeChecker process.
         this._forkTypeChecker = true;
+        this._typeCheckerProcess = null;
         this._forkedTypeCheckerInitialized = false;
         this._mainFields = [];
         this._options = Object.assign({}, options);
+        this._logger = options.logger || node_1.createConsoleLogger();
         this._setupOptions(this._options);
     }
     get options() { return this._options; }
@@ -75,7 +80,6 @@ class AngularCompilerPlugin {
     }
     _setupOptions(options) {
         benchmark_1.time('AngularCompilerPlugin._setupOptions');
-        this._logger = options.logger || node_1.createConsoleLogger();
         // Fill in the missing options.
         if (!options.hasOwnProperty('tsConfigPath')) {
             throw new Error('Must specify "tsConfigPath" in the configuration of @ngtools/webpack.');
@@ -175,6 +179,9 @@ class AngularCompilerPlugin {
             && this.options.additionalLazyModuleResources.length > 0) {
             this._warnings.push(new Error(`Lazy route discovery is disabled but additional Lazy Module Resources were`
                 + ` provided. These will be ignored.`));
+        }
+        if (this._compilerOptions.strictMetadataEmit) {
+            this._warnings.push(new Error(`Using Angular compiler option 'strictMetadataEmit' for applications might cause undefined behavior.`));
         }
         if (this._discoverLazyRoutes === false && this.options.additionalLazyModules
             && Object.keys(this.options.additionalLazyModules).length > 0) {
@@ -572,7 +579,14 @@ class AngularCompilerPlugin {
             }
             let ngccProcessor;
             if (this._compilerOptions.enableIvy) {
-                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, compilerWithFileSystems.inputFileSystem, this._warnings, this._errors, this._basePath, this._tsConfigPath);
+                const fileWatchPurger = (path) => {
+                    // tslint:disable-next-line: no-any
+                    if (compilerWithFileSystems.inputFileSystem.purge) {
+                        // tslint:disable-next-line: no-any
+                        compilerWithFileSystems.inputFileSystem.purge(path);
+                    }
+                };
+                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, fileWatchPurger, this._warnings, this._errors, this._basePath, this._tsConfigPath);
                 ngccProcessor.process();
             }
             // Use an identity function as all our paths are absolute already.
