@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getResourceUrl = exports.replaceResources = void 0;
+exports.getResourceUrl = exports.createResourceImport = exports.replaceResources = void 0;
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -9,39 +9,37 @@ exports.getResourceUrl = exports.replaceResources = void 0;
  * found in the LICENSE file at https://angular.io/license
  */
 const ts = require("typescript");
-// emit helper for `import Name from "foo"`
-// importName is marked as an internal property but is needed for the tslib import.
-const importDefaultHelper = {
-    name: 'typescript:commonjsimportdefault',
-    importName: '__importDefault',
-    scoped: false,
-    text: `
-    var __importDefault = (this && this.__importDefault) || function (mod) {
-      return (mod && mod.__esModule) ? mod : { "default": mod };
-    };`,
-};
 function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false) {
     return (context) => {
         const typeChecker = getTypeChecker();
+        const resourceImportDeclarations = [];
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
-                const decorators = ts.visitNodes(node.decorators, (node) => ts.isDecorator(node)
-                    ? visitDecorator(context, node, typeChecker, directTemplateLoading)
+                const decorators = ts.visitNodes(node.decorators, node => ts.isDecorator(node)
+                    ? visitDecorator(node, typeChecker, directTemplateLoading, resourceImportDeclarations)
                     : node);
                 return ts.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
             return ts.visitEachChild(node, visitNode, context);
         };
         return (sourceFile) => {
-            if (shouldTransform(sourceFile.fileName)) {
-                return ts.visitNode(sourceFile, visitNode);
+            if (!shouldTransform(sourceFile.fileName)) {
+                return sourceFile;
             }
-            return sourceFile;
+            const updatedSourceFile = ts.visitNode(sourceFile, visitNode);
+            if (resourceImportDeclarations.length) {
+                // Add resource imports
+                return ts.updateSourceFileNode(updatedSourceFile, ts.setTextRange(ts.createNodeArray([
+                    ...resourceImportDeclarations,
+                    ...updatedSourceFile.statements,
+                ]), updatedSourceFile.statements));
+            }
+            return updatedSourceFile;
         };
     };
 }
 exports.replaceResources = replaceResources;
-function visitDecorator(context, node, typeChecker, directTemplateLoading) {
+function visitDecorator(node, typeChecker, directTemplateLoading, resourceImportDeclarations) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
     }
@@ -57,8 +55,8 @@ function visitDecorator(context, node, typeChecker, directTemplateLoading) {
     const objectExpression = args[0];
     const styleReplacements = [];
     // visit all properties
-    let properties = ts.visitNodes(objectExpression.properties, (node) => ts.isObjectLiteralElementLike(node)
-        ? visitComponentMetadata(context, node, styleReplacements, directTemplateLoading)
+    let properties = ts.visitNodes(objectExpression.properties, node => ts.isObjectLiteralElementLike(node)
+        ? visitComponentMetadata(node, styleReplacements, directTemplateLoading, resourceImportDeclarations)
         : node);
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
@@ -69,7 +67,7 @@ function visitDecorator(context, node, typeChecker, directTemplateLoading) {
         ts.updateObjectLiteral(objectExpression, properties),
     ]));
 }
-function visitComponentMetadata(context, node, styleReplacements, directTemplateLoading) {
+function visitComponentMetadata(node, styleReplacements, directTemplateLoading, resourceImportDeclarations) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -78,20 +76,25 @@ function visitComponentMetadata(context, node, styleReplacements, directTemplate
         case 'moduleId':
             return undefined;
         case 'templateUrl':
-            return ts.updatePropertyAssignment(node, ts.createIdentifier('template'), createRequireExpression(context, node.initializer, directTemplateLoading ? '!raw-loader!' : ''));
+            const importName = createResourceImport(node.initializer, directTemplateLoading ? '!raw-loader!' : '', resourceImportDeclarations);
+            if (!importName) {
+                return node;
+            }
+            return ts.updatePropertyAssignment(node, ts.createIdentifier('template'), importName);
         case 'styles':
         case 'styleUrls':
             if (!ts.isArrayLiteralExpression(node.initializer)) {
                 return node;
             }
             const isInlineStyles = name === 'styles';
-            const styles = ts.visitNodes(node.initializer.elements, (node) => {
+            const styles = ts.visitNodes(node.initializer.elements, node => {
                 if (!ts.isStringLiteral(node) && !ts.isNoSubstitutionTemplateLiteral(node)) {
                     return node;
                 }
-                return isInlineStyles
-                    ? ts.createLiteral(node.text)
-                    : createRequireExpression(context, node);
+                if (isInlineStyles) {
+                    return ts.createLiteral(node.text);
+                }
+                return createResourceImport(node, undefined, resourceImportDeclarations) || node;
             });
             // Styles should be placed first
             if (isInlineStyles) {
@@ -105,6 +108,16 @@ function visitComponentMetadata(context, node, styleReplacements, directTemplate
             return node;
     }
 }
+function createResourceImport(node, loader, resourceImportDeclarations) {
+    const url = getResourceUrl(node, loader);
+    if (!url) {
+        return null;
+    }
+    const importName = ts.createIdentifier(`__NG_CLI_RESOURCE__${resourceImportDeclarations.length}`);
+    resourceImportDeclarations.push(ts.createImportDeclaration(undefined, undefined, ts.createImportClause(importName, undefined), ts.createLiteral(url)));
+    return importName;
+}
+exports.createResourceImport = createResourceImport;
 function getResourceUrl(node, loader = '') {
     // only analyze strings
     if (!ts.isStringLiteral(node) && !ts.isNoSubstitutionTemplateLiteral(node)) {
@@ -122,17 +135,6 @@ function isComponentDecorator(node, typeChecker) {
         return true;
     }
     return false;
-}
-function createRequireExpression(context, node, loader) {
-    const url = getResourceUrl(node, loader);
-    if (!url) {
-        return node;
-    }
-    context.requestEmitHelper(importDefaultHelper);
-    const callExpression = ts.createCall(ts.createIdentifier('require'), undefined, [
-        ts.createLiteral(url),
-    ]);
-    return ts.createPropertyAccess(ts.createCall(ts.setEmitFlags(ts.createIdentifier('__importDefault'), ts.EmitFlags.HelperName | ts.EmitFlags.AdviseOnEmitNode), undefined, [callExpression]), 'default');
 }
 function getDecoratorOrigin(decorator, typeChecker) {
     if (!ts.isCallExpression(decorator.expression)) {
