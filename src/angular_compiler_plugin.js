@@ -553,7 +553,7 @@ class AngularCompilerPlugin {
         compiler.hooks.environment.tap('angular-compiler', () => {
             // The webpack types currently do not include these
             const compilerWithFileSystems = compiler;
-            let host = this._options.host || new webpack_input_host_1.WebpackInputHost(compilerWithFileSystems.inputFileSystem);
+            let host = this._options.host || webpack_input_host_1.createWebpackInputHost(compilerWithFileSystems.inputFileSystem);
             let replacements;
             if (this._options.hostReplacementPaths) {
                 if (typeof this._options.hostReplacementPaths == 'function') {
