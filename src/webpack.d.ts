@@ -6,9 +6,6 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import { InputFileSystem } from 'webpack';
-export interface Callback<T = any> {
-    (err?: Error | null, result?: T): void;
-}
 export interface NormalModuleFactoryRequest {
     request: string;
     context: {

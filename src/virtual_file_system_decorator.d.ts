@@ -10,7 +10,7 @@ import { Path } from '@angular-devkit/core';
 import { Stats } from 'fs';
 import { InputFileSystem } from 'webpack';
 import { WebpackCompilerHost } from './compiler_host';
-import { Callback, NodeWatchFileSystemInterface } from './webpack';
+import { NodeWatchFileSystemInterface } from './webpack';
 export declare const NodeWatchFileSystem: NodeWatchFileSystemInterface;
 export declare class VirtualFileSystemDecorator implements InputFileSystem {
     private _inputFileSystem;
@@ -18,10 +18,10 @@ export declare class VirtualFileSystemDecorator implements InputFileSystem {
     constructor(_inputFileSystem: InputFileSystem, _webpackCompilerHost: WebpackCompilerHost);
     getWebpackCompilerHost(): WebpackCompilerHost;
     getVirtualFilesPaths(): string[];
-    stat(path: string, callback: (err: Error, stats: Stats) => void): void;
-    readdir(path: string, callback: Callback<string[]>): void;
+    stat(path: string, callback: (err: Error, result: Stats) => void): void;
+    readdir(path: string, callback: (err: Error, result: string[]) => void): void;
     readFile(path: string, callback: (err: Error, contents: Buffer) => void): void;
-    readJson(path: string, callback: Callback<{}>): void;
+    readJson(path: string, callback: (err: Error, result: unknown) => void): void;
     readlink(path: string, callback: (err: Error | null | undefined, linkString: string) => void): void;
     statSync(path: string): Stats;
     readdirSync(path: string): string[];
@@ -34,11 +34,5 @@ export declare class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem
     private _virtualInputFileSystem;
     private _replacements?;
     constructor(_virtualInputFileSystem: VirtualFileSystemDecorator, _replacements?: Map<Path, Path> | ((path: Path) => Path) | undefined);
-    watch(files: string[], dirs: string[], missing: string[], startTime: number | undefined, options: {}, callback: any, // tslint:disable-line:no-any
-    callbackUndelayed: (filename: string, timestamp: number) => void): {
-        close: () => any;
-        pause: () => any;
-        getFileTimestamps: () => Map<string, number>;
-        getContextTimestamps: () => Map<string, number>;
-    };
+    watch: (files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>;
 }
