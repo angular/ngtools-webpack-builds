@@ -7,5 +7,4 @@
  */
 import * as ts from 'typescript';
 export declare function replaceResources(shouldTransform: (fileName: string) => boolean, getTypeChecker: () => ts.TypeChecker, directTemplateLoading?: boolean): ts.TransformerFactory<ts.SourceFile>;
-export declare function createResourceImport(node: ts.Node, loader: string | undefined, resourceImportDeclarations: ts.ImportDeclaration[]): ts.Identifier | null;
 export declare function getResourceUrl(node: ts.Node, loader?: string): string | null;
