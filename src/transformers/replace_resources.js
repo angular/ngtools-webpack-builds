@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getResourceUrl = exports.createResourceImport = exports.replaceResources = void 0;
+exports.getResourceUrl = exports.replaceResources = void 0;
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -13,10 +13,11 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
     return (context) => {
         const typeChecker = getTypeChecker();
         const resourceImportDeclarations = [];
+        const moduleKind = context.getCompilerOptions().module;
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
                 const decorators = ts.visitNodes(node.decorators, node => ts.isDecorator(node)
-                    ? visitDecorator(node, typeChecker, directTemplateLoading, resourceImportDeclarations)
+                    ? visitDecorator(node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind)
                     : node);
                 return ts.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
@@ -39,7 +40,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
     };
 }
 exports.replaceResources = replaceResources;
-function visitDecorator(node, typeChecker, directTemplateLoading, resourceImportDeclarations) {
+function visitDecorator(node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
     }
@@ -56,7 +57,7 @@ function visitDecorator(node, typeChecker, directTemplateLoading, resourceImport
     const styleReplacements = [];
     // visit all properties
     let properties = ts.visitNodes(objectExpression.properties, node => ts.isObjectLiteralElementLike(node)
-        ? visitComponentMetadata(node, styleReplacements, directTemplateLoading, resourceImportDeclarations)
+        ? visitComponentMetadata(node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind)
         : node);
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
@@ -67,7 +68,7 @@ function visitDecorator(node, typeChecker, directTemplateLoading, resourceImport
         ts.updateObjectLiteral(objectExpression, properties),
     ]));
 }
-function visitComponentMetadata(node, styleReplacements, directTemplateLoading, resourceImportDeclarations) {
+function visitComponentMetadata(node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -76,7 +77,7 @@ function visitComponentMetadata(node, styleReplacements, directTemplateLoading, 
         case 'moduleId':
             return undefined;
         case 'templateUrl':
-            const importName = createResourceImport(node.initializer, directTemplateLoading ? '!raw-loader!' : '', resourceImportDeclarations);
+            const importName = createResourceImport(node.initializer, directTemplateLoading ? '!raw-loader!' : '', resourceImportDeclarations, moduleKind);
             if (!importName) {
                 return node;
             }
@@ -94,7 +95,7 @@ function visitComponentMetadata(node, styleReplacements, directTemplateLoading, 
                 if (isInlineStyles) {
                     return ts.createLiteral(node.text);
                 }
-                return createResourceImport(node, undefined, resourceImportDeclarations) || node;
+                return createResourceImport(node, undefined, resourceImportDeclarations, moduleKind) || node;
             });
             // Styles should be placed first
             if (isInlineStyles) {
@@ -108,16 +109,6 @@ function visitComponentMetadata(node, styleReplacements, directTemplateLoading, 
             return node;
     }
 }
-function createResourceImport(node, loader, resourceImportDeclarations) {
-    const url = getResourceUrl(node, loader);
-    if (!url) {
-        return null;
-    }
-    const importName = ts.createIdentifier(`__NG_CLI_RESOURCE__${resourceImportDeclarations.length}`);
-    resourceImportDeclarations.push(ts.createImportDeclaration(undefined, undefined, ts.createImportClause(importName, undefined), ts.createLiteral(url)));
-    return importName;
-}
-exports.createResourceImport = createResourceImport;
 function getResourceUrl(node, loader = '') {
     // only analyze strings
     if (!ts.isStringLiteral(node) && !ts.isNoSubstitutionTemplateLiteral(node)) {
@@ -135,6 +126,21 @@ function isComponentDecorator(node, typeChecker) {
         return true;
     }
     return false;
+}
+function createResourceImport(node, loader, resourceImportDeclarations, moduleKind = ts.ModuleKind.ES2015) {
+    const url = getResourceUrl(node, loader);
+    if (!url) {
+        return null;
+    }
+    const urlLiteral = ts.createLiteral(url);
+    if (moduleKind < ts.ModuleKind.ES2015) {
+        return ts.createPropertyAccess(ts.createCall(ts.createIdentifier('require'), [], [urlLiteral]), 'default');
+    }
+    else {
+        const importName = ts.createIdentifier(`__NG_CLI_RESOURCE__${resourceImportDeclarations.length}`);
+        resourceImportDeclarations.push(ts.createImportDeclaration(undefined, undefined, ts.createImportClause(importName, undefined), urlLiteral));
+        return importName;
+    }
 }
 function getDecoratorOrigin(decorator, typeChecker) {
     if (!ts.isCallExpression(decorator.expression)) {
