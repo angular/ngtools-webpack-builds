@@ -34,5 +34,9 @@ export declare class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem
     private _virtualInputFileSystem;
     private _replacements?;
     constructor(_virtualInputFileSystem: VirtualFileSystemDecorator, _replacements?: Map<Path, Path> | ((path: Path) => Path) | undefined);
-    watch: (files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>;
+    mapReplacements(original: Iterable<string>, reverseReplacements: Map<string, string>): Iterable<string>;
+    reverseTimestamps<T>(map: Map<string, T>, reverseReplacements: Map<string, string>): Map<string, T>;
+    createWebpack4Watch(): (files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>;
+    createWebpack5Watch(): (files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>;
+    watch: (() => (files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>) | ((files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>);
 }
