@@ -77,7 +77,7 @@ class TypeChecker {
         const allDiagnostics = diagnostics_1.gatherDiagnostics(this._program, this._JitMode, 'TypeChecker', diagnostics_1.DiagnosticMode.Semantic, cancellationToken);
         // Report diagnostics.
         if (!cancellationToken.isCancellationRequested()) {
-            diagnostics_1.reportDiagnostics(allDiagnostics, msg => this.sendMessage(new type_checker_messages_1.LogMessage('error', 'ERROR in ' + msg)), msg => this.sendMessage(new type_checker_messages_1.LogMessage('warn', 'WARNING in ' + msg)));
+            diagnostics_1.reportDiagnostics(allDiagnostics, msg => this.sendMessage(new type_checker_messages_1.LogMessage('error', 'Error: ' + msg)), msg => this.sendMessage(new type_checker_messages_1.LogMessage('warn', 'Warning: ' + msg)));
         }
     }
     sendMessage(msg) {
