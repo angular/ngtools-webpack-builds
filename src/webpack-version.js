@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mergeResolverMainFields = exports.isWebpackFiveOrHigher = void 0;
+exports.isWebpackFiveOrHigher = void 0;
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -23,20 +23,3 @@ function isWebpackFiveOrHigher() {
     return cachedIsWebpackFiveOrHigher;
 }
 exports.isWebpackFiveOrHigher = isWebpackFiveOrHigher;
-function mergeResolverMainFields(options, originalMainFields, extraMainFields) {
-    var _a;
-    const cleverMerge = (_a = webpack.util) === null || _a === void 0 ? void 0 : _a.cleverMerge;
-    if (cleverMerge) {
-        // Webpack 5
-        // https://github.com/webpack/webpack/issues/11635#issuecomment-707016779
-        return cleverMerge(options, { mainFields: [...extraMainFields, '...'] });
-    }
-    else {
-        // Webpack 4
-        return {
-            ...options,
-            mainFields: [...extraMainFields, ...originalMainFields],
-        };
-    }
-}
-exports.mergeResolverMainFields = mergeResolverMainFields;
