@@ -693,10 +693,7 @@ class AngularCompilerPlugin {
                     .tap('WebpackOptionsApply', (resolveOptions) => {
                     const originalMainFields = resolveOptions.mainFields;
                     const ivyMainFields = originalMainFields.map(f => `${f}_ivy_ngcc`);
-                    return {
-                        ...resolveOptions,
-                        mainFields: [...ivyMainFields, ...originalMainFields],
-                    };
+                    return webpack_version_1.mergeResolverMainFields(resolveOptions, originalMainFields, ivyMainFields);
                 });
             }
             // tslint:disable-next-line:no-any

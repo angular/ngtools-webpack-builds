@@ -95,7 +95,8 @@ class VirtualWatchFileSystemDecorator extends exports.NodeWatchFileSystem {
         super(_virtualInputFileSystem);
         this._virtualInputFileSystem = _virtualInputFileSystem;
         this._replacements = _replacements;
-        this.watch = webpack_version_1.isWebpackFiveOrHigher() ? this.createWebpack5Watch : this.createWebpack4Watch();
+        // tslint:disable-next-line: no-any
+        this.watch = webpack_version_1.isWebpackFiveOrHigher() ? this.createWebpack5Watch() : this.createWebpack4Watch();
     }
     mapReplacements(original, reverseReplacements) {
         if (!this._replacements) {
