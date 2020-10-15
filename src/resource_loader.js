@@ -43,7 +43,7 @@ class WebpackResourceLoader {
         }
         // Simple sanity check.
         if (filePath.match(/\.[jt]s$/)) {
-            return Promise.reject(`Cannot use a JavaScript or TypeScript file (${filePath}) in a component's styleUrls or templateUrl.`);
+            return Promise.reject('Cannot use a JavaScript or TypeScript file for styleUrl or templateUrl.');
         }
         const outputOptions = { filename: filePath };
         const relativePath = path.relative(this._context || '', filePath);
