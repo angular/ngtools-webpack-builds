@@ -32,9 +32,7 @@ const type_checker_1 = require("./type_checker");
 const type_checker_messages_1 = require("./type_checker_messages");
 const utils_1 = require("./utils");
 const virtual_file_system_decorator_1 = require("./virtual_file_system_decorator");
-const webpack_diagnostics_1 = require("./webpack-diagnostics");
 const webpack_input_host_1 = require("./webpack-input-host");
-const webpack_version_1 = require("./webpack-version");
 class AngularCompilerPlugin {
     constructor(options) {
         this._discoverLazyRoutes = true;
@@ -179,16 +177,16 @@ class AngularCompilerPlugin {
         }
         if (this._discoverLazyRoutes === false && this.options.additionalLazyModuleResources
             && this.options.additionalLazyModuleResources.length > 0) {
-            this._warnings.push(`Lazy route discovery is disabled but additional Lazy Module Resources were` +
-                ` provided. These will be ignored.`);
+            this._warnings.push(new Error(`Lazy route discovery is disabled but additional Lazy Module Resources were`
+                + ` provided. These will be ignored.`));
         }
         if (this._compilerOptions.strictMetadataEmit) {
-            this._warnings.push(`Using Angular compiler option 'strictMetadataEmit' for applications might cause undefined behavior.`);
+            this._warnings.push(new Error(`Using Angular compiler option 'strictMetadataEmit' for applications might cause undefined behavior.`));
         }
         if (this._discoverLazyRoutes === false && this.options.additionalLazyModules
             && Object.keys(this.options.additionalLazyModules).length > 0) {
-            this._warnings.push(`Lazy route discovery is disabled but additional lazy modules were provided.` +
-                `These will be ignored.`);
+            this._warnings.push(new Error(`Lazy route discovery is disabled but additional lazy modules were provided.`
+                + `These will be ignored.`));
         }
         if (!this._JitMode && !this._compilerOptions.enableIvy) {
             // Only attempt to use factories when AOT and not Ivy.
@@ -390,9 +388,9 @@ class AngularCompilerPlugin {
             if (moduleKey in this._lazyRoutes) {
                 if (this._lazyRoutes[moduleKey] !== modulePath) {
                     // Found a duplicate, this is an error.
-                    this._warnings.push(`Duplicated path in loadChildren detected during a rebuild. ` +
-                        `We will take the latest version detected and override it to save rebuild time. ` +
-                        `You should perform a full build to validate that your routes don't overlap.`);
+                    this._warnings.push(new Error(`Duplicated path in loadChildren detected during a rebuild. `
+                        + `We will take the latest version detected and override it to save rebuild time. `
+                        + `You should perform a full build to validate that your routes don't overlap.`));
                 }
             }
             else {
@@ -505,7 +503,7 @@ class AngularCompilerPlugin {
         // Anything that remains is unused, because it wasn't referenced directly or transitively
         // on the files in the compilation.
         for (const fileName of unusedSourceFileNames) {
-            webpack_diagnostics_1.addWarning(compilation, `${fileName} is part of the TypeScript compilation but it's unused.\n` +
+            compilation.warnings.push(`${fileName} is part of the TypeScript compilation but it's unused.\n` +
                 `Add only entry points to the 'files' or 'include' properties in your tsconfig.`);
             this._unusedFiles.add(fileName);
             // Remove the truly unused from the type dep list.
@@ -693,7 +691,10 @@ class AngularCompilerPlugin {
                     .tap('WebpackOptionsApply', (resolveOptions) => {
                     const originalMainFields = resolveOptions.mainFields;
                     const ivyMainFields = originalMainFields.map(f => `${f}_ivy_ngcc`);
-                    return webpack_version_1.mergeResolverMainFields(resolveOptions, originalMainFields, ivyMainFields);
+                    return {
+                        ...resolveOptions,
+                        mainFields: [...ivyMainFields, ...originalMainFields],
+                    };
                 });
             }
             // tslint:disable-next-line:no-any
@@ -721,9 +722,7 @@ class AngularCompilerPlugin {
                             catch (_a) { }
                         }
                     }
-                    if (!webpack_version_1.isWebpackFiveOrHigher()) {
-                        return request;
-                    }
+                    return request;
                 });
             });
         });
@@ -762,14 +761,14 @@ class AngularCompilerPlugin {
             this.pushCompilationErrors(compilation);
         }
         catch (err) {
-            webpack_diagnostics_1.addError(compilation, err.message || err);
+            compilation.errors.push(err);
             this.pushCompilationErrors(compilation);
         }
         benchmark_1.timeEnd('AngularCompilerPlugin._make');
     }
     pushCompilationErrors(compilation) {
-        this._errors.forEach((error) => webpack_diagnostics_1.addError(compilation, error));
-        this._warnings.forEach((warning) => webpack_diagnostics_1.addWarning(compilation, warning));
+        compilation.errors.push(...this._errors);
+        compilation.warnings.push(...this._warnings);
         this._errors = [];
         this._warnings = [];
     }
@@ -884,7 +883,7 @@ class AngularCompilerPlugin {
         const { emitResult, diagnostics } = this._emit();
         benchmark_1.timeEnd('AngularCompilerPlugin._update._emit');
         // Report any diagnostics.
-        diagnostics_1.reportDiagnostics(diagnostics, msg => this._errors.push(msg), msg => this._warnings.push(msg));
+        diagnostics_1.reportDiagnostics(diagnostics, msg => this._errors.push(new Error(msg)), msg => this._warnings.push(msg));
         this._emitSkipped = !emitResult || emitResult.emitSkipped;
         // Reset changed files on successful compilation.
         if (!this._emitSkipped && this._errors.length === 0) {

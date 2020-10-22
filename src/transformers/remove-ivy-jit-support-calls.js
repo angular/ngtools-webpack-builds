@@ -21,19 +21,11 @@ function removeIvyJitSupportCalls(classMetadata, ngModuleScope, getTypeChecker) 
             if (!innerStatement) {
                 return false;
             }
-            let shouldRemove = false;
             if (ngModuleScope && ts.isBinaryExpression(innerStatement.expression)) {
-                shouldRemove = isIvyPrivateCallExpression(innerStatement.expression.right, 'ɵɵsetNgModuleScope');
+                return isIvyPrivateCallExpression(innerStatement.expression.right, 'ɵɵsetNgModuleScope');
             }
-            if (classMetadata && !shouldRemove) {
-                if (ts.isBinaryExpression(innerStatement.expression)) {
-                    shouldRemove = isIvyPrivateCallExpression(innerStatement.expression.right, 'ɵsetClassMetadata');
-                }
-                else {
-                    shouldRemove = isIvyPrivateCallExpression(innerStatement.expression, 'ɵsetClassMetadata');
-                }
-            }
-            return shouldRemove;
+            return (classMetadata &&
+                isIvyPrivateCallExpression(innerStatement.expression, 'ɵsetClassMetadata'));
         })
             .forEach(statement => ops.push(new interfaces_1.RemoveNodeOperation(sourceFile, statement)));
         return ops;
