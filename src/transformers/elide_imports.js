@@ -26,7 +26,7 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
     const usedSymbols = new Set();
     const imports = [];
     ts.forEachChild(sourceFile, function visit(node) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d;
         // Skip removed nodes.
         if (removedNodes.includes(node)) {
             return;
@@ -39,9 +39,7 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
         }
         // Record import and skip
         if (ts.isImportDeclaration(node)) {
-            if (!((_a = node.importClause) === null || _a === void 0 ? void 0 : _a.isTypeOnly)) {
-                imports.push(node);
-            }
+            imports.push(node);
             return;
         }
         let symbol;
@@ -56,15 +54,15 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
                 case ts.SyntaxKind.GetAccessor:
                 case ts.SyntaxKind.PropertyDeclaration:
                 case ts.SyntaxKind.MethodDeclaration:
-                    isTypeReferenceForDecoratoredNode = !!((_b = parent.decorators) === null || _b === void 0 ? void 0 : _b.length);
+                    isTypeReferenceForDecoratoredNode = !!((_a = parent.decorators) === null || _a === void 0 ? void 0 : _a.length);
                     break;
                 case ts.SyntaxKind.Parameter:
                     // - A constructor parameter can be decorated or the class itself is decorated.
                     // - The parent of the parameter is decorated example a method declaration or a set accessor.
                     // In all cases we need the type reference not to be elided.
-                    isTypeReferenceForDecoratoredNode = !!(((_c = parent.decorators) === null || _c === void 0 ? void 0 : _c.length) ||
-                        (ts.isSetAccessor(parent.parent) && !!((_d = parent.parent.decorators) === null || _d === void 0 ? void 0 : _d.length)) ||
-                        (ts.isConstructorDeclaration(parent.parent) && !!((_e = parent.parent.parent.decorators) === null || _e === void 0 ? void 0 : _e.length)));
+                    isTypeReferenceForDecoratoredNode = !!(((_b = parent.decorators) === null || _b === void 0 ? void 0 : _b.length) ||
+                        (ts.isSetAccessor(parent.parent) && !!((_c = parent.parent.decorators) === null || _c === void 0 ? void 0 : _c.length)) ||
+                        (ts.isConstructorDeclaration(parent.parent) && !!((_d = parent.parent.parent.decorators) === null || _d === void 0 ? void 0 : _d.length)));
                     break;
             }
             if (isTypeReferenceForDecoratoredNode) {
