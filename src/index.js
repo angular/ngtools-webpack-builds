@@ -17,9 +17,10 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NgToolsLoader = exports.default = void 0;
+exports.ivy = exports.NgToolsLoader = exports.default = void 0;
 __exportStar(require("./angular_compiler_plugin"), exports);
 __exportStar(require("./interfaces"), exports);
 var loader_1 = require("./loader");
 Object.defineProperty(exports, "default", { enumerable: true, get: function () { return loader_1.ngcLoader; } });
 exports.NgToolsLoader = __filename;
+exports.ivy = require("./ivy");
