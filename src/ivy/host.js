@@ -85,8 +85,12 @@ function augmentHostWithReplacements(host, replacements, moduleResolutionCache) 
     if (Object.keys(replacements).length === 0) {
         return;
     }
+    const normalizedReplacements = {};
+    for (const [key, value] of Object.entries(replacements)) {
+        normalizedReplacements[utils_1.forwardSlashPath(key)] = utils_1.forwardSlashPath(value);
+    }
     const tryReplace = (resolvedModule) => {
-        const replacement = resolvedModule && replacements[resolvedModule.resolvedFileName];
+        const replacement = resolvedModule && normalizedReplacements[resolvedModule.resolvedFileName];
         if (replacement) {
             return {
                 resolvedFileName: replacement,
