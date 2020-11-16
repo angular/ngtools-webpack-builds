@@ -560,6 +560,7 @@ class AngularCompilerPlugin {
         // Decorate inputFileSystem to serve contents of CompilerHost.
         // Use decorated inputFileSystem in watchFileSystem.
         compiler.hooks.environment.tap('angular-compiler', () => {
+            var _a;
             // The webpack types currently do not include these
             const compilerWithFileSystems = compiler;
             let host = this._options.host || webpack_input_host_1.createWebpackInputHost(compilerWithFileSystems.inputFileSystem);
@@ -588,14 +589,7 @@ class AngularCompilerPlugin {
             }
             let ngccProcessor;
             if (this._compilerOptions.enableIvy) {
-                const fileWatchPurger = (path) => {
-                    // tslint:disable-next-line: no-any
-                    if (compilerWithFileSystems.inputFileSystem.purge) {
-                        // tslint:disable-next-line: no-any
-                        compilerWithFileSystems.inputFileSystem.purge(path);
-                    }
-                };
-                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, fileWatchPurger, this._warnings, this._errors, this._basePath, this._tsConfigPath);
+                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, this._warnings, this._errors, this._basePath, this._tsConfigPath, compilerWithFileSystems.inputFileSystem, (_a = compiler.options.resolve) === null || _a === void 0 ? void 0 : _a.symlinks);
                 ngccProcessor.process();
             }
             // Use an identity function as all our paths are absolute already.
