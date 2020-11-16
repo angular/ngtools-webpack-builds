@@ -11,6 +11,7 @@ exports.NgccProcessor = void 0;
 const ngcc_1 = require("@angular/compiler-cli/ngcc");
 const child_process_1 = require("child_process");
 const crypto_1 = require("crypto");
+const enhanced_resolve_1 = require("enhanced-resolve");
 const fs_1 = require("fs");
 const path = require("path");
 const benchmark_1 = require("./benchmark");
@@ -22,16 +23,25 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(propertiesToConsider, fileWatchPurger, compilationWarnings, compilationErrors, basePath, tsConfigPath) {
+    constructor(propertiesToConsider, compilationWarnings, compilationErrors, basePath, tsConfigPath, inputFileSystem, symlinks) {
         this.propertiesToConsider = propertiesToConsider;
-        this.fileWatchPurger = fileWatchPurger;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
         this.basePath = basePath;
         this.tsConfigPath = tsConfigPath;
+        this.inputFileSystem = inputFileSystem;
+        this.symlinks = symlinks;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
         this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
+        this._resolver = enhanced_resolve_1.ResolverFactory.createResolver({
+            // NOTE: @types/webpack InputFileSystem is missing some methods
+            // tslint:disable-next-line: no-any
+            fileSystem: this.inputFileSystem,
+            extensions: ['.json'],
+            useSyncFileSystemCalls: true,
+            symlinks,
+        });
     }
     /** Process the entire node modules tree. */
     process() {
@@ -162,7 +172,10 @@ class NgccProcessor {
         benchmark_1.timeEnd(timeLabel);
         // Purge this file from cache, since NGCC add new mainFields. Ex: module_ivy_ngcc
         // which are unknown in the cached file.
-        this.fileWatchPurger(packageJsonPath);
+        if (this.inputFileSystem.purge) {
+            // tslint:disable-next-line: no-any
+            this.inputFileSystem.purge(packageJsonPath);
+        }
         this._processedModules.add(resolvedFileName);
     }
     invalidate(fileName) {
@@ -173,15 +186,10 @@ class NgccProcessor {
      */
     tryResolvePackage(moduleName, resolvedFileName) {
         try {
-            // This is based on the logic in the NGCC compiler
-            // tslint:disable-next-line:max-line-length
-            // See: https://github.com/angular/angular/blob/b93c1dffa17e4e6900b3ab1b9e554b6da92be0de/packages/compiler-cli/src/ngcc/src/packages/dependency_host.ts#L85-L121
-            return require.resolve(`${moduleName}/package.json`, {
-                paths: [resolvedFileName],
-            });
+            const resolvedPath = this._resolver.resolveSync({}, resolvedFileName, `${moduleName}/package.json`);
+            return resolvedPath || undefined;
         }
         catch (_a) {
-            // if it fails this might be a deep import which doesn't have a package.json
             // Ex: @angular/compiler/src/i18n/i18n_ast/package.json
             // or local libraries which don't reside in node_modules
             const packageJsonPath = path.resolve(resolvedFileName, '../package.json');

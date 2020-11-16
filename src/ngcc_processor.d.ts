@@ -6,17 +6,20 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import * as ts from 'typescript';
+import { InputFileSystem } from 'webpack';
 export declare class NgccProcessor {
     private readonly propertiesToConsider;
-    private readonly fileWatchPurger;
     private readonly compilationWarnings;
     private readonly compilationErrors;
     private readonly basePath;
     private readonly tsConfigPath;
+    private readonly inputFileSystem;
+    private readonly symlinks;
     private _processedModules;
     private _logger;
     private _nodeModulesDirectory;
-    constructor(propertiesToConsider: string[], fileWatchPurger: (path: string) => void, compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string);
+    private _resolver;
+    constructor(propertiesToConsider: string[], compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string, inputFileSystem: InputFileSystem, symlinks: boolean | undefined);
     /** Process the entire node modules tree. */
     process(): void;
     /** Process a module and it's depedencies. */

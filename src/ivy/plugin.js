@@ -25,18 +25,12 @@ const symbol_1 = require("./symbol");
 const system_1 = require("./system");
 const transformation_1 = require("./transformation");
 function initializeNgccProcessor(compiler, tsconfig) {
-    var _a;
+    var _a, _b;
     const { inputFileSystem, options: webpackOptions } = compiler;
     const mainFields = [].concat(...(((_a = webpackOptions.resolve) === null || _a === void 0 ? void 0 : _a.mainFields) || []));
-    const fileWatchPurger = (path) => {
-        if (inputFileSystem.purge) {
-            // Webpack typings do not contain the string parameter overload for purge
-            inputFileSystem.purge(path);
-        }
-    };
     const errors = [];
     const warnings = [];
-    const processor = new ngcc_processor_1.NgccProcessor(mainFields, fileWatchPurger, warnings, errors, compiler.context, tsconfig);
+    const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, (_b = webpackOptions.resolve) === null || _b === void 0 ? void 0 : _b.symlinks);
     return { processor, errors, warnings };
 }
 const PLUGIN_NAME = 'angular-compiler';
