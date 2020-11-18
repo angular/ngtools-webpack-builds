@@ -145,7 +145,12 @@ class AngularWebpackPlugin {
                 .getSourceFiles()
                 .filter((sourceFile) => !(internalFiles === null || internalFiles === void 0 ? void 0 : internalFiles.has(sourceFile)));
             // Ensure all program files are considered part of the compilation and will be watched
-            allProgramFiles.forEach((sourceFile) => compilation.compilationDependencies.add(sourceFile.fileName));
+            if (webpack_version_1.isWebpackFiveOrHigher()) {
+                allProgramFiles.forEach((sourceFile) => compilation.fileDependencies.add(sourceFile.fileName));
+            }
+            else {
+                allProgramFiles.forEach((sourceFile) => compilation.compilationDependencies.add(sourceFile.fileName));
+            }
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
                 // Rebuild any remaining AOT required modules
                 const rebuild = (filename) => new Promise((resolve) => {
