@@ -14,7 +14,7 @@ exports.WebpackResourceLoader = void 0;
 const path = require("path");
 const vm = require("vm");
 const webpack_sources_1 = require("webpack-sources");
-const utils_1 = require("./utils");
+const paths_1 = require("./ivy/paths");
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
@@ -36,7 +36,7 @@ class WebpackResourceLoader {
             this.changedFiles.clear();
             for (const [file, time] of parentCompilation.fileTimestamps) {
                 if (this.buildTimestamp < time) {
-                    this.changedFiles.add(file);
+                    this.changedFiles.add(paths_1.normalizePath(file));
                 }
             }
         }
@@ -129,7 +129,7 @@ class WebpackResourceLoader {
         // Save the dependencies for this resource.
         this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
         for (const file of childCompilation.fileDependencies) {
-            const resolvedFile = utils_1.forwardSlashPath(file);
+            const resolvedFile = paths_1.normalizePath(file);
             const entry = this._reverseDependencies.get(resolvedFile);
             if (entry) {
                 entry.add(filePath);
