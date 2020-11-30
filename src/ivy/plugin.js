@@ -18,6 +18,7 @@ const paths_plugin_1 = require("../paths-plugin");
 const resource_loader_1 = require("../resource_loader");
 const webpack_diagnostics_1 = require("../webpack-diagnostics");
 const webpack_version_1 = require("../webpack-version");
+const cache_1 = require("./cache");
 const diagnostics_1 = require("./diagnostics");
 const host_1 = require("./host");
 const paths_1 = require("./paths");
@@ -108,18 +109,14 @@ class AngularWebpackPlugin {
             const host = ts.createIncrementalCompilerHost(compilerOptions, system);
             // Setup source file caching and reuse cache from previous compilation if present
             let cache = this.sourceFileCache;
+            let changedFiles;
             if (cache) {
-                // Invalidate existing cache based on compilation file timestamps
-                for (const [file, time] of compilation.fileTimestamps) {
-                    if (this.buildTimestamp < time) {
-                        // Cache stores paths using the POSIX directory separator
-                        cache.delete(paths_1.normalizePath(file));
-                    }
-                }
+                // Invalidate existing cache based on compiler file timestamps
+                changedFiles = cache.invalidate(compiler.fileTimestamps, this.buildTimestamp);
             }
             else {
                 // Initialize a new cache
-                cache = new Map();
+                cache = new cache_1.SourceFileCache();
                 // Only store cache if in watch mode
                 if (this.watchMode) {
                     this.sourceFileCache = cache;
@@ -131,7 +128,7 @@ class AngularWebpackPlugin {
             // Setup on demand ngcc
             host_1.augmentHostWithNgcc(host, ngccProcessor, moduleResolutionCache);
             // Setup resource loading
-            resourceLoader.update(compilation);
+            resourceLoader.update(compilation, changedFiles);
             host_1.augmentHostWithResources(host, resourceLoader, {
                 directTemplateLoading: this.pluginOptions.directTemplateLoading,
             });

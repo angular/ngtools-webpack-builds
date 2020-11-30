@@ -26,24 +26,18 @@ class WebpackResourceLoader {
         this._reverseDependencies = new Map();
         this._cachedSources = new Map();
         this._cachedEvaluatedSources = new Map();
-        this.changedFiles = new Set();
     }
-    update(parentCompilation) {
+    update(parentCompilation, changedFiles) {
         this._parentCompilation = parentCompilation;
         this._context = parentCompilation.context;
         // Update changed file list
-        if (this.buildTimestamp !== undefined) {
-            this.changedFiles.clear();
-            for (const [file, time] of parentCompilation.fileTimestamps) {
-                if (this.buildTimestamp < time) {
-                    this.changedFiles.add(paths_1.normalizePath(file));
-                }
-            }
-        }
-        this.buildTimestamp = Date.now();
+        this.changedFiles = changedFiles;
     }
     getModifiedResourceFiles() {
         const modifiedResources = new Set();
+        if (!this.changedFiles) {
+            return modifiedResources;
+        }
         for (const changedFile of this.changedFiles) {
             this.getAffectedResources(changedFile).forEach((affected) => modifiedResources.add(affected));
         }
