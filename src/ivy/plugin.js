@@ -16,12 +16,11 @@ const webpack_1 = require("webpack");
 const ngcc_processor_1 = require("../ngcc_processor");
 const paths_plugin_1 = require("../paths-plugin");
 const resource_loader_1 = require("../resource_loader");
+const utils_1 = require("../utils");
 const webpack_diagnostics_1 = require("../webpack-diagnostics");
 const webpack_version_1 = require("../webpack-version");
-const cache_1 = require("./cache");
 const diagnostics_1 = require("./diagnostics");
 const host_1 = require("./host");
-const paths_1 = require("./paths");
 const symbol_1 = require("./symbol");
 const system_1 = require("./system");
 const transformation_1 = require("./transformation");
@@ -105,18 +104,21 @@ class AngularWebpackPlugin {
             // Update TypeScript path mapping plugin with new configuration
             pathsPlugin.update(compilerOptions);
             // Create a Webpack-based TypeScript compiler host
-            const system = system_1.createWebpackSystem(compiler.inputFileSystem, paths_1.normalizePath(compiler.context));
+            const system = system_1.createWebpackSystem(compiler.inputFileSystem, utils_1.forwardSlashPath(compiler.context));
             const host = ts.createIncrementalCompilerHost(compilerOptions, system);
             // Setup source file caching and reuse cache from previous compilation if present
             let cache = this.sourceFileCache;
-            let changedFiles;
             if (cache) {
-                // Invalidate existing cache based on compiler file timestamps
-                changedFiles = cache.invalidate(compiler.fileTimestamps, this.buildTimestamp);
+                // Invalidate existing cache based on compilation file timestamps
+                for (const [file, time] of compilation.fileTimestamps) {
+                    if (this.buildTimestamp < time) {
+                        cache.delete(utils_1.forwardSlashPath(file));
+                    }
+                }
             }
             else {
                 // Initialize a new cache
-                cache = new cache_1.SourceFileCache();
+                cache = new Map();
                 // Only store cache if in watch mode
                 if (this.watchMode) {
                     this.sourceFileCache = cache;
@@ -128,7 +130,7 @@ class AngularWebpackPlugin {
             // Setup on demand ngcc
             host_1.augmentHostWithNgcc(host, ngccProcessor, moduleResolutionCache);
             // Setup resource loading
-            resourceLoader.update(compilation, changedFiles);
+            resourceLoader.update(compilation);
             host_1.augmentHostWithResources(host, resourceLoader, {
                 directTemplateLoading: this.pluginOptions.directTemplateLoading,
             });
@@ -152,7 +154,8 @@ class AngularWebpackPlugin {
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
                 // Rebuild any remaining AOT required modules
                 const rebuild = (filename) => new Promise((resolve) => {
-                    const module = modules.find(({ resource }) => resource && paths_1.normalizePath(resource) === filename);
+                    // tslint:disable-next-line: no-any
+                    const module = modules.find((element) => element.resource === filename);
                     if (!module) {
                         resolve();
                     }
@@ -171,8 +174,9 @@ class AngularWebpackPlugin {
                 const currentUnused = new Set(allProgramFiles
                     .filter((sourceFile) => !sourceFile.isDeclarationFile)
                     .map((sourceFile) => sourceFile.fileName));
-                modules.forEach(({ resource }) => {
-                    const sourceFile = resource && builder.getSourceFile(resource);
+                modules.forEach((module) => {
+                    const { resource } = module;
+                    const sourceFile = resource && builder.getSourceFile(utils_1.forwardSlashPath(resource));
                     if (!sourceFile) {
                         return;
                     }
@@ -258,7 +262,8 @@ class AngularWebpackPlugin {
         const transformers = transformation_1.createAotTransformers(builder, this.pluginOptions);
         const getDependencies = (sourceFile) => {
             const dependencies = [];
-            for (const resourcePath of angularCompiler.getResourceDependencies(sourceFile)) {
+            for (const resourceDependency of angularCompiler.getResourceDependencies(sourceFile)) {
+                const resourcePath = utils_1.forwardSlashPath(resourceDependency);
                 dependencies.push(resourcePath, 
                 // Retrieve all dependencies of the resource (stylesheet imports, etc.)
                 ...resourceLoader.getResourceDependencies(resourcePath));
@@ -284,7 +289,8 @@ class AngularWebpackPlugin {
             // NOTE: This can be removed once support for the deprecated lazy route string format is removed
             for (const lazyRoute of angularCompiler.listLazyRoutes()) {
                 const [routeKey] = lazyRoute.route.split('#');
-                this.lazyRouteMap[routeKey] = lazyRoute.referencedModule.filePath;
+                const routePath = utils_1.forwardSlashPath(lazyRoute.referencedModule.filePath);
+                this.lazyRouteMap[routeKey] = routePath;
             }
             return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
                 this.requiredFilesToEmit.delete(sourceFile.fileName);
@@ -324,7 +330,8 @@ class AngularWebpackPlugin {
         const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
             for (const lazyRoute of angularCompiler.listLazyRoutes()) {
                 const [routeKey] = lazyRoute.route.split('#');
-                this.lazyRouteMap[routeKey] = lazyRoute.referencedModule.filePath;
+                const routePath = utils_1.forwardSlashPath(lazyRoute.referencedModule.filePath);
+                this.lazyRouteMap[routeKey] = routePath;
             }
             return this.createFileEmitter(builder, transformers, () => []);
         });
@@ -343,7 +350,7 @@ class AngularWebpackPlugin {
     }
     createFileEmitter(program, transformers = {}, getExtraDependencies, onAfterEmit) {
         return async (file) => {
-            const sourceFile = program.getSourceFile(file);
+            const sourceFile = program.getSourceFile(utils_1.forwardSlashPath(file));
             if (!sourceFile) {
                 return undefined;
             }
@@ -361,7 +368,7 @@ class AngularWebpackPlugin {
             const dependencies = [
                 ...program.getAllDependencies(sourceFile),
                 ...getExtraDependencies(sourceFile),
-            ].map(paths_1.externalizePath);
+            ];
             return { content, map, dependencies };
         };
     }
