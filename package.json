@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "11.0.2+12.9db916c",
+  "version": "11.0.2+14.6e32253",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/angular/angular-cli",
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#9db916cdd",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#6e3225388",
     "enhanced-resolve": "5.3.1",
     "webpack-sources": "2.0.1"
   },
@@ -38,11 +38,5 @@
     "node": ">= 10.13.0",
     "npm": ">= 6.11.0",
     "yarn": ">= 1.13.0"
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "yarn -s ng-dev commit-message pre-commit-validate --file-env-variable HUSKY_GIT_PARAMS",
-      "prepare-commit-msg": "yarn -s ng-dev commit-message restore-commit-message-draft --file-env-variable HUSKY_GIT_PARAMS"
-    }
   }
 }
