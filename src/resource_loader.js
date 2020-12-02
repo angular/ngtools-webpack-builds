@@ -14,7 +14,7 @@ exports.WebpackResourceLoader = void 0;
 const path = require("path");
 const vm = require("vm");
 const webpack_sources_1 = require("webpack-sources");
-const utils_1 = require("./utils");
+const paths_1 = require("./ivy/paths");
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
@@ -26,24 +26,18 @@ class WebpackResourceLoader {
         this._reverseDependencies = new Map();
         this._cachedSources = new Map();
         this._cachedEvaluatedSources = new Map();
-        this.changedFiles = new Set();
     }
-    update(parentCompilation) {
+    update(parentCompilation, changedFiles) {
         this._parentCompilation = parentCompilation;
         this._context = parentCompilation.context;
         // Update changed file list
-        if (this.buildTimestamp !== undefined) {
-            this.changedFiles.clear();
-            for (const [file, time] of parentCompilation.fileTimestamps) {
-                if (this.buildTimestamp < time) {
-                    this.changedFiles.add(file);
-                }
-            }
-        }
-        this.buildTimestamp = Date.now();
+        this.changedFiles = changedFiles;
     }
     getModifiedResourceFiles() {
         const modifiedResources = new Set();
+        if (!this.changedFiles) {
+            return modifiedResources;
+        }
         for (const changedFile of this.changedFiles) {
             this.getAffectedResources(changedFile).forEach((affected) => modifiedResources.add(affected));
         }
@@ -129,7 +123,7 @@ class WebpackResourceLoader {
         // Save the dependencies for this resource.
         this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
         for (const file of childCompilation.fileDependencies) {
-            const resolvedFile = utils_1.forwardSlashPath(file);
+            const resolvedFile = paths_1.normalizePath(file);
             const entry = this._reverseDependencies.get(resolvedFile);
             if (entry) {
                 entry.add(filePath);

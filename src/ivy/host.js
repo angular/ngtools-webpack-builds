@@ -4,11 +4,11 @@ exports.augmentHostWithCaching = exports.augmentProgramWithVersioning = exports.
 const crypto_1 = require("crypto");
 const path = require("path");
 const ts = require("typescript");
-const utils_1 = require("../utils");
+const paths_1 = require("./paths");
 function augmentHostWithResources(host, resourceLoader, options = {}) {
     const resourceHost = host;
     resourceHost.readResource = function (fileName) {
-        const filePath = utils_1.forwardSlashPath(fileName);
+        const filePath = paths_1.normalizePath(fileName);
         if (options.directTemplateLoading &&
             (filePath.endsWith('.html') || filePath.endsWith('.svg'))) {
             const content = this.readFile(filePath);
@@ -23,7 +23,7 @@ function augmentHostWithResources(host, resourceLoader, options = {}) {
         }
     };
     resourceHost.resourceNameToFileName = function (resourceName, containingFile) {
-        return utils_1.forwardSlashPath(path.join(path.dirname(containingFile), resourceName));
+        return path.join(path.dirname(containingFile), resourceName);
     };
     resourceHost.getModifiedResourceFiles = function () {
         return resourceLoader.getModifiedResourceFiles();
@@ -87,7 +87,7 @@ function augmentHostWithReplacements(host, replacements, moduleResolutionCache) 
     }
     const normalizedReplacements = {};
     for (const [key, value] of Object.entries(replacements)) {
-        normalizedReplacements[utils_1.forwardSlashPath(key)] = utils_1.forwardSlashPath(value);
+        normalizedReplacements[paths_1.normalizePath(key)] = paths_1.normalizePath(value);
     }
     const tryReplace = (resolvedModule) => {
         const replacement = resolvedModule && normalizedReplacements[resolvedModule.resolvedFileName];
