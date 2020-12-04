@@ -5,8 +5,9 @@ export declare class WebpackResourceLoader {
     private _reverseDependencies;
     private _cachedSources;
     private _cachedEvaluatedSources;
-    changedFiles?: Iterable<string>;
-    update(parentCompilation: import('webpack').compilation.Compilation, changedFiles?: Iterable<string>): void;
+    private buildTimestamp?;
+    changedFiles: Set<string>;
+    update(parentCompilation: import('webpack').compilation.Compilation): void;
     getModifiedResourceFiles(): Set<string>;
     getResourceDependencies(filePath: string): never[] | Set<string>;
     getAffectedResources(file: string): never[] | Set<string>;

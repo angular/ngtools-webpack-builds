@@ -9,23 +9,38 @@ exports.createWebpackSystem = void 0;
  * found in the LICENSE file at https://angular.io/license
  */
 const ts = require("typescript");
-const paths_1 = require("./paths");
 function shouldNotWrite() {
     throw new Error('Webpack TypeScript System should not write.');
 }
+// Webpack's CachedInputFileSystem uses the default directory separator in the paths it uses
+// for keys to its cache. If the keys do not match then the file watcher will not purge outdated
+// files and cause stale data to be used in the next rebuild. TypeScript always uses a `/` (POSIX)
+// directory separator internally which is also supported with Windows system APIs. However,
+// if file operations are performed with the non-default directory separator, the Webpack cache
+// will contain a key that will not be purged.
+function createToSystemPath() {
+    if (process.platform === 'win32') {
+        const cache = new Map();
+        return (path) => {
+            let value = cache.get(path);
+            if (value === undefined) {
+                value = path.replace(/\//g, '\\');
+                cache.set(path, value);
+            }
+            return value;
+        };
+    }
+    // POSIX-like platforms retain the existing directory separator
+    return (path) => path;
+}
 function createWebpackSystem(input, currentDirectory) {
-    // Webpack's CachedInputFileSystem uses the default directory separator in the paths it uses
-    // for keys to its cache. If the keys do not match then the file watcher will not purge outdated
-    // files and cause stale data to be used in the next rebuild. TypeScript always uses a `/` (POSIX)
-    // directory separator internally which is also supported with Windows system APIs. However,
-    // if file operations are performed with the non-default directory separator, the Webpack cache
-    // will contain a key that will not be purged. `externalizePath` ensures the paths are as expected.
+    const toSystemPath = createToSystemPath();
     const system = {
         ...ts.sys,
         readFile(path) {
             let data;
             try {
-                data = input.readFileSync(paths_1.externalizePath(path));
+                data = input.readFileSync(toSystemPath(path));
             }
             catch (_a) {
                 return undefined;
@@ -39,7 +54,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         getFileSize(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).size;
+                return input.statSync(toSystemPath(path)).size;
             }
             catch (_a) {
                 return 0;
@@ -47,7 +62,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         fileExists(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).isFile();
+                return input.statSync(toSystemPath(path)).isFile();
             }
             catch (_a) {
                 return false;
@@ -55,7 +70,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         directoryExists(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).isDirectory();
+                return input.statSync(toSystemPath(path)).isDirectory();
             }
             catch (_a) {
                 return false;
@@ -63,7 +78,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         getModifiedTime(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).mtime;
+                return input.statSync(toSystemPath(path)).mtime;
             }
             catch (_a) {
                 return undefined;
