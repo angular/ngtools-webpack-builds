@@ -272,7 +272,18 @@ class AngularWebpackPlugin {
             for (const sourceFile of builder.getSourceFiles()) {
                 // Collect Angular template diagnostics
                 if (!ignoreForDiagnostics.has(sourceFile)) {
-                    diagnosticsReporter(angularCompiler.getDiagnostics(sourceFile));
+                    // The below check should be removed once support for compiler 11.0 is dropped.
+                    // Also, the below require should be changed to an ES6 import.
+                    if (angularCompiler.getDiagnosticsForFile) {
+                        // @angular/compiler-cli 11.1+
+                        const { OptimizeFor } = require('@angular/compiler-cli/src/ngtsc/typecheck/api');
+                        diagnosticsReporter(angularCompiler.getDiagnosticsForFile(sourceFile, OptimizeFor.WholeProgram));
+                    }
+                    else {
+                        // @angular/compiler-cli 11.0+
+                        const getDiagnostics = angularCompiler.getDiagnostics;
+                        diagnosticsReporter(getDiagnostics.call(angularCompiler, sourceFile));
+                    }
                 }
                 // Collect sources that are required to be emitted
                 if (!sourceFile.isDeclarationFile &&
