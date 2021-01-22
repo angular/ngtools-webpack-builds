@@ -102,6 +102,10 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
         return [];
     }
     const isUnused = (node) => {
+        // Do not remove JSX factory imports
+        if (node.text === compilerOptions.jsxFactory) {
+            return false;
+        }
         const symbol = typeChecker.getSymbolAtLocation(node);
         return symbol && !usedSymbols.has(symbol);
     };

@@ -23,7 +23,7 @@ function createAotTransformers(builder, options) {
     const removeNgModuleScope = !options.emitNgModuleScope;
     if (removeClassMetadata || removeNgModuleScope) {
         // tslint:disable-next-line: no-non-null-assertion
-        transformers.after.push(remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls(removeClassMetadata, removeNgModuleScope, getTypeChecker));
+        transformers.before.push(remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls(removeClassMetadata, removeNgModuleScope, getTypeChecker));
     }
     return transformers;
 }
