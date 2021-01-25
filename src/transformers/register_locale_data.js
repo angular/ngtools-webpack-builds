@@ -47,15 +47,15 @@ function registerLocaleData(shouldTransform, getEntryModule, locale) {
                 return;
             }
             // Create the import node for the locale.
-            const localeNamespaceId = ts.createUniqueName('__NgCli_locale_');
+            const localeNamespaceId = ts.factory.createUniqueName('__NgCli_locale_');
             ops.push(...insert_import_1.insertStarImport(sourceFile, localeNamespaceId, `@angular/common/locales/${locale}`, firstNode, true));
             // Create the import node for the registerLocaleData function.
-            const regIdentifier = ts.createIdentifier(`registerLocaleData`);
-            const regNamespaceId = ts.createUniqueName('__NgCli_locale_');
+            const regIdentifier = ts.factory.createIdentifier(`registerLocaleData`);
+            const regNamespaceId = ts.factory.createUniqueName('__NgCli_locale_');
             ops.push(...insert_import_1.insertStarImport(sourceFile, regNamespaceId, '@angular/common', firstNode, true));
             // Create the register function call
-            const registerFunctionCall = ts.createCall(ts.createPropertyAccess(regNamespaceId, regIdentifier), undefined, [ts.createPropertyAccess(localeNamespaceId, 'default')]);
-            const registerFunctionStatement = ts.createStatement(registerFunctionCall);
+            const registerFunctionCall = ts.factory.createCallExpression(ts.factory.createPropertyAccessExpression(regNamespaceId, regIdentifier), undefined, [ts.factory.createPropertyAccessExpression(localeNamespaceId, 'default')]);
+            const registerFunctionStatement = ts.factory.createExpressionStatement(registerFunctionCall);
             ops.push(new interfaces_1.AddNodeOperation(sourceFile, firstNode, registerFunctionStatement));
         });
         return ops;

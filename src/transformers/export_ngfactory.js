@@ -45,8 +45,8 @@ function exportNgFactory(shouldTransform, getEntryModule) {
             // Add the transform operations.
             const factoryClassName = entryModule.className + 'NgFactory';
             const factoryModulePath = normalizedEntryModulePath + '.ngfactory';
-            const namedExports = ts.createNamedExports([ts.createExportSpecifier(undefined, ts.createIdentifier(factoryClassName))]);
-            const newImport = ts.createExportDeclaration(undefined, undefined, namedExports, ts.createLiteral(factoryModulePath));
+            const namedExports = ts.factory.createNamedExports([ts.factory.createExportSpecifier(undefined, ts.factory.createIdentifier(factoryClassName))]);
+            const newImport = ts.factory.createExportDeclaration(undefined, undefined, false, namedExports, ts.factory.createStringLiteral(factoryModulePath));
             const firstNode = ast_helpers_1.getFirstNode(sourceFile);
             if (firstNode) {
                 ops.push(new interfaces_1.AddNodeOperation(sourceFile, firstNode, newImport));

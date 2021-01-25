@@ -183,11 +183,11 @@ function replaceImport(node, context, emitWarning, fileName, typeChecker) {
     const replacementVisitor = (node) => {
         if (node === importStringLit) {
             // Transform the import string.
-            return ts.createStringLiteral(newImportString);
+            return ts.factory.createStringLiteral(newImportString);
         }
         else if (node === exportNameId) {
             // Transform the export name.
-            return ts.createIdentifier(exportNameId.text + 'NgFactory');
+            return ts.factory.createIdentifier(exportNameId.text + 'NgFactory');
         }
         return ts.visitEachChild(node, replacementVisitor, context);
     };
