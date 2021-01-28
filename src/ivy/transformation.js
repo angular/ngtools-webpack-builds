@@ -60,16 +60,17 @@ function replaceBootstrap(getTypeChecker) {
         let bootstrapImport;
         let bootstrapNamespace;
         const replacedNodes = [];
+        const nodeFactory = context.factory;
         const visitNode = (node) => {
             if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
                 const target = node.expression;
                 if (target.text === 'platformBrowserDynamic') {
                     if (!bootstrapNamespace) {
-                        bootstrapNamespace = ts.createUniqueName('__NgCli_bootstrap_');
-                        bootstrapImport = ts.createImportDeclaration(undefined, undefined, ts.createImportClause(undefined, ts.createNamespaceImport(bootstrapNamespace)), ts.createLiteral('@angular/platform-browser'));
+                        bootstrapNamespace = nodeFactory.createUniqueName('__NgCli_bootstrap_');
+                        bootstrapImport = nodeFactory.createImportDeclaration(undefined, undefined, nodeFactory.createImportClause(false, undefined, nodeFactory.createNamespaceImport(bootstrapNamespace)), nodeFactory.createStringLiteral('@angular/platform-browser'));
                     }
                     replacedNodes.push(target);
-                    return ts.updateCall(node, ts.createPropertyAccess(bootstrapNamespace, 'platformBrowser'), node.typeArguments, node.arguments);
+                    return nodeFactory.updateCallExpression(node, nodeFactory.createPropertyAccessExpression(bootstrapNamespace, 'platformBrowser'), node.typeArguments, node.arguments);
                 }
             }
             return ts.visitEachChild(node, visitNode, context);
@@ -83,7 +84,7 @@ function replaceBootstrap(getTypeChecker) {
                     updatedSourceFile = ts.visitEachChild(updatedSourceFile, (node) => (removals.includes(node) ? undefined : node), context);
                 }
                 // Add new platform browser import
-                return ts.updateSourceFileNode(updatedSourceFile, ts.setTextRange(ts.createNodeArray([bootstrapImport, ...updatedSourceFile.statements]), sourceFile.statements));
+                return nodeFactory.updateSourceFile(updatedSourceFile, ts.setTextRange(nodeFactory.createNodeArray([bootstrapImport, ...updatedSourceFile.statements]), sourceFile.statements));
             }
             else {
                 return updatedSourceFile;
