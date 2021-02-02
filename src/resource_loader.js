@@ -73,13 +73,21 @@ class WebpackResourceLoader {
         new SingleEntryPlugin(context, filePath).apply(childCompiler);
         new LibraryTemplatePlugin('resource', 'var').apply(childCompiler);
         childCompiler.hooks.thisCompilation.tap('ngtools-webpack', (compilation) => {
-            compilation.hooks.additionalAssets.tapPromise('ngtools-webpack', async () => {
+            compilation.hooks.additionalAssets.tap('ngtools-webpack', () => {
                 const asset = compilation.assets[filePath];
                 if (!asset) {
                     return;
                 }
-                const output = await this._evaluate(filePath, asset.source());
-                compilation.assets[filePath] = new webpack_sources_1.RawSource(output);
+                try {
+                    const output = this._evaluate(filePath, asset.source());
+                    if (typeof output === 'string') {
+                        compilation.assets[filePath] = new webpack_sources_1.RawSource(output);
+                    }
+                }
+                catch (error) {
+                    // Use compilation errors, as otherwise webpack will choke
+                    compilation.errors.push(error);
+                }
             });
         });
         // Compile and return a promise
@@ -125,11 +133,17 @@ class WebpackResourceLoader {
         const finalOutput = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source();
         return { outputName: filePath, source: finalOutput !== null && finalOutput !== void 0 ? finalOutput : '', success: !(errors === null || errors === void 0 ? void 0 : errors.length) };
     }
-    async _evaluate(filename, source) {
+    _evaluate(filename, source) {
         var _a;
         // Evaluate code
         const context = {};
-        vm.runInNewContext(source, context, { filename });
+        try {
+            vm.runInNewContext(source, context, { filename });
+        }
+        catch (_b) {
+            // Error are propagated through the child compilation.
+            return null;
+        }
         if (typeof context.resource === 'string') {
             return context.resource;
         }
