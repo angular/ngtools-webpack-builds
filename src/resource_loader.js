@@ -21,27 +21,29 @@ const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 class WebpackResourceLoader {
     constructor() {
-        this._context = '';
         this._fileDependencies = new Map();
         this._reverseDependencies = new Map();
-        this._cachedSources = new Map();
-        this._cachedEvaluatedSources = new Map();
+        this.cache = new Map();
+        this.modifiedResources = new Set();
     }
     update(parentCompilation, changedFiles) {
         this._parentCompilation = parentCompilation;
-        this._context = parentCompilation.context;
-        // Update changed file list
-        this.changedFiles = changedFiles;
+        // Update resource cache and modified resources
+        this.modifiedResources.clear();
+        if (changedFiles) {
+            for (const changedFile of changedFiles) {
+                for (const affectedResource of this.getAffectedResources(changedFile)) {
+                    this.cache.delete(paths_1.normalizePath(affectedResource));
+                    this.modifiedResources.add(affectedResource);
+                }
+            }
+        }
+        else {
+            this.cache.clear();
+        }
     }
     getModifiedResourceFiles() {
-        const modifiedResources = new Set();
-        if (!this.changedFiles) {
-            return modifiedResources;
-        }
-        for (const changedFile of this.changedFiles) {
-            this.getAffectedResources(changedFile).forEach((affected) => modifiedResources.add(affected));
-        }
-        return modifiedResources;
+        return this.modifiedResources;
     }
     getResourceDependencies(filePath) {
         return this._fileDependencies.get(filePath) || [];
@@ -53,6 +55,7 @@ class WebpackResourceLoader {
         this._reverseDependencies.set(file, new Set(resources));
     }
     async _compile(filePath) {
+        var _a;
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
@@ -61,34 +64,29 @@ class WebpackResourceLoader {
             return Promise.reject(`Cannot use a JavaScript or TypeScript file (${filePath}) in a component's styleUrls or templateUrl.`);
         }
         const outputOptions = { filename: filePath };
-        const relativePath = path.relative(this._context || '', filePath);
+        const context = this._parentCompilation.context;
+        const relativePath = path.relative(context || '', filePath);
         const childCompiler = this._parentCompilation.createChildCompiler(relativePath, outputOptions);
-        childCompiler.context = this._context;
+        childCompiler.context = context;
         new NodeTemplatePlugin(outputOptions).apply(childCompiler);
         new NodeTargetPlugin().apply(childCompiler);
-        new SingleEntryPlugin(this._context, filePath).apply(childCompiler);
+        new SingleEntryPlugin(context, filePath).apply(childCompiler);
         new LibraryTemplatePlugin('resource', 'var').apply(childCompiler);
         childCompiler.hooks.thisCompilation.tap('ngtools-webpack', (compilation) => {
-            compilation.hooks.additionalAssets.tapAsync('ngtools-webpack', (callback) => {
-                if (this._cachedEvaluatedSources.has(compilation.fullHash)) {
-                    const cachedEvaluatedSource = this._cachedEvaluatedSources.get(compilation.fullHash);
-                    compilation.assets[filePath] = cachedEvaluatedSource;
-                    callback();
+            compilation.hooks.additionalAssets.tap('ngtools-webpack', () => {
+                const asset = compilation.assets[filePath];
+                if (!asset) {
                     return;
                 }
-                const asset = compilation.assets[filePath];
-                if (asset) {
-                    this._evaluate({ outputName: filePath, source: asset.source() })
-                        .then(output => {
-                        const evaluatedSource = new webpack_sources_1.RawSource(output);
-                        this._cachedEvaluatedSources.set(compilation.fullHash, evaluatedSource);
-                        compilation.assets[filePath] = evaluatedSource;
-                        callback();
-                    })
-                        .catch(err => callback(err));
+                try {
+                    const output = this._evaluate(filePath, asset.source());
+                    if (typeof output === 'string') {
+                        compilation.assets[filePath] = new webpack_sources_1.RawSource(output);
+                    }
                 }
-                else {
-                    callback();
+                catch (error) {
+                    // Use compilation errors, as otherwise webpack will choke
+                    compilation.errors.push(error);
                 }
             });
         });
@@ -111,12 +109,12 @@ class WebpackResourceLoader {
         if (errors && errors.length) {
             this._parentCompilation.errors.push(...errors);
         }
-        Object.keys(childCompilation.assets).forEach(assetName => {
+        Object.keys(childCompilation.assets).forEach((assetName) => {
             // Add all new assets to the parent compilation, with the exception of
             // the file we're loading and its sourcemap.
-            if (assetName !== filePath
-                && assetName !== `${filePath}.map`
-                && this._parentCompilation.assets[assetName] == undefined) {
+            if (assetName !== filePath &&
+                assetName !== `${filePath}.map` &&
+                this._parentCompilation.assets[assetName] == undefined) {
                 this._parentCompilation.assets[assetName] = childCompilation.assets[assetName];
             }
         });
@@ -132,33 +130,41 @@ class WebpackResourceLoader {
                 this._reverseDependencies.set(resolvedFile, new Set([filePath]));
             }
         }
-        const compilationHash = childCompilation.fullHash;
-        const maybeSource = this._cachedSources.get(compilationHash);
-        if (maybeSource) {
-            return { outputName: filePath, source: maybeSource };
-        }
-        else {
-            const source = childCompilation.assets[filePath].source();
-            this._cachedSources.set(compilationHash, source);
-            return { outputName: filePath, source };
-        }
+        const finalOutput = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source();
+        return { outputName: filePath, source: finalOutput !== null && finalOutput !== void 0 ? finalOutput : '', success: !(errors === null || errors === void 0 ? void 0 : errors.length) };
     }
-    async _evaluate({ outputName, source }) {
+    _evaluate(filename, source) {
         var _a;
         // Evaluate code
         const context = {};
-        vm.runInNewContext(source, context, { filename: outputName });
+        try {
+            vm.runInNewContext(source, context, { filename });
+        }
+        catch (_b) {
+            // Error are propagated through the child compilation.
+            return null;
+        }
         if (typeof context.resource === 'string') {
             return context.resource;
         }
         else if (typeof ((_a = context.resource) === null || _a === void 0 ? void 0 : _a.default) === 'string') {
             return context.resource.default;
         }
-        throw new Error(`The loader "${outputName}" didn't return a string.`);
+        throw new Error(`The loader "${filename}" didn't return a string.`);
     }
-    get(filePath) {
-        return this._compile(filePath)
-            .then((result) => result.source);
+    async get(filePath) {
+        const normalizedFile = paths_1.normalizePath(filePath);
+        let data = this.cache.get(normalizedFile);
+        if (data === undefined) {
+            // cache miss so compile resource
+            const compilationResult = await this._compile(filePath);
+            data = compilationResult.source;
+            // Only cache if compilation was successful
+            if (compilationResult.success) {
+                this.cache.set(normalizedFile, data);
+            }
+        }
+        return data;
     }
 }
 exports.WebpackResourceLoader = WebpackResourceLoader;
