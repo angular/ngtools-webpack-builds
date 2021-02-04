@@ -42,7 +42,6 @@ class AngularWebpackPlugin {
         this.pluginOptions = {
             emitClassMetadata: false,
             emitNgModuleScope: false,
-            jitMode: false,
             fileReplacements: {},
             substitutions: {},
             directTemplateLoading: true,
@@ -137,7 +136,7 @@ class AngularWebpackPlugin {
             host_1.augmentHostWithReplacements(host, this.pluginOptions.fileReplacements, moduleResolutionCache);
             host_1.augmentHostWithSubstitutions(host, this.pluginOptions.substitutions);
             // Create the file emitter used by the webpack loader
-            const { fileEmitter, builder, internalFiles } = this.pluginOptions.jitMode
+            const { fileEmitter, builder, internalFiles } = compilerOptions.skipTemplateCodegen
                 ? this.updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter)
                 : this.updateAotProgram(compilerOptions, rootNames, host, diagnosticsReporter, resourceLoader);
             const allProgramFiles = builder

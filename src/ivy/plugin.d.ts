@@ -16,7 +16,6 @@ export interface AngularPluginOptions {
     emitClassMetadata: boolean;
     emitNgModuleScope: boolean;
     suppressZoneJsIncompatibilityWarning: boolean;
-    jitMode: boolean;
 }
 export declare class AngularWebpackPlugin {
     private readonly pluginOptions;
