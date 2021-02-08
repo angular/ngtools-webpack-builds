@@ -10,7 +10,6 @@ exports.AngularWebpackPlugin = void 0;
  */
 const compiler_cli_1 = require("@angular/compiler-cli");
 const program_1 = require("@angular/compiler-cli/src/ngtsc/program");
-const crypto_1 = require("crypto");
 const path = require("path");
 const ts = require("typescript");
 const webpack_1 = require("webpack");
@@ -35,16 +34,11 @@ function initializeNgccProcessor(compiler, tsconfig) {
     const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, (_b = webpackOptions.resolve) === null || _b === void 0 ? void 0 : _b.symlinks);
     return { processor, errors, warnings };
 }
-function hashContent(content) {
-    return crypto_1.createHash('md5').update(content).digest();
-}
 const PLUGIN_NAME = 'angular-compiler';
 class AngularWebpackPlugin {
     constructor(options = {}) {
         this.lazyRouteMap = {};
         this.requiredFilesToEmit = new Set();
-        this.requiredFilesToEmitCache = new Map();
-        this.fileEmitHistory = new Map();
         this.pluginOptions = {
             emitClassMetadata: false,
             emitNgModuleScope: false,
@@ -158,7 +152,19 @@ class AngularWebpackPlugin {
             }
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
                 // Rebuild any remaining AOT required modules
-                await this.rebuildRequiredFiles(modules, compilation, fileEmitter);
+                const rebuild = (filename) => new Promise((resolve) => {
+                    const module = modules.find(({ resource }) => resource && paths_1.normalizePath(resource) === filename);
+                    if (!module) {
+                        resolve();
+                    }
+                    else {
+                        compilation.rebuildModule(module, resolve);
+                    }
+                });
+                for (const requiredFile of this.requiredFilesToEmit) {
+                    await rebuild(requiredFile);
+                }
+                this.requiredFilesToEmit.clear();
                 // Analyze program for unused files
                 if (compilation.errors.length > 0) {
                     return;
@@ -185,41 +191,6 @@ class AngularWebpackPlugin {
             // Store file emitter for loader usage
             compilation[symbol_1.AngularPluginSymbol] = fileEmitter;
         });
-    }
-    async rebuildRequiredFiles(modules, compilation, fileEmitter) {
-        if (this.requiredFilesToEmit.size === 0) {
-            return;
-        }
-        const rebuild = (webpackModule) => new Promise((resolve) => compilation.rebuildModule(webpackModule, resolve));
-        const filesToRebuild = new Set();
-        for (const requiredFile of this.requiredFilesToEmit) {
-            const history = this.fileEmitHistory.get(requiredFile);
-            if (history) {
-                const emitResult = await fileEmitter(requiredFile);
-                if ((emitResult === null || emitResult === void 0 ? void 0 : emitResult.content) === undefined ||
-                    history.length !== emitResult.content.length ||
-                    emitResult.hash === undefined ||
-                    Buffer.compare(history.hash, emitResult.hash) !== 0) {
-                    // New emit result is different so rebuild using new emit result
-                    this.requiredFilesToEmitCache.set(requiredFile, emitResult);
-                    filesToRebuild.add(requiredFile);
-                }
-            }
-            else {
-                // No emit history so rebuild
-                filesToRebuild.add(requiredFile);
-            }
-        }
-        if (filesToRebuild.size > 0) {
-            for (const webpackModule of [...modules]) {
-                const resource = webpackModule.resource;
-                if (resource && filesToRebuild.has(paths_1.normalizePath(resource))) {
-                    await rebuild(webpackModule);
-                }
-            }
-        }
-        this.requiredFilesToEmit.clear();
-        this.requiredFilesToEmitCache.clear();
     }
     loadConfiguration(compilation) {
         const { options: compilerOptions, rootNames, errors } = compiler_cli_1.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
@@ -384,15 +355,12 @@ class AngularWebpackPlugin {
     }
     createFileEmitter(program, transformers = {}, getExtraDependencies, onAfterEmit) {
         return async (file) => {
-            if (this.requiredFilesToEmitCache.has(file)) {
-                return this.requiredFilesToEmitCache.get(file);
-            }
             const sourceFile = program.getSourceFile(file);
             if (!sourceFile) {
                 return undefined;
             }
-            let content;
-            let map;
+            let content = undefined;
+            let map = undefined;
             program.emit(sourceFile, (filename, data) => {
                 if (filename.endsWith('.map')) {
                     map = data;
@@ -402,17 +370,11 @@ class AngularWebpackPlugin {
                 }
             }, undefined, undefined, transformers);
             onAfterEmit === null || onAfterEmit === void 0 ? void 0 : onAfterEmit(sourceFile);
-            let hash;
-            if (content !== undefined && this.watchMode) {
-                // Capture emit history info for Angular rebuild analysis
-                hash = hashContent(content);
-                this.fileEmitHistory.set(file, { length: content.length, hash });
-            }
             const dependencies = [
                 ...program.getAllDependencies(sourceFile),
                 ...getExtraDependencies(sourceFile),
             ].map(paths_1.externalizePath);
-            return { content, map, dependencies, hash };
+            return { content, map, dependencies };
         };
     }
 }

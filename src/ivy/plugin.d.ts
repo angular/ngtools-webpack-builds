@@ -27,14 +27,11 @@ export declare class AngularWebpackPlugin {
     private buildTimestamp;
     private readonly lazyRouteMap;
     private readonly requiredFilesToEmit;
-    private readonly requiredFilesToEmitCache;
-    private readonly fileEmitHistory;
     constructor(options?: Partial<AngularPluginOptions>);
     get options(): AngularPluginOptions;
     apply(compiler: Compiler & {
         watchMode?: boolean;
     }): void;
-    private rebuildRequiredFiles;
     private loadConfiguration;
     private updateAotProgram;
     private updateJitProgram;
