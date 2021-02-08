@@ -10,5 +10,6 @@ export interface EmitFileResult {
     content?: string;
     map?: string;
     dependencies: readonly string[];
+    hash?: Uint8Array;
 }
 export declare type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
