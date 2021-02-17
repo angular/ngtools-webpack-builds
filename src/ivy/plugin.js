@@ -60,7 +60,8 @@ class AngularWebpackPlugin {
     get options() {
         return this.pluginOptions;
     }
-    apply(compiler) {
+    apply(webpackCompiler) {
+        const compiler = webpackCompiler;
         // Setup file replacements with webpack
         for (const [key, value] of Object.entries(this.pluginOptions.fileReplacements)) {
             new webpack_1.NormalModuleReplacementPlugin(new RegExp('^' + key.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&') + '$'), value).apply(compiler);
@@ -112,7 +113,9 @@ class AngularWebpackPlugin {
             // Update TypeScript path mapping plugin with new configuration
             pathsPlugin.update(compilerOptions);
             // Create a Webpack-based TypeScript compiler host
-            const system = system_1.createWebpackSystem(compiler.inputFileSystem, paths_1.normalizePath(compiler.context));
+            const system = system_1.createWebpackSystem(
+            // Webpack lacks an InputFileSytem type definition with sync functions
+            compiler.inputFileSystem, paths_1.normalizePath(compiler.context));
             const host = ts.createIncrementalCompilerHost(compilerOptions, system);
             // Setup source file caching and reuse cache from previous compilation if present
             let cache = this.sourceFileCache;
@@ -166,7 +169,7 @@ class AngularWebpackPlugin {
                 const currentUnused = new Set(allProgramFiles
                     .filter((sourceFile) => !sourceFile.isDeclarationFile)
                     .map((sourceFile) => sourceFile.fileName));
-                modules.forEach(({ resource }) => {
+                Array.from(modules).forEach(({ resource }) => {
                     const sourceFile = resource && builder.getSourceFile(resource);
                     if (!sourceFile) {
                         return;
@@ -190,7 +193,7 @@ class AngularWebpackPlugin {
         if (this.requiredFilesToEmit.size === 0) {
             return;
         }
-        const rebuild = (webpackModule) => new Promise((resolve) => compilation.rebuildModule(webpackModule, resolve));
+        const rebuild = (webpackModule) => new Promise((resolve) => compilation.rebuildModule(webpackModule, () => resolve()));
         const filesToRebuild = new Set();
         for (const requiredFile of this.requiredFilesToEmit) {
             const history = this.fileEmitHistory.get(requiredFile);
@@ -319,7 +322,7 @@ class AngularWebpackPlugin {
                 if (!sourceFile.isDeclarationFile &&
                     !ignoreForEmit.has(sourceFile) &&
                     !angularCompiler.incrementalDriver.safeToSkipEmit(sourceFile)) {
-                    this.requiredFilesToEmit.add(sourceFile.fileName);
+                    this.requiredFilesToEmit.add(paths_1.normalizePath(sourceFile.fileName));
                 }
             }
             // NOTE: This can be removed once support for the deprecated lazy route string format is removed
@@ -328,7 +331,7 @@ class AngularWebpackPlugin {
                 this.lazyRouteMap[routeKey] = lazyRoute.referencedModule.filePath;
             }
             return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
-                this.requiredFilesToEmit.delete(sourceFile.fileName);
+                this.requiredFilesToEmit.delete(paths_1.normalizePath(sourceFile.fileName));
                 angularCompiler.incrementalDriver.recordSuccessfulEmit(sourceFile);
             });
         });
@@ -384,10 +387,11 @@ class AngularWebpackPlugin {
     }
     createFileEmitter(program, transformers = {}, getExtraDependencies, onAfterEmit) {
         return async (file) => {
-            if (this.requiredFilesToEmitCache.has(file)) {
-                return this.requiredFilesToEmitCache.get(file);
+            const filePath = paths_1.normalizePath(file);
+            if (this.requiredFilesToEmitCache.has(filePath)) {
+                return this.requiredFilesToEmitCache.get(filePath);
             }
-            const sourceFile = program.getSourceFile(file);
+            const sourceFile = program.getSourceFile(filePath);
             if (!sourceFile) {
                 return undefined;
             }
@@ -406,7 +410,7 @@ class AngularWebpackPlugin {
             if (content !== undefined && this.watchMode) {
                 // Capture emit history info for Angular rebuild analysis
                 hash = hashContent(content);
-                this.fileEmitHistory.set(file, { length: content.length, hash });
+                this.fileEmitHistory.set(filePath, { length: content.length, hash });
             }
             const dependencies = [
                 ...program.getAllDependencies(sourceFile),

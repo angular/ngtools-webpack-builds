@@ -7,7 +7,7 @@
  */
 import * as ts from 'typescript';
 export declare class SourceFileCache extends Map<string, ts.SourceFile> {
-    invalidate(fileTimestamps: Map<string, number | {
-        timestamp: number;
+    invalidate(fileTimestamps: Map<string, 'ignore' | number | {
+        safeTime: number;
     } | null>, buildTimestamp: number): Set<string>;
 }

@@ -6,8 +6,17 @@ class SourceFileCache extends Map {
     invalidate(fileTimestamps, buildTimestamp) {
         const changedFiles = new Set();
         for (const [file, timeOrEntry] of fileTimestamps) {
-            const time = timeOrEntry && (typeof timeOrEntry === 'number' ? timeOrEntry : timeOrEntry.timestamp);
-            if (time === null || buildTimestamp < time) {
+            if (timeOrEntry === 'ignore') {
+                continue;
+            }
+            let time;
+            if (typeof timeOrEntry === 'number') {
+                time = timeOrEntry;
+            }
+            else if (timeOrEntry) {
+                time = timeOrEntry.safeTime;
+            }
+            if (!time || time >= buildTimestamp) {
                 // Cache stores paths using the POSIX directory separator
                 const normalizedFile = paths_1.normalizePath(file);
                 this.delete(normalizedFile);

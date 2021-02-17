@@ -52,7 +52,10 @@ class VirtualFileSystemDecorator {
         // tslint:disable-next-line:no-any
         this._inputFileSystem.readJson(path, callback);
     }
-    readlink(path, callback) {
+    readlink(path, 
+    // Callback types differ between Webpack 4 and 5
+    // tslint:disable-next-line: no-any
+    callback) {
         this._inputFileSystem.readlink(path, callback);
     }
     statSync(path) {
@@ -74,6 +77,8 @@ class VirtualFileSystemDecorator {
         return this._inputFileSystem.readJsonSync(path);
     }
     readlinkSync(path) {
+        // Synchronous functions are missing from the Webpack typings
+        // tslint:disable-next-line: no-any
         return this._inputFileSystem.readlinkSync(path);
     }
     purge(changes) {

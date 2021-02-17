@@ -22,6 +22,8 @@ function createWebpackInputHost(inputFileSystem) {
             throw new Error('Not supported.');
         },
         read(path) {
+            // Synchronous functions are missing from the Webpack typings
+            // tslint:disable-next-line: no-any
             const data = inputFileSystem.readFileSync(core_1.getSystemPath(path));
             return new Uint8Array(data).buffer;
         },
@@ -43,6 +45,8 @@ function createWebpackInputHost(inputFileSystem) {
         },
         stat(path) {
             try {
+                // Synchronous functions are missing from the Webpack typings
+                // tslint:disable-next-line: no-any
                 return inputFileSystem.statSync(core_1.getSystemPath(path));
             }
             catch (e) {

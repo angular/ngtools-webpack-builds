@@ -10,7 +10,11 @@ import { Path } from '@angular-devkit/core';
 import { Stats } from 'fs';
 import { InputFileSystem } from 'webpack';
 import { WebpackCompilerHost } from './compiler_host';
-import { NodeWatchFileSystemInterface } from './webpack';
+interface NodeWatchFileSystemInterface {
+    inputFileSystem: InputFileSystem;
+    new (inputFileSystem: InputFileSystem): NodeWatchFileSystemInterface;
+    watch(files: any, dirs: any, missing: any, startTime: any, options: any, callback: any, callbackUndelayed: any): any;
+}
 export declare const NodeWatchFileSystem: NodeWatchFileSystemInterface;
 export declare class VirtualFileSystemDecorator implements InputFileSystem {
     private _inputFileSystem;
@@ -22,7 +26,7 @@ export declare class VirtualFileSystemDecorator implements InputFileSystem {
     readdir(path: string, callback: (err: Error, result: string[]) => void): void;
     readFile(path: string, callback: (err: Error, contents: Buffer) => void): void;
     readJson(path: string, callback: (err: Error, result: unknown) => void): void;
-    readlink(path: string, callback: (err: Error | null | undefined, linkString: string) => void): void;
+    readlink(path: string, callback: (err: any, linkString: any) => void): void;
     statSync(path: string): Stats;
     readdirSync(path: string): string[];
     readFileSync(path: string): Buffer;
@@ -40,3 +44,4 @@ export declare class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem
     createWebpack5Watch(): (files: Iterable<string>, dirs: Iterable<string>, missing: Iterable<string>, startTime: number, options: {}, callback: Parameters<NodeWatchFileSystemInterface['watch']>[5], callbackUndelayed: (filename: string, timestamp: number) => void) => ReturnType<NodeWatchFileSystemInterface['watch']>;
     watch: any;
 }
+export {};

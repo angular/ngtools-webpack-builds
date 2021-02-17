@@ -508,7 +508,8 @@ class AngularCompilerPlugin {
             }
         };
         // Go over all the modules in the webpack compilation and remove them from the sets.
-        compilation.modules.forEach(m => m.resource ? removeSourceFile(m.resource, true) : null);
+        // tslint:disable-next-line: no-any
+        compilation.modules.forEach((m) => m.resource ? removeSourceFile(m.resource, true) : null);
         // Anything that remains is unused, because it wasn't referenced directly or transitively
         // on the files in the compilation.
         for (const fileName of unusedSourceFileNames) {
@@ -528,7 +529,8 @@ class AngularCompilerPlugin {
     }
     // Registration hook for webpack plugin.
     // tslint:disable-next-line:no-big-function
-    apply(compiler) {
+    apply(webpackCompiler) {
+        const compiler = webpackCompiler;
         // The below is require by NGCC processor
         // since we need to know which fields we need to process
         compiler.hooks.environment.tap('angular-compiler', () => {
@@ -561,9 +563,7 @@ class AngularCompilerPlugin {
         // Use decorated inputFileSystem in watchFileSystem.
         compiler.hooks.environment.tap('angular-compiler', () => {
             var _a;
-            // The webpack types currently do not include these
-            const compilerWithFileSystems = compiler;
-            let host = this._options.host || webpack_input_host_1.createWebpackInputHost(compilerWithFileSystems.inputFileSystem);
+            let host = this._options.host || webpack_input_host_1.createWebpackInputHost(compiler.inputFileSystem);
             let replacements;
             if (this._options.hostReplacementPaths) {
                 if (typeof this._options.hostReplacementPaths == 'function') {
@@ -589,7 +589,7 @@ class AngularCompilerPlugin {
             }
             let ngccProcessor;
             if (this._compilerOptions.enableIvy) {
-                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, this._warnings, this._errors, this._basePath, this._tsConfigPath, compilerWithFileSystems.inputFileSystem, (_a = compiler.options.resolve) === null || _a === void 0 ? void 0 : _a.symlinks);
+                ngccProcessor = new ngcc_processor_1.NgccProcessor(this._mainFields, this._warnings, this._errors, this._basePath, this._tsConfigPath, compiler.inputFileSystem, (_a = compiler.options.resolve) === null || _a === void 0 ? void 0 : _a.symlinks);
                 ngccProcessor.process();
             }
             // Use an identity function as all our paths are absolute already.
@@ -610,9 +610,9 @@ class AngularCompilerPlugin {
             if (this._options.mainPath) {
                 this._mainPath = this._compilerHost.resolve(this._options.mainPath);
             }
-            const inputDecorator = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compilerWithFileSystems.inputFileSystem, this._compilerHost);
-            compilerWithFileSystems.inputFileSystem = inputDecorator;
-            compilerWithFileSystems.watchFileSystem = new virtual_file_system_decorator_1.VirtualWatchFileSystemDecorator(inputDecorator, replacements);
+            const inputDecorator = new virtual_file_system_decorator_1.VirtualFileSystemDecorator(compiler.inputFileSystem, this._compilerHost);
+            compiler.inputFileSystem = inputDecorator;
+            compiler.watchFileSystem = new virtual_file_system_decorator_1.VirtualWatchFileSystemDecorator(inputDecorator, replacements);
         });
         if (this._discoverLazyRoutes) {
             // Add lazy modules to the context module for @angular/core
