@@ -319,7 +319,7 @@ class AngularWebpackPlugin {
                 if (!sourceFile.isDeclarationFile &&
                     !ignoreForEmit.has(sourceFile) &&
                     !angularCompiler.incrementalDriver.safeToSkipEmit(sourceFile)) {
-                    this.requiredFilesToEmit.add(sourceFile.fileName);
+                    this.requiredFilesToEmit.add(paths_1.normalizePath(sourceFile.fileName));
                 }
             }
             // NOTE: This can be removed once support for the deprecated lazy route string format is removed
@@ -328,7 +328,7 @@ class AngularWebpackPlugin {
                 this.lazyRouteMap[routeKey] = lazyRoute.referencedModule.filePath;
             }
             return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
-                this.requiredFilesToEmit.delete(sourceFile.fileName);
+                this.requiredFilesToEmit.delete(paths_1.normalizePath(sourceFile.fileName));
                 angularCompiler.incrementalDriver.recordSuccessfulEmit(sourceFile);
             });
         });
@@ -384,10 +384,11 @@ class AngularWebpackPlugin {
     }
     createFileEmitter(program, transformers = {}, getExtraDependencies, onAfterEmit) {
         return async (file) => {
-            if (this.requiredFilesToEmitCache.has(file)) {
-                return this.requiredFilesToEmitCache.get(file);
+            const filePath = paths_1.normalizePath(file);
+            if (this.requiredFilesToEmitCache.has(filePath)) {
+                return this.requiredFilesToEmitCache.get(filePath);
             }
-            const sourceFile = program.getSourceFile(file);
+            const sourceFile = program.getSourceFile(filePath);
             if (!sourceFile) {
                 return undefined;
             }
@@ -406,7 +407,7 @@ class AngularWebpackPlugin {
             if (content !== undefined && this.watchMode) {
                 // Capture emit history info for Angular rebuild analysis
                 hash = hashContent(content);
-                this.fileEmitHistory.set(file, { length: content.length, hash });
+                this.fileEmitHistory.set(filePath, { length: content.length, hash });
             }
             const dependencies = [
                 ...program.getAllDependencies(sourceFile),
