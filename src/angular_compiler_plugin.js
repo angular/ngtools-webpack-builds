@@ -697,12 +697,15 @@ class AngularCompilerPlugin {
                     return webpack_version_1.mergeResolverMainFields(resolveOptions, originalMainFields, ivyMainFields);
                 });
             }
-            // tslint:disable-next-line:no-any
-            compiler.resolverFactory.hooks.resolver
+            // tslint:disable-next-line: no-any
+            compiler.resolverFactory.hooks.resolveOptions
                 .for('normal')
-                // tslint:disable-next-line:no-any
-                .tap('angular-compiler', (resolver) => {
-                new paths_plugin_1.TypeScriptPathsPlugin(this._compilerOptions).apply(resolver);
+                .tap('angular-compiler', (resolveOptions) => {
+                if (!resolveOptions.plugins) {
+                    resolveOptions.plugins = [];
+                }
+                resolveOptions.plugins.push(new paths_plugin_1.TypeScriptPathsPlugin(this._compilerOptions));
+                return resolveOptions;
             });
             compiler.hooks.normalModuleFactory.tap('angular-compiler', nmf => {
                 // Virtual file system.

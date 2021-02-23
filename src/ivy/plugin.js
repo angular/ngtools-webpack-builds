@@ -83,10 +83,11 @@ class AngularWebpackPlugin {
                 .tap(PLUGIN_NAME, (resolveOptions) => {
                 const originalMainFields = resolveOptions.mainFields;
                 const ivyMainFields = originalMainFields.map((f) => `${f}_ivy_ngcc`);
+                if (!resolveOptions.plugins) {
+                    resolveOptions.plugins = [];
+                }
+                resolveOptions.plugins.push(pathsPlugin);
                 return webpack_version_1.mergeResolverMainFields(resolveOptions, originalMainFields, ivyMainFields);
-            });
-            resolverFactoryHooks.resolver.for('normal').tap(PLUGIN_NAME, (resolver) => {
-                pathsPlugin.apply(resolver);
             });
         });
         let ngccProcessor;
