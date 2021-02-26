@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "12.0.0-next.2+11.32a0173",
+  "version": "12.0.0-next.2+12.aa3ea88",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/angular/angular-cli",
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#32a017334",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#aa3ea885e",
     "enhanced-resolve": "5.7.0",
     "webpack-sources": "2.2.0"
   },
