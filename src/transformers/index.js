@@ -25,7 +25,6 @@ __exportStar(require("./elide_imports"), exports);
 __exportStar(require("./replace_bootstrap"), exports);
 __exportStar(require("./replace_server_bootstrap"), exports);
 __exportStar(require("./export_ngfactory"), exports);
-__exportStar(require("./export_lazy_module_map"), exports);
 __exportStar(require("./register_locale_data"), exports);
 __exportStar(require("./replace_resources"), exports);
 __exportStar(require("./remove_decorators"), exports);

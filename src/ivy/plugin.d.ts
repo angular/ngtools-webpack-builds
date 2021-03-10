@@ -25,7 +25,6 @@ export declare class AngularWebpackPlugin {
     private builder?;
     private sourceFileCache?;
     private buildTimestamp;
-    private readonly lazyRouteMap;
     private readonly requiredFilesToEmit;
     private readonly requiredFilesToEmitCache;
     private readonly fileEmitHistory;

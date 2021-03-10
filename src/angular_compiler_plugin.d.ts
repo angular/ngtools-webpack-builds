@@ -9,9 +9,7 @@ export declare class AngularCompilerPlugin {
     private _compilerHost;
     private _moduleResolutionCache;
     private _resourceLoader?;
-    private _discoverLazyRoutes;
     private _useFactories;
-    private _lazyRoutes;
     private _tsConfigPath;
     private _entryModule;
     private _mainPath;
@@ -31,7 +29,6 @@ export declare class AngularCompilerPlugin {
     private _normalizedLocale;
     private _warnings;
     private _errors;
-    private _contextElementDependencyConstructor;
     private _forkTypeChecker;
     private _typeCheckerProcess;
     private _forkedTypeCheckerInitialized;
@@ -50,9 +47,6 @@ export declare class AngularCompilerPlugin {
     updateChangedFileExtensions(extension: string): void;
     private _getChangedCompilationFiles;
     private _createOrUpdateProgram;
-    private _findLazyRoutesInAst;
-    private _listLazyRoutesFromProgram;
-    private _processLazyRoutes;
     private _createForkedTypeChecker;
     private _killForkedTypeChecker;
     private _updateForkedTypeChecker;
@@ -61,7 +55,6 @@ export declare class AngularCompilerPlugin {
     private _make;
     private pushCompilationErrors;
     private _makeTransformers;
-    private _getChangedTsFiles;
     private _update;
     writeI18nOutFile(): void;
     getCompiledFile(fileName: string): {

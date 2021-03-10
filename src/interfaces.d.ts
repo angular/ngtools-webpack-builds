@@ -14,11 +14,6 @@ export declare enum PLATFORM {
     Browser = 0,
     Server = 1
 }
-export interface ContextElementDependency {
-}
-export interface ContextElementDependencyConstructor {
-    new (modulePath: string, name: string): ContextElementDependency;
-}
 /**
  * Option Constants
  */
@@ -51,25 +46,6 @@ export interface AngularCompilerPluginOptions {
     directTemplateLoading?: boolean;
     emitClassMetadata?: boolean;
     emitNgModuleScope?: boolean;
-    /**
-     * When using the loadChildren string syntax, @ngtools/webpack must query @angular/compiler-cli
-     * via a private API to know which lazy routes exist. This increases build and rebuild time.
-     * When using Ivy, the string syntax is not supported at all. Thus we shouldn't attempt that
-     * This option is also used for when the compilation doesn't need this sort of processing at all.
-     * @deprecated SystemJsNgModuleLoader is deprecated, and this is part of its usage.
-     */
-    discoverLazyRoutes?: boolean;
-    /** added to the list of lazy routes
-     * @deprecated SystemJsNgModuleLoader is deprecated, and this is part of its usage.
-     */
-    additionalLazyModules?: {
-        [module: string]: string;
-    };
-    /**
-     * @deprecated SystemJsNgModuleLoader is deprecated, and this is part of its usage.
-     */
-    additionalLazyModuleResources?: string[];
-    contextElementDependencyConstructor?: ContextElementDependencyConstructor;
     compilerOptions?: CompilerOptions;
     host?: virtualFs.Host<fs.Stats>;
     platformTransformers?: ts.TransformerFactory<ts.SourceFile>[];
