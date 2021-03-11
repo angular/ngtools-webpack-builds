@@ -14,6 +14,7 @@ const crypto_1 = require("crypto");
 const path = require("path");
 const ts = require("typescript");
 const webpack_1 = require("webpack");
+const lazy_routes_1 = require("../lazy_routes");
 const ngcc_processor_1 = require("../ngcc_processor");
 const paths_plugin_1 = require("../paths-plugin");
 const resource_loader_1 = require("../resource_loader");
@@ -42,6 +43,7 @@ const PLUGIN_NAME = 'angular-compiler';
 class AngularWebpackPlugin {
     constructor(options = {}) {
         this.lazyRouteMap = {};
+        this.fileDependencies = new Map();
         this.requiredFilesToEmit = new Set();
         this.requiredFilesToEmitCache = new Map();
         this.fileEmitHistory = new Map();
@@ -120,6 +122,10 @@ class AngularWebpackPlugin {
             if (cache) {
                 // Invalidate existing cache based on compiler file timestamps
                 changedFiles = cache.invalidate(compiler.fileTimestamps, this.buildTimestamp);
+                // Invalidate file dependencies of changed files
+                for (const changedFile of changedFiles) {
+                    this.fileDependencies.delete(paths_1.normalizePath(changedFile));
+                }
             }
             else {
                 // Initialize a new cache
@@ -132,6 +138,8 @@ class AngularWebpackPlugin {
             this.buildTimestamp = Date.now();
             host_1.augmentHostWithCaching(host, cache);
             const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), host.getCanonicalFileName.bind(host), compilerOptions);
+            // Setup source file dependency collection
+            host_1.augmentHostWithDependencyCollection(host, this.fileDependencies, moduleResolutionCache);
             // Setup on demand ngcc
             host_1.augmentHostWithNgcc(host, ngccProcessor, moduleResolutionCache);
             // Setup resource loading
@@ -144,7 +152,7 @@ class AngularWebpackPlugin {
             host_1.augmentHostWithSubstitutions(host, this.pluginOptions.substitutions);
             // Create the file emitter used by the webpack loader
             const { fileEmitter, builder, internalFiles } = this.pluginOptions.jitMode
-                ? this.updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter)
+                ? this.updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter, changedFiles)
                 : this.updateAotProgram(compilerOptions, rootNames, host, diagnosticsReporter, resourceLoader);
             const allProgramFiles = builder
                 .getSourceFiles()
@@ -342,7 +350,7 @@ class AngularWebpackPlugin {
             internalFiles: ignoreForEmit,
         };
     }
-    updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter) {
+    updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter, changedFiles) {
         const builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(rootNames, compilerOptions, host, this.builder);
         // Save for next rebuild
         if (this.watchMode) {
@@ -357,30 +365,51 @@ class AngularWebpackPlugin {
         ];
         diagnosticsReporter(diagnostics);
         const transformers = transformation_1.createJitTransformers(builder, this.pluginOptions);
-        // Required to support asynchronous resource loading
-        // Must be done before listing lazy routes
-        // NOTE: This can be removed once support for the deprecated lazy route string format is removed
-        const angularProgram = new program_1.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
-        const angularCompiler = angularProgram.compiler;
-        const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
-            for (const lazyRoute of angularCompiler.listLazyRoutes()) {
-                const [routeKey] = lazyRoute.route.split('#');
-                this.lazyRouteMap[routeKey] = lazyRoute.referencedModule.filePath;
+        // Only do a full, expensive Angular compiler string lazy route analysis on the first build
+        // `changedFiles` will be undefined on a first build
+        if (!changedFiles) {
+            // Required to support asynchronous resource loading
+            // Must be done before listing lazy routes
+            // NOTE: This can be removed once support for the deprecated lazy route string format is removed
+            const angularProgram = new program_1.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
+            const angularCompiler = angularProgram.compiler;
+            const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
+                for (const lazyRoute of angularCompiler.listLazyRoutes()) {
+                    const [routeKey] = lazyRoute.route.split('#');
+                    this.lazyRouteMap[routeKey] = lazyRoute.referencedModule.filePath;
+                }
+                return this.createFileEmitter(builder, transformers, () => []);
+            });
+            const analyzingFileEmitter = async (file) => {
+                const innerFileEmitter = await pendingAnalysis;
+                return innerFileEmitter(file);
+            };
+            if (this.watchMode) {
+                this.ngtscNextProgram = angularProgram;
             }
-            return this.createFileEmitter(builder, transformers, () => []);
-        });
-        const analyzingFileEmitter = async (file) => {
-            const innerFileEmitter = await pendingAnalysis;
-            return innerFileEmitter(file);
-        };
-        if (this.watchMode) {
-            this.ngtscNextProgram = angularProgram;
+            return {
+                fileEmitter: analyzingFileEmitter,
+                builder,
+                internalFiles: undefined,
+            };
         }
-        return {
-            fileEmitter: analyzingFileEmitter,
-            builder,
-            internalFiles: undefined,
-        };
+        else {
+            // Update lazy route map for changed files using fast but less accurate method
+            for (const changedFile of changedFiles) {
+                if (!builder.getSourceFile(changedFile)) {
+                    continue;
+                }
+                const routes = lazy_routes_1.findLazyRoutes(changedFile, host, builder.getProgram());
+                for (const [routeKey, filePath] of Object.entries(routes)) {
+                    this.lazyRouteMap[routeKey] = filePath;
+                }
+            }
+            return {
+                fileEmitter: this.createFileEmitter(builder, transformers, () => []),
+                builder,
+                internalFiles: undefined,
+            };
+        }
     }
     createFileEmitter(program, transformers = {}, getExtraDependencies, onAfterEmit) {
         return async (file) => {
@@ -410,7 +439,7 @@ class AngularWebpackPlugin {
                 this.fileEmitHistory.set(filePath, { length: content.length, hash });
             }
             const dependencies = [
-                ...program.getAllDependencies(sourceFile),
+                ...this.fileDependencies.get(filePath) || [],
                 ...getExtraDependencies(sourceFile),
             ].map(paths_1.externalizePath);
             return { content, map, dependencies, hash };
