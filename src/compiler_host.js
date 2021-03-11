@@ -87,7 +87,7 @@ class WebpackCompilerHost {
                 this._changedFiles.add(utils_1.workaroundResolve(fullPath));
             }
         }
-        catch (_a) { }
+        catch { }
         // File doesn't exist anymore and is not a factory, so we should delete the related
         // virtual files.
         if (!exists &&
@@ -137,7 +137,7 @@ class WebpackCompilerHost {
         try {
             exists = this._syncHost.isFile(p);
         }
-        catch (_a) { }
+        catch { }
         return exists;
     }
     readFile(fileName) {
@@ -153,7 +153,7 @@ class WebpackCompilerHost {
             // strip BOM
             return core_1.virtualFs.fileBufferToString(content).replace(/^\uFEFF/, '');
         }
-        catch (_a) {
+        catch {
             return undefined;
         }
     }
@@ -202,7 +202,7 @@ class WebpackCompilerHost {
         try {
             stats = this._memoryHost.stat(p) || this._syncHost.stat(p);
         }
-        catch (_a) { }
+        catch { }
         if (!stats) {
             return null;
         }
@@ -216,7 +216,7 @@ class WebpackCompilerHost {
         try {
             return this._memoryHost.isDirectory(p) || this._syncHost.isDirectory(p);
         }
-        catch (_a) {
+        catch {
             return false;
         }
     }
@@ -228,12 +228,12 @@ class WebpackCompilerHost {
                 try {
                     return this._syncHost.isDirectory(core_1.join(p, x));
                 }
-                catch (_a) {
+                catch {
                     return false;
                 }
             });
         }
-        catch (_a) {
+        catch {
             delegated = [];
         }
         let memory;
@@ -242,12 +242,12 @@ class WebpackCompilerHost {
                 try {
                     return this._memoryHost.isDirectory(core_1.join(p, x));
                 }
-                catch (_a) {
+                catch {
                     return false;
                 }
             });
         }
-        catch (_b) {
+        catch {
             memory = [];
         }
         return [...new Set([...delegated, ...memory])];

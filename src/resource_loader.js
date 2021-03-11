@@ -140,7 +140,7 @@ class WebpackResourceLoader {
         try {
             vm.runInNewContext(source, context, { filename });
         }
-        catch (_b) {
+        catch {
             // Error are propagated through the child compilation.
             return null;
         }

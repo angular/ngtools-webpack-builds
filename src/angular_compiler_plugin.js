@@ -331,7 +331,7 @@ class AngularCompilerPlugin {
             try {
                 this._typeCheckerProcess.kill();
             }
-            catch (_a) { }
+            catch { }
             this._typeCheckerProcess = null;
         }
     }
@@ -553,7 +553,7 @@ class AngularCompilerPlugin {
                             try {
                                 await this.done;
                             }
-                            catch (_a) { }
+                            catch { }
                         }
                     }
                     if (!webpack_version_1.isWebpackFiveOrHigher()) {

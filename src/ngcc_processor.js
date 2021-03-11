@@ -67,7 +67,7 @@ class NgccProcessor {
             try {
                 lockData = fs_1.readFileSync(path.join(projectBasePath, lockFile));
             }
-            catch (_a) {
+            catch {
                 lockFile = 'package-lock.json';
                 lockData = fs_1.readFileSync(path.join(projectBasePath, lockFile));
             }
@@ -75,7 +75,7 @@ class NgccProcessor {
             try {
                 ngccConfigData = fs_1.readFileSync(path.join(projectBasePath, 'ngcc.config.js'));
             }
-            catch (_b) {
+            catch {
                 ngccConfigData = '';
             }
             const relativeTsconfigPath = path.relative(projectBasePath, this.tsConfigPath);
@@ -96,7 +96,7 @@ class NgccProcessor {
                 skipProcessing = true;
             }
         }
-        catch (_c) {
+        catch {
             // Any error means an ngcc execution is needed
         }
         if (skipProcessing) {
@@ -137,7 +137,7 @@ class NgccProcessor {
                 }
                 fs_1.writeFileSync(runHashFilePath, '');
             }
-            catch (_d) {
+            catch {
                 // Errors are non-fatal
             }
         }
@@ -189,7 +189,7 @@ class NgccProcessor {
             const resolvedPath = this._resolver.resolveSync({}, resolvedFileName, `${moduleName}/package.json`);
             return resolvedPath || undefined;
         }
-        catch (_a) {
+        catch {
             // Ex: @angular/compiler/src/i18n/i18n_ast/package.json
             // or local libraries which don't reside in node_modules
             const packageJsonPath = path.resolve(resolvedFileName, '../package.json');
@@ -232,7 +232,7 @@ function isReadOnlyFile(fileName) {
         fs_1.accessSync(fileName, fs_1.constants.W_OK);
         return false;
     }
-    catch (_a) {
+    catch {
         return true;
     }
 }

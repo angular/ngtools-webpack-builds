@@ -27,7 +27,7 @@ function createWebpackSystem(input, currentDirectory) {
             try {
                 data = input.readFileSync(paths_1.externalizePath(path));
             }
-            catch (_a) {
+            catch {
                 return undefined;
             }
             // Strip BOM if present
@@ -41,7 +41,7 @@ function createWebpackSystem(input, currentDirectory) {
             try {
                 return input.statSync(paths_1.externalizePath(path)).size;
             }
-            catch (_a) {
+            catch {
                 return 0;
             }
         },
@@ -49,7 +49,7 @@ function createWebpackSystem(input, currentDirectory) {
             try {
                 return input.statSync(paths_1.externalizePath(path)).isFile();
             }
-            catch (_a) {
+            catch {
                 return false;
             }
         },
@@ -57,7 +57,7 @@ function createWebpackSystem(input, currentDirectory) {
             try {
                 return input.statSync(paths_1.externalizePath(path)).isDirectory();
             }
-            catch (_a) {
+            catch {
                 return false;
             }
         },
@@ -65,7 +65,7 @@ function createWebpackSystem(input, currentDirectory) {
             try {
                 return input.statSync(paths_1.externalizePath(path)).mtime;
             }
-            catch (_a) {
+            catch {
                 return undefined;
             }
         },
