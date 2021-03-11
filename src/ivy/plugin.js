@@ -43,6 +43,7 @@ const PLUGIN_NAME = 'angular-compiler';
 class AngularWebpackPlugin {
     constructor(options = {}) {
         this.lazyRouteMap = {};
+        this.fileDependencies = new Map();
         this.requiredFilesToEmit = new Set();
         this.requiredFilesToEmitCache = new Map();
         this.fileEmitHistory = new Map();
@@ -121,6 +122,10 @@ class AngularWebpackPlugin {
             if (cache) {
                 // Invalidate existing cache based on compiler file timestamps
                 changedFiles = cache.invalidate(compiler.fileTimestamps, this.buildTimestamp);
+                // Invalidate file dependencies of changed files
+                for (const changedFile of changedFiles) {
+                    this.fileDependencies.delete(paths_1.normalizePath(changedFile));
+                }
             }
             else {
                 // Initialize a new cache
@@ -133,6 +138,8 @@ class AngularWebpackPlugin {
             this.buildTimestamp = Date.now();
             host_1.augmentHostWithCaching(host, cache);
             const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), host.getCanonicalFileName.bind(host), compilerOptions);
+            // Setup source file dependency collection
+            host_1.augmentHostWithDependencyCollection(host, this.fileDependencies, moduleResolutionCache);
             // Setup on demand ngcc
             host_1.augmentHostWithNgcc(host, ngccProcessor, moduleResolutionCache);
             // Setup resource loading
@@ -432,7 +439,7 @@ class AngularWebpackPlugin {
                 this.fileEmitHistory.set(filePath, { length: content.length, hash });
             }
             const dependencies = [
-                ...program.getAllDependencies(sourceFile),
+                ...this.fileDependencies.get(filePath) || [],
                 ...getExtraDependencies(sourceFile),
             ].map(paths_1.externalizePath);
             return { content, map, dependencies, hash };

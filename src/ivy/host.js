@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.augmentHostWithCaching = exports.augmentProgramWithVersioning = exports.augmentHostWithVersioning = exports.augmentHostWithSubstitutions = exports.augmentHostWithReplacements = exports.augmentHostWithNgcc = exports.augmentHostWithResources = void 0;
+exports.augmentHostWithCaching = exports.augmentProgramWithVersioning = exports.augmentHostWithVersioning = exports.augmentHostWithSubstitutions = exports.augmentHostWithReplacements = exports.augmentHostWithNgcc = exports.augmentHostWithDependencyCollection = exports.augmentHostWithResources = void 0;
 const crypto_1 = require("crypto");
 const path = require("path");
 const ts = require("typescript");
@@ -49,6 +49,60 @@ function augmentResolveModuleNames(host, resolvedModuleModifier, moduleResolutio
         };
     }
 }
+/**
+ * Augments a TypeScript Compiler Host's resolveModuleNames function to collect dependencies
+ * of the containing file passed to the resolveModuleNames function. This process assumes
+ * that consumers of the Compiler Host will only call resolveModuleNames with modules that are
+ * actually present in a containing file.
+ * This process is a workaround for gathering a TypeScript SourceFile's dependencies as there
+ * is no currently exposed public method to do so. A BuilderProgram does have a `getAllDependencies`
+ * function. However, that function returns all transitive dependencies as well which can cause
+ * excessive Webpack rebuilds.
+ *
+ * @param host The CompilerHost to augment.
+ * @param dependencies A Map which will be used to store file dependencies.
+ * @param moduleResolutionCache An optional resolution cache to use when the host resolves a module.
+ */
+function augmentHostWithDependencyCollection(host, dependencies, moduleResolutionCache) {
+    if (host.resolveModuleNames) {
+        const baseResolveModuleNames = host.resolveModuleNames;
+        host.resolveModuleNames = function (moduleNames, containingFile, ...parameters) {
+            const results = baseResolveModuleNames.call(host, moduleNames, containingFile, ...parameters);
+            const containingFilePath = paths_1.normalizePath(containingFile);
+            for (const result of results) {
+                if (result) {
+                    const containingFileDependencies = dependencies.get(containingFilePath);
+                    if (containingFileDependencies) {
+                        containingFileDependencies.add(result.resolvedFileName);
+                    }
+                    else {
+                        dependencies.set(containingFilePath, new Set([result.resolvedFileName]));
+                    }
+                }
+            }
+            return results;
+        };
+    }
+    else {
+        host.resolveModuleNames = function (moduleNames, containingFile, _reusedNames, redirectedReference, options) {
+            return moduleNames.map((name) => {
+                const result = ts.resolveModuleName(name, containingFile, options, host, moduleResolutionCache, redirectedReference).resolvedModule;
+                if (result) {
+                    const containingFilePath = paths_1.normalizePath(containingFile);
+                    const containingFileDependencies = dependencies.get(containingFilePath);
+                    if (containingFileDependencies) {
+                        containingFileDependencies.add(result.resolvedFileName);
+                    }
+                    else {
+                        dependencies.set(containingFilePath, new Set([result.resolvedFileName]));
+                    }
+                }
+                return result;
+            });
+        };
+    }
+}
+exports.augmentHostWithDependencyCollection = augmentHostWithDependencyCollection;
 function augmentHostWithNgcc(host, ngcc, moduleResolutionCache) {
     augmentResolveModuleNames(host, (resolvedModule, moduleName) => {
         if (resolvedModule && ngcc) {
