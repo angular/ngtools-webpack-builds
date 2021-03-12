@@ -173,13 +173,11 @@ class AngularWebpackPlugin {
                 }
                 const currentUnused = new Set(allProgramFiles
                     .filter((sourceFile) => !sourceFile.isDeclarationFile)
-                    .map((sourceFile) => sourceFile.fileName));
+                    .map((sourceFile) => paths_1.normalizePath(sourceFile.fileName)));
                 modules.forEach(({ resource }) => {
-                    const sourceFile = resource && builder.getSourceFile(resource);
-                    if (!sourceFile) {
-                        return;
+                    if (resource) {
+                        this.markResourceUsed(paths_1.normalizePath(resource), currentUnused);
                     }
-                    builder.getAllDependencies(sourceFile).forEach((dep) => currentUnused.delete(dep));
                 });
                 for (const unused of currentUnused) {
                     if (previousUnused && previousUnused.has(unused)) {
@@ -193,6 +191,19 @@ class AngularWebpackPlugin {
             // Store file emitter for loader usage
             compilation[symbol_1.AngularPluginSymbol] = fileEmitter;
         });
+    }
+    markResourceUsed(normalizedResourcePath, currentUnused) {
+        if (!currentUnused.has(normalizedResourcePath)) {
+            return;
+        }
+        currentUnused.delete(normalizedResourcePath);
+        const dependencies = this.fileDependencies.get(normalizedResourcePath);
+        if (!dependencies) {
+            return;
+        }
+        for (const dependency of dependencies) {
+            this.markResourceUsed(paths_1.normalizePath(dependency), currentUnused);
+        }
     }
     async rebuildRequiredFiles(modules, compilation, fileEmitter) {
         if (this.requiredFilesToEmit.size === 0) {
@@ -371,7 +382,7 @@ class AngularWebpackPlugin {
             // Required to support asynchronous resource loading
             // Must be done before listing lazy routes
             // NOTE: This can be removed once support for the deprecated lazy route string format is removed
-            const angularProgram = new program_1.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
+            const angularProgram = new program_1.NgtscProgram(rootNames, compilerOptions, host);
             const angularCompiler = angularProgram.compiler;
             const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
                 for (const lazyRoute of angularCompiler.listLazyRoutes()) {
@@ -384,9 +395,6 @@ class AngularWebpackPlugin {
                 const innerFileEmitter = await pendingAnalysis;
                 return innerFileEmitter(file);
             };
-            if (this.watchMode) {
-                this.ngtscNextProgram = angularProgram;
-            }
             return {
                 fileEmitter: analyzingFileEmitter,
                 builder,
@@ -439,7 +447,7 @@ class AngularWebpackPlugin {
                 this.fileEmitHistory.set(filePath, { length: content.length, hash });
             }
             const dependencies = [
-                ...this.fileDependencies.get(filePath) || [],
+                ...(this.fileDependencies.get(filePath) || []),
                 ...getExtraDependencies(sourceFile),
             ].map(paths_1.externalizePath);
             return { content, map, dependencies, hash };

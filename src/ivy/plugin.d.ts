@@ -35,6 +35,7 @@ export declare class AngularWebpackPlugin {
     apply(compiler: Compiler & {
         watchMode?: boolean;
     }): void;
+    private markResourceUsed;
     private rebuildRequiredFiles;
     private loadConfiguration;
     private updateAotProgram;
