@@ -32,6 +32,7 @@ export declare class AngularWebpackPlugin {
     constructor(options?: Partial<AngularPluginOptions>);
     get options(): AngularPluginOptions;
     apply(webpackCompiler: Compiler | WebpackFourCompiler): void;
+    private markResourceUsed;
     private rebuildRequiredFiles;
     private loadConfiguration;
     private updateAotProgram;

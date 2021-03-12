@@ -172,13 +172,11 @@ class AngularWebpackPlugin {
                 }
                 const currentUnused = new Set(allProgramFiles
                     .filter((sourceFile) => !sourceFile.isDeclarationFile)
-                    .map((sourceFile) => sourceFile.fileName));
+                    .map((sourceFile) => paths_1.normalizePath(sourceFile.fileName)));
                 Array.from(modules).forEach(({ resource }) => {
-                    const sourceFile = resource && builder.getSourceFile(resource);
-                    if (!sourceFile) {
-                        return;
+                    if (resource) {
+                        this.markResourceUsed(paths_1.normalizePath(resource), currentUnused);
                     }
-                    builder.getAllDependencies(sourceFile).forEach((dep) => currentUnused.delete(dep));
                 });
                 for (const unused of currentUnused) {
                     if (previousUnused && previousUnused.has(unused)) {
@@ -192,6 +190,19 @@ class AngularWebpackPlugin {
             // Store file emitter for loader usage
             compilation[symbol_1.AngularPluginSymbol] = fileEmitter;
         });
+    }
+    markResourceUsed(normalizedResourcePath, currentUnused) {
+        if (!currentUnused.has(normalizedResourcePath)) {
+            return;
+        }
+        currentUnused.delete(normalizedResourcePath);
+        const dependencies = this.fileDependencies.get(normalizedResourcePath);
+        if (!dependencies) {
+            return;
+        }
+        for (const dependency of dependencies) {
+            this.markResourceUsed(paths_1.normalizePath(dependency), currentUnused);
+        }
     }
     async rebuildRequiredFiles(modules, compilation, fileEmitter) {
         if (this.requiredFilesToEmit.size === 0) {
@@ -393,7 +404,7 @@ class AngularWebpackPlugin {
                 this.fileEmitHistory.set(filePath, { length: content.length, hash });
             }
             const dependencies = [
-                ...this.fileDependencies.get(filePath) || [],
+                ...(this.fileDependencies.get(filePath) || []),
                 ...getExtraDependencies(sourceFile),
             ].map(paths_1.externalizePath);
             return { content, map, dependencies, hash };
