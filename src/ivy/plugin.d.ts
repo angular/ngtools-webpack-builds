@@ -15,7 +15,6 @@ export interface AngularPluginOptions {
     directTemplateLoading: boolean;
     emitClassMetadata: boolean;
     emitNgModuleScope: boolean;
-    suppressZoneJsIncompatibilityWarning: boolean;
     jitMode: boolean;
 }
 export declare class AngularWebpackPlugin {
