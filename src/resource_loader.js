@@ -8,10 +8,6 @@ exports.WebpackResourceLoader = void 0;
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-// TODO: fix typings.
-// tslint:disable-next-line:no-global-tslint-disable
-// tslint:disable:no-any
-const path = require("path");
 const vm = require("vm");
 const webpack_sources_1 = require("webpack-sources");
 const paths_1 = require("./ivy/paths");
@@ -55,7 +51,6 @@ class WebpackResourceLoader {
         this._reverseDependencies.set(file, new Set(resources));
     }
     async _compile(filePath) {
-        var _a;
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
@@ -64,23 +59,24 @@ class WebpackResourceLoader {
             return Promise.reject(`Cannot use a JavaScript or TypeScript file (${filePath}) in a component's styleUrls or templateUrl.`);
         }
         const outputOptions = { filename: filePath };
-        const context = this._parentCompilation.context;
-        const relativePath = path.relative(context || '', filePath);
-        const childCompiler = this._parentCompilation.createChildCompiler(relativePath, outputOptions);
-        childCompiler.context = context;
-        new NodeTemplatePlugin(outputOptions).apply(childCompiler);
-        new NodeTargetPlugin().apply(childCompiler);
-        new SingleEntryPlugin(context, filePath).apply(childCompiler);
-        new LibraryTemplatePlugin('resource', 'var').apply(childCompiler);
-        childCompiler.hooks.thisCompilation.tap('ngtools-webpack', (compilation) => {
-            compilation.hooks.additionalAssets.tap('ngtools-webpack', () => {
+        const context = this._parentCompilation.compiler.context;
+        const childCompiler = this._parentCompilation.createChildCompiler('angular-compiler:resource', outputOptions, [
+            new NodeTemplatePlugin(outputOptions),
+            new NodeTargetPlugin(),
+            new SingleEntryPlugin(context, filePath, 'resource'),
+            new LibraryTemplatePlugin('resource', 'var'),
+        ]);
+        childCompiler.hooks.thisCompilation.tap('angular-compiler', (compilation) => {
+            compilation.hooks.additionalAssets.tap('angular-compiler', () => {
                 const asset = compilation.assets[filePath];
                 if (!asset) {
                     return;
                 }
                 try {
-                    const output = this._evaluate(filePath, asset.source());
+                    const output = this._evaluate(filePath, asset.source().toString());
                     if (typeof output === 'string') {
+                        // `webpack-sources` package has incomplete typings
+                        // tslint:disable-next-line: no-any
                         compilation.assets[filePath] = new webpack_sources_1.RawSource(output);
                     }
                 }
@@ -90,48 +86,45 @@ class WebpackResourceLoader {
                 }
             });
         });
-        // Compile and return a promise
-        const childCompilation = await new Promise((resolve, reject) => {
-            childCompiler.compile((err, childCompilation) => {
-                if (err) {
-                    reject(err);
+        let finalContent;
+        let finalMap;
+        childCompiler.hooks.afterCompile.tap('angular-compiler', (childCompilation) => {
+            var _a, _b;
+            finalContent = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
+            finalMap = (_b = childCompilation.assets[filePath + '.map']) === null || _b === void 0 ? void 0 : _b.source().toString();
+            delete childCompilation.assets[filePath];
+            delete childCompilation.assets[filePath + '.map'];
+        });
+        return new Promise((resolve, reject) => {
+            childCompiler.runAsChild((error, _, childCompilation) => {
+                var _a;
+                if (error) {
+                    reject(error);
+                    return;
                 }
-                else {
-                    resolve(childCompilation);
+                else if (!childCompilation) {
+                    reject(new Error('Unknown child compilation error'));
+                    return;
                 }
+                // Save the dependencies for this resource.
+                this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
+                for (const file of childCompilation.fileDependencies) {
+                    const resolvedFile = paths_1.normalizePath(file);
+                    const entry = this._reverseDependencies.get(resolvedFile);
+                    if (entry) {
+                        entry.add(filePath);
+                    }
+                    else {
+                        this._reverseDependencies.set(resolvedFile, new Set([filePath]));
+                    }
+                }
+                resolve({
+                    content: finalContent !== null && finalContent !== void 0 ? finalContent : '',
+                    map: finalMap,
+                    success: ((_a = childCompilation.errors) === null || _a === void 0 ? void 0 : _a.length) === 0,
+                });
             });
         });
-        // Propagate warnings to parent compilation.
-        const { warnings, errors } = childCompilation;
-        if (warnings && warnings.length) {
-            this._parentCompilation.warnings.push(...warnings);
-        }
-        if (errors && errors.length) {
-            this._parentCompilation.errors.push(...errors);
-        }
-        Object.keys(childCompilation.assets).forEach((assetName) => {
-            // Add all new assets to the parent compilation, with the exception of
-            // the file we're loading and its sourcemap.
-            if (assetName !== filePath &&
-                assetName !== `${filePath}.map` &&
-                this._parentCompilation.assets[assetName] == undefined) {
-                this._parentCompilation.assets[assetName] = childCompilation.assets[assetName];
-            }
-        });
-        // Save the dependencies for this resource.
-        this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
-        for (const file of childCompilation.fileDependencies) {
-            const resolvedFile = paths_1.normalizePath(file);
-            const entry = this._reverseDependencies.get(resolvedFile);
-            if (entry) {
-                entry.add(filePath);
-            }
-            else {
-                this._reverseDependencies.set(resolvedFile, new Set([filePath]));
-            }
-        }
-        const finalOutput = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source();
-        return { outputName: filePath, source: finalOutput !== null && finalOutput !== void 0 ? finalOutput : '', success: !(errors === null || errors === void 0 ? void 0 : errors.length) };
     }
     _evaluate(filename, source) {
         var _a;
@@ -154,17 +147,16 @@ class WebpackResourceLoader {
     }
     async get(filePath) {
         const normalizedFile = paths_1.normalizePath(filePath);
-        let data = this.cache.get(normalizedFile);
-        if (data === undefined) {
+        let compilationResult = this.cache.get(normalizedFile);
+        if (compilationResult === undefined) {
             // cache miss so compile resource
-            const compilationResult = await this._compile(filePath);
-            data = compilationResult.source;
+            compilationResult = await this._compile(filePath);
             // Only cache if compilation was successful
             if (compilationResult.success) {
-                this.cache.set(normalizedFile, data);
+                this.cache.set(normalizedFile, compilationResult);
             }
         }
-        return data;
+        return compilationResult.content;
     }
 }
 exports.WebpackResourceLoader = WebpackResourceLoader;
