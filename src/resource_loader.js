@@ -11,7 +11,6 @@ exports.WebpackResourceLoader = void 0;
 const vm = require("vm");
 const webpack_sources_1 = require("webpack-sources");
 const paths_1 = require("./ivy/paths");
-const webpack_version_1 = require("./webpack-version");
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
@@ -89,27 +88,13 @@ class WebpackResourceLoader {
         });
         let finalContent;
         let finalMap;
-        if (webpack_version_1.isWebpackFiveOrHigher()) {
-            childCompiler.hooks.compilation.tap('angular-compiler', (childCompilation) => {
-                // tslint:disable-next-line: no-any
-                childCompilation.hooks.processAssets.tap('angular-compiler', () => {
-                    var _a, _b;
-                    finalContent = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
-                    finalMap = (_b = childCompilation.assets[filePath + '.map']) === null || _b === void 0 ? void 0 : _b.source().toString();
-                    delete childCompilation.assets[filePath];
-                    delete childCompilation.assets[filePath + '.map'];
-                });
-            });
-        }
-        else {
-            childCompiler.hooks.afterCompile.tap('angular-compiler', (childCompilation) => {
-                var _a, _b;
-                finalContent = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
-                finalMap = (_b = childCompilation.assets[filePath + '.map']) === null || _b === void 0 ? void 0 : _b.source().toString();
-                delete childCompilation.assets[filePath];
-                delete childCompilation.assets[filePath + '.map'];
-            });
-        }
+        childCompiler.hooks.afterCompile.tap('angular-compiler', (childCompilation) => {
+            var _a, _b;
+            finalContent = (_a = childCompilation.assets[filePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
+            finalMap = (_b = childCompilation.assets[filePath + '.map']) === null || _b === void 0 ? void 0 : _b.source().toString();
+            delete childCompilation.assets[filePath];
+            delete childCompilation.assets[filePath + '.map'];
+        });
         return new Promise((resolve, reject) => {
             childCompiler.runAsChild((error, _, childCompilation) => {
                 var _a;
