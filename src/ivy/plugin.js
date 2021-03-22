@@ -91,7 +91,9 @@ class AngularWebpackPlugin {
             });
         });
         let ngccProcessor;
-        const resourceLoader = new resource_loader_1.WebpackResourceLoader();
+        const resourceLoader = this.pluginOptions.jitMode
+            ? new resource_loader_1.NoopResourceLoader()
+            : new resource_loader_1.WebpackResourceLoader();
         let previousUnused;
         compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (thisCompilation) => {
             var _a;
@@ -145,7 +147,7 @@ class AngularWebpackPlugin {
             // Setup resource loading
             resourceLoader.update(compilation, changedFiles);
             host_1.augmentHostWithResources(host, resourceLoader, {
-                directTemplateLoading: this.pluginOptions.directTemplateLoading,
+                directTemplateLoading: !this.pluginOptions.jitMode && this.pluginOptions.directTemplateLoading,
             });
             // Setup source file adjustment options
             host_1.augmentHostWithReplacements(host, this.pluginOptions.fileReplacements, moduleResolutionCache);

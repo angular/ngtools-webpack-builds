@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import { NgccProcessor } from '../ngcc_processor';
-import { WebpackResourceLoader } from '../resource_loader';
-export declare function augmentHostWithResources(host: ts.CompilerHost, resourceLoader: WebpackResourceLoader, options?: {
+import { ResourceLoader } from '../resource_loader';
+export declare function augmentHostWithResources(host: ts.CompilerHost, resourceLoader: ResourceLoader, options?: {
     directTemplateLoading?: boolean;
 }): void;
 /**

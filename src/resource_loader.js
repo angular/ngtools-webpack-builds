@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WebpackResourceLoader = void 0;
+exports.WebpackResourceLoader = exports.NoopResourceLoader = void 0;
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -19,6 +19,20 @@ const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
+class NoopResourceLoader {
+    async get() {
+        return '';
+    }
+    getModifiedResourceFiles() {
+        return new Set();
+    }
+    getResourceDependencies() {
+        return [];
+    }
+    setAffectedResources() { }
+    update() { }
+}
+exports.NoopResourceLoader = NoopResourceLoader;
 class WebpackResourceLoader {
     constructor() {
         this._fileDependencies = new Map();
