@@ -7,7 +7,7 @@
  */
 import { CompilerOptions } from '@angular/compiler-cli';
 import { Compiler, WebpackFourCompiler } from 'webpack';
-export interface AngularPluginOptions {
+export interface AngularWebpackPluginOptions {
     tsconfig: string;
     compilerOptions?: CompilerOptions;
     fileReplacements: Record<string, string>;
@@ -28,8 +28,8 @@ export declare class AngularWebpackPlugin {
     private readonly requiredFilesToEmit;
     private readonly requiredFilesToEmitCache;
     private readonly fileEmitHistory;
-    constructor(options?: Partial<AngularPluginOptions>);
-    get options(): AngularPluginOptions;
+    constructor(options?: Partial<AngularWebpackPluginOptions>);
+    get options(): AngularWebpackPluginOptions;
     apply(webpackCompiler: Compiler | WebpackFourCompiler): void;
     private markResourceUsed;
     private rebuildRequiredFiles;

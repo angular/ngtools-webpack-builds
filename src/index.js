@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ivy = exports.default = exports.AngularWebpackPlugin = exports.AngularWebpackLoaderPath = void 0;
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -6,21 +8,16 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ivy = exports.NgToolsLoader = exports.default = void 0;
-__exportStar(require("./angular_compiler_plugin"), exports);
-__exportStar(require("./interfaces"), exports);
-var loader_1 = require("./loader");
-Object.defineProperty(exports, "default", { enumerable: true, get: function () { return loader_1.ngcLoader; } });
-exports.NgToolsLoader = __filename;
-exports.ivy = require("./ivy");
+const ivyInternal = require("./ivy");
+var ivy_1 = require("./ivy");
+Object.defineProperty(exports, "AngularWebpackLoaderPath", { enumerable: true, get: function () { return ivy_1.AngularWebpackLoaderPath; } });
+Object.defineProperty(exports, "AngularWebpackPlugin", { enumerable: true, get: function () { return ivy_1.AngularWebpackPlugin; } });
+Object.defineProperty(exports, "default", { enumerable: true, get: function () { return ivy_1.default; } });
+/** @deprecated Deprecated as of v12, please use the direct exports
+ * (`AngularWebpackPlugin` instead of `ivy.AngularWebpackPlugin`)
+ */
+var ivy;
+(function (ivy) {
+    ivy.AngularWebpackLoaderPath = ivyInternal.AngularWebpackLoaderPath;
+    ivy.AngularWebpackPlugin = ivyInternal.AngularWebpackPlugin;
+})(ivy = exports.ivy || (exports.ivy = {}));

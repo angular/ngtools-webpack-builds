@@ -8,16 +8,10 @@ exports.transformTypescript = exports.createTypescriptContext = void 0;
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-const core_1 = require("@angular-devkit/core");
-const fs_1 = require("fs");
 const path_1 = require("path");
 const ts = require("typescript");
-const compiler_host_1 = require("../compiler_host");
 // Test transform helpers.
-const basePath = '/project/src/';
-const basefileName = basePath + 'test-file.ts';
-const typeScriptLibFiles = loadTypeScriptLibFiles();
-const tsLibFiles = loadTsLibFiles();
+const basefileName = 'test-file.ts';
 function createTypescriptContext(content, additionalFiles, useLibs = false, extraCompilerOptions = {}, jsxFile = false) {
     const fileName = basefileName + (jsxFile ? 'x' : '');
     // Set compiler options.
@@ -32,30 +26,29 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, extr
         sourceMap: false,
         importHelpers: true,
         experimentalDecorators: true,
+        types: [],
         ...extraCompilerOptions,
     };
     // Create compiler host.
-    const compilerHost = new compiler_host_1.WebpackCompilerHost(compilerOptions, basePath, new core_1.virtualFs.SimpleMemoryHost(), false);
-    // Add a dummy file to host content.
-    compilerHost.writeFile(fileName, content, false);
-    if (useLibs) {
-        // Write the default libs.
-        // These are needed for tests that use import(), because it relies on a Promise being there.
-        const compilerLibFolder = path_1.dirname(compilerHost.getDefaultLibFileName(compilerOptions));
-        for (const [k, v] of Object.entries(typeScriptLibFiles)) {
-            compilerHost.writeFile(path_1.join(compilerLibFolder, k), v, false);
+    const compilerHost = ts.createCompilerHost(compilerOptions, true);
+    const baseFileExists = compilerHost.fileExists;
+    compilerHost.fileExists = function (compilerFileName) {
+        return (compilerFileName === fileName ||
+            !!(additionalFiles === null || additionalFiles === void 0 ? void 0 : additionalFiles[path_1.basename(compilerFileName)]) ||
+            baseFileExists(compilerFileName));
+    };
+    const baseReadFile = compilerHost.readFile;
+    compilerHost.readFile = function (compilerFileName) {
+        if (compilerFileName === fileName) {
+            return content;
         }
-    }
-    if (compilerOptions.importHelpers) {
-        for (const [k, v] of Object.entries(tsLibFiles)) {
-            compilerHost.writeFile(k, v, false);
+        else if (additionalFiles === null || additionalFiles === void 0 ? void 0 : additionalFiles[path_1.basename(compilerFileName)]) {
+            return additionalFiles[path_1.basename(compilerFileName)];
         }
-    }
-    if (additionalFiles) {
-        for (const key in additionalFiles) {
-            compilerHost.writeFile(basePath + key, additionalFiles[key], false);
+        else {
+            return baseReadFile(compilerFileName);
         }
-    }
+    };
     // Create the TypeScript program.
     const program = ts.createProgram([fileName], compilerOptions, compilerHost);
     return { compilerHost, program };
@@ -75,35 +68,19 @@ function transformTypescript(content, transformers, program, compilerHost) {
     else if (!program || !compilerHost) {
         throw new Error('transformTypescript needs either `content` or a `program` and `compilerHost');
     }
+    const outputFileName = basefileName.replace(/\.tsx?$/, '.js');
+    let outputContent;
     // Emit.
-    const { emitSkipped, diagnostics } = program.emit(undefined, undefined, undefined, undefined, { before: transformers });
+    const { emitSkipped, diagnostics } = program.emit(undefined, (filename, data) => {
+        if (filename === outputFileName) {
+            outputContent = data;
+        }
+    }, undefined, undefined, { before: transformers });
     // Throw error with diagnostics if emit wasn't successfull.
     if (emitSkipped) {
         throw new Error(ts.formatDiagnostics(diagnostics, compilerHost));
     }
     // Return the transpiled js.
-    return compilerHost.readFile(basefileName.replace(/\.tsx?$/, '.js'));
+    return outputContent;
 }
 exports.transformTypescript = transformTypescript;
-function loadTypeScriptLibFiles() {
-    const libFolderPath = path_1.dirname(require.resolve('typescript/lib/lib.d.ts'));
-    const libFolderFiles = fs_1.readdirSync(libFolderPath);
-    const libFileNames = libFolderFiles.filter(f => f.startsWith('lib.') && f.endsWith('.d.ts'));
-    // Return a map of the lib names to their content.
-    const libs = {};
-    for (const f of libFileNames) {
-        libs[f] = fs_1.readFileSync(path_1.join(libFolderPath, f), 'utf-8');
-    }
-    return libs;
-}
-function loadTsLibFiles() {
-    const libFolderPath = path_1.dirname(require.resolve('tslib/package.json'));
-    const libFolderFiles = fs_1.readdirSync(libFolderPath)
-        .filter(p => fs_1.statSync(path_1.join(libFolderPath, p)).isFile());
-    // Return a map of the lib names to their content.
-    const libs = {};
-    for (const f of libFolderFiles) {
-        libs[path_1.join('node_modules/tslib', f)] = fs_1.readFileSync(path_1.join(libFolderPath, f), 'utf-8');
-    }
-    return libs;
-}
