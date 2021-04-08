@@ -18,8 +18,8 @@ map) {
     if (!callback) {
         throw new Error('Invalid webpack version');
     }
-    const emitFile = this._compilation[symbol_1.AngularPluginSymbol];
-    if (typeof emitFile !== 'function') {
+    const fileEmitter = this._compilation[symbol_1.AngularPluginSymbol];
+    if (typeof fileEmitter !== 'object') {
         if (this.resourcePath.endsWith('.js')) {
             // Passthrough for JS files when no plugin is used
             this.callback(undefined, content, map);
@@ -28,7 +28,7 @@ map) {
         callback(new Error('The Angular Webpack loader requires the AngularWebpackPlugin.'));
         return;
     }
-    emitFile(this.resourcePath)
+    fileEmitter.emit(this.resourcePath)
         .then((result) => {
         if (!result) {
             if (this.resourcePath.endsWith('.js')) {

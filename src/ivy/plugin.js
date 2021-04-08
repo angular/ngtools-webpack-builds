@@ -98,6 +98,11 @@ class AngularWebpackPlugin {
         compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (thisCompilation) => {
             var _a;
             const compilation = thisCompilation;
+            // Register plugin to ensure deterministic emit order in multi-plugin usage
+            if (!compilation[symbol_1.AngularPluginSymbol]) {
+                compilation[symbol_1.AngularPluginSymbol] = new symbol_1.FileEmitterCollection();
+            }
+            const emitRegistration = compilation[symbol_1.AngularPluginSymbol].register();
             // Store watch mode; assume true if not present (webpack < 4.23.0)
             this.watchMode = (_a = compiler.watchMode) !== null && _a !== void 0 ? _a : true;
             // Initialize and process eager ngcc if not already setup
@@ -193,7 +198,7 @@ class AngularWebpackPlugin {
                 previousUnused = currentUnused;
             });
             // Store file emitter for loader usage
-            compilation[symbol_1.AngularPluginSymbol] = fileEmitter;
+            emitRegistration.update(fileEmitter);
         });
     }
     markResourceUsed(normalizedResourcePath, currentUnused) {
@@ -334,7 +339,7 @@ class AngularWebpackPlugin {
         // Required to support asynchronous resource loading
         // Must be done before creating transformers or getting template diagnostics
         const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
-            var _a, _b;
+            var _a, _b, _c, _d;
             this.requiredFilesToEmit.clear();
             for (const sourceFile of builder.getSourceFiles()) {
                 if (sourceFile.isDeclarationFile) {
@@ -373,7 +378,7 @@ class AngularWebpackPlugin {
             // tslint:disable-next-line: no-any
             angularProgram.reuseTsProgram =
                 // tslint:disable-next-line: no-any
-                (angularCompiler === null || angularCompiler === void 0 ? void 0 : angularCompiler.getNextProgram()) || ((_b = angularCompiler) === null || _b === void 0 ? void 0 : _b.getCurrentProgram());
+                ((_b = angularCompiler.getNextProgram) === null || _b === void 0 ? void 0 : _b.call(angularCompiler)) || ((_d = (_c = angularCompiler).getCurrentProgram) === null || _d === void 0 ? void 0 : _d.call(_c));
             return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
                 this.requiredFilesToEmit.delete(paths_1.normalizePath(sourceFile.fileName));
                 angularCompiler.incrementalDriver.recordSuccessfulEmit(sourceFile);

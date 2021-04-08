@@ -13,3 +13,13 @@ export interface EmitFileResult {
     hash?: Uint8Array;
 }
 export declare type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
+export declare class FileEmitterRegistration {
+    #private;
+    update(emitter: FileEmitter): void;
+    emit(file: string): Promise<EmitFileResult | undefined>;
+}
+export declare class FileEmitterCollection {
+    #private;
+    register(): FileEmitterRegistration;
+    emit(file: string): Promise<EmitFileResult | undefined>;
+}
