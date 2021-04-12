@@ -5,6 +5,7 @@ export declare class WebpackResourceLoader {
     private _reverseDependencies;
     private cache;
     private modifiedResources;
+    private outputPathCounter;
     update(parentCompilation: Compilation, changedFiles?: Iterable<string>): void;
     getModifiedResourceFiles(): Set<string>;
     getResourceDependencies(filePath: string): never[] | Set<string>;
@@ -13,4 +14,5 @@ export declare class WebpackResourceLoader {
     private _compile;
     private _evaluate;
     get(filePath: string): Promise<string>;
+    process(data: string, mimeType: string): Promise<string>;
 }
