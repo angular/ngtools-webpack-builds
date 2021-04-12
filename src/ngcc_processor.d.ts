@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import * as ts from 'typescript';
-import { InputFileSystem } from 'webpack';
+import { InputFileSystem } from './ivy/system';
 export declare class NgccProcessor {
     private readonly propertiesToConsider;
     private readonly compilationWarnings;

@@ -1,11 +1,11 @@
-import { compilation } from 'webpack';
+import { Compilation } from 'webpack';
 export declare class WebpackResourceLoader {
     private _parentCompilation?;
     private _fileDependencies;
     private _reverseDependencies;
     private cache;
     private modifiedResources;
-    update(parentCompilation: compilation.Compilation, changedFiles?: Iterable<string>): void;
+    update(parentCompilation: Compilation, changedFiles?: Iterable<string>): void;
     getModifiedResourceFiles(): Set<string>;
     getResourceDependencies(filePath: string): never[] | Set<string>;
     getAffectedResources(file: string): never[] | Set<string>;

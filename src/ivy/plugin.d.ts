@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import { CompilerOptions } from '@angular/compiler-cli';
-import { Compiler, WebpackFourCompiler } from 'webpack';
+import { Compiler } from 'webpack';
 export interface AngularWebpackPluginOptions {
     tsconfig: string;
     compilerOptions?: CompilerOptions;
@@ -30,7 +30,7 @@ export declare class AngularWebpackPlugin {
     private readonly fileEmitHistory;
     constructor(options?: Partial<AngularWebpackPluginOptions>);
     get options(): AngularWebpackPluginOptions;
-    apply(webpackCompiler: Compiler | WebpackFourCompiler): void;
+    apply(webpackCompiler: Compiler): void;
     private markResourceUsed;
     private rebuildRequiredFiles;
     private loadConfiguration;

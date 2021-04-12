@@ -6,5 +6,6 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import { Diagnostics } from '@angular/compiler-cli';
+import { Compilation } from 'webpack';
 export declare type DiagnosticsReporter = (diagnostics: Diagnostics) => void;
-export declare function createDiagnosticsReporter(compilation: import('webpack').compilation.Compilation): DiagnosticsReporter;
+export declare function createDiagnosticsReporter(compilation: Compilation): DiagnosticsReporter;
