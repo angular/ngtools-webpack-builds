@@ -10,7 +10,6 @@ exports.WebpackResourceLoader = void 0;
  */
 const vm = require("vm");
 const webpack_1 = require("webpack");
-const webpack_sources_1 = require("webpack-sources");
 const paths_1 = require("./ivy/paths");
 class WebpackResourceLoader {
     constructor() {
@@ -103,9 +102,7 @@ class WebpackResourceLoader {
                 try {
                     const output = this._evaluate(outputFilePath, asset.source().toString());
                     if (typeof output === 'string') {
-                        // `webpack-sources` package has incomplete typings
-                        // tslint:disable-next-line: no-any
-                        compilation.assets[outputFilePath] = new webpack_sources_1.RawSource(output);
+                        compilation.assets[outputFilePath] = new webpack_1.sources.RawSource(output);
                     }
                 }
                 catch (error) {
