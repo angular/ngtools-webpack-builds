@@ -16,7 +16,7 @@ npm install git+https://github.com/angular/ngtools-webpack-builds.git
 ----
 # Angular Compiler Webpack Plugin
 
-Webpack 5.x plugin for the Angular Ahead-of-Time compiler. The plugin also supports Angular JIT mode.
+Webpack 4.x/5.x plugin for the Angular Ahead-of-Time compiler. The plugin also supports Angular JIT mode.
 
 ## Usage
 

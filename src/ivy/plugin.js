@@ -17,6 +17,7 @@ const ngcc_processor_1 = require("../ngcc_processor");
 const paths_plugin_1 = require("../paths-plugin");
 const resource_loader_1 = require("../resource_loader");
 const webpack_diagnostics_1 = require("../webpack-diagnostics");
+const webpack_version_1 = require("../webpack-version");
 const cache_1 = require("./cache");
 const diagnostics_1 = require("./diagnostics");
 const host_1 = require("./host");
@@ -88,8 +89,7 @@ class AngularWebpackPlugin {
                     resolveOptions.plugins = [];
                 }
                 resolveOptions.plugins.push(pathsPlugin);
-                // https://github.com/webpack/webpack/issues/11635#issuecomment-707016779
-                return webpack_1.util.cleverMerge(resolveOptions, { mainFields: [...ivyMainFields, '...'] });
+                return webpack_version_1.mergeResolverMainFields(resolveOptions, originalMainFields, ivyMainFields);
             });
         });
         let ngccProcessor;
@@ -168,7 +168,12 @@ class AngularWebpackPlugin {
                 .getSourceFiles()
                 .filter((sourceFile) => !(internalFiles === null || internalFiles === void 0 ? void 0 : internalFiles.has(sourceFile)));
             // Ensure all program files are considered part of the compilation and will be watched
-            allProgramFiles.forEach((sourceFile) => compilation.fileDependencies.add(sourceFile.fileName));
+            if (webpack_version_1.isWebpackFiveOrHigher()) {
+                allProgramFiles.forEach((sourceFile) => compilation.fileDependencies.add(sourceFile.fileName));
+            }
+            else {
+                allProgramFiles.forEach((sourceFile) => compilation.compilationDependencies.add(sourceFile.fileName));
+            }
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
                 // Rebuild any remaining AOT required modules
                 await this.rebuildRequiredFiles(modules, compilation, fileEmitter);
