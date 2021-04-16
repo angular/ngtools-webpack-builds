@@ -25,13 +25,12 @@
   },
   "homepage": "https://github.com/angular/angular-cli",
   "dependencies": {
-    "enhanced-resolve": "5.7.0",
-    "webpack-sources": "2.2.0"
+    "enhanced-resolve": "5.7.0"
   },
   "peerDependencies": {
     "@angular/compiler-cli": "^12.0.0-next",
     "typescript": "~4.2.3",
-    "webpack": "^4.0.0 || ^5.30.0"
+    "webpack": "^5.30.0"
   },
   "engines": {
     "node": ">= 12.13.0",
