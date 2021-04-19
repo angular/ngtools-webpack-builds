@@ -335,7 +335,7 @@ class AngularWebpackPlugin {
         // Required to support asynchronous resource loading
         // Must be done before creating transformers or getting template diagnostics
         const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
-            var _a, _b, _c, _d;
+            var _a;
             this.requiredFilesToEmit.clear();
             for (const sourceFile of builder.getSourceFiles()) {
                 if (sourceFile.isDeclarationFile) {
@@ -370,11 +370,6 @@ class AngularWebpackPlugin {
                 diagnosticsReporter(angularDiagnostics);
                 (_a = this.sourceFileCache) === null || _a === void 0 ? void 0 : _a.updateAngularDiagnostics(affectedFile, angularDiagnostics);
             }
-            // NOTE: Workaround to fix stale reuse program. Can be removed once fixed upstream.
-            // tslint:disable-next-line: no-any
-            angularProgram.reuseTsProgram =
-                // tslint:disable-next-line: no-any
-                ((_b = angularCompiler.getNextProgram) === null || _b === void 0 ? void 0 : _b.call(angularCompiler)) || ((_d = (_c = angularCompiler).getCurrentProgram) === null || _d === void 0 ? void 0 : _d.call(_c));
             return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
                 this.requiredFilesToEmit.delete(paths_1.normalizePath(sourceFile.fileName));
                 angularCompiler.incrementalDriver.recordSuccessfulEmit(sourceFile);
