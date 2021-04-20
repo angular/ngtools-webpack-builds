@@ -9,36 +9,47 @@ exports.removeIvyJitSupportCalls = void 0;
  * found in the LICENSE file at https://angular.io/license
  */
 const ts = require("typescript");
-const ast_helpers_1 = require("./ast_helpers");
-const interfaces_1 = require("./interfaces");
-const make_transform_1 = require("./make_transform");
+const elide_imports_1 = require("./elide_imports");
 function removeIvyJitSupportCalls(classMetadata, ngModuleScope, getTypeChecker) {
-    const standardTransform = function (sourceFile) {
-        const ops = [];
-        ast_helpers_1.collectDeepNodes(sourceFile, ts.SyntaxKind.ExpressionStatement)
-            .filter(statement => {
-            const innerStatement = getIifeStatement(statement);
-            if (!innerStatement) {
-                return false;
-            }
-            let shouldRemove = false;
-            if (ngModuleScope && ts.isBinaryExpression(innerStatement.expression)) {
-                shouldRemove = isIvyPrivateCallExpression(innerStatement.expression.right, 'ɵɵsetNgModuleScope');
-            }
-            if (classMetadata && !shouldRemove) {
-                if (ts.isBinaryExpression(innerStatement.expression)) {
-                    shouldRemove = isIvyPrivateCallExpression(innerStatement.expression.right, 'ɵsetClassMetadata');
+    return (context) => {
+        const removedNodes = [];
+        const visitNode = (node) => {
+            const innerStatement = ts.isExpressionStatement(node) && getIifeStatement(node);
+            if (innerStatement) {
+                if (ngModuleScope &&
+                    ts.isBinaryExpression(innerStatement.expression) &&
+                    isIvyPrivateCallExpression(innerStatement.expression.right, 'ɵɵsetNgModuleScope')) {
+                    removedNodes.push(innerStatement);
+                    return undefined;
                 }
-                else {
-                    shouldRemove = isIvyPrivateCallExpression(innerStatement.expression, 'ɵsetClassMetadata');
+                if (classMetadata) {
+                    const expression = ts.isBinaryExpression(innerStatement.expression)
+                        ? innerStatement.expression.right
+                        : innerStatement.expression;
+                    if (isIvyPrivateCallExpression(expression, 'ɵsetClassMetadata')) {
+                        removedNodes.push(innerStatement);
+                        return undefined;
+                    }
                 }
             }
-            return shouldRemove;
-        })
-            .forEach(statement => ops.push(new interfaces_1.RemoveNodeOperation(sourceFile, statement)));
-        return ops;
+            return ts.visitEachChild(node, visitNode, context);
+        };
+        return (sourceFile) => {
+            let updatedSourceFile = ts.visitEachChild(sourceFile, visitNode, context);
+            if (removedNodes.length > 0) {
+                // Remove any unused imports
+                const importRemovals = elide_imports_1.elideImports(updatedSourceFile, removedNodes, getTypeChecker, context.getCompilerOptions()).map((op) => op.target);
+                if (importRemovals.length > 0) {
+                    updatedSourceFile = ts.visitEachChild(updatedSourceFile, function visitForRemoval(node) {
+                        return importRemovals.includes(node)
+                            ? undefined
+                            : ts.visitEachChild(node, visitForRemoval, context);
+                    }, context);
+                }
+            }
+            return updatedSourceFile;
+        };
     };
-    return make_transform_1.makeTransform(standardTransform, getTypeChecker);
 }
 exports.removeIvyJitSupportCalls = removeIvyJitSupportCalls;
 // Each Ivy private call expression is inside an IIFE
