@@ -17,8 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-__exportStar(require("./interfaces"), exports);
-__exportStar(require("./ast_helpers"), exports);
-__exportStar(require("./make_transform"), exports);
 __exportStar(require("./elide_imports"), exports);
 __exportStar(require("./replace_resources"), exports);
