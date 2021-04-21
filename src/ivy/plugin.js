@@ -31,12 +31,12 @@ const transformation_1 = require("./transformation");
  */
 const DIAGNOSTICS_AFFECTED_THRESHOLD = 1;
 function initializeNgccProcessor(compiler, tsconfig) {
-    var _a, _b;
+    var _a, _b, _c, _d;
     const { inputFileSystem, options: webpackOptions } = compiler;
-    const mainFields = [].concat(...(((_a = webpackOptions.resolve) === null || _a === void 0 ? void 0 : _a.mainFields) || []));
+    const mainFields = (_c = (_b = (_a = webpackOptions.resolve) === null || _a === void 0 ? void 0 : _a.mainFields) === null || _b === void 0 ? void 0 : _b.flat()) !== null && _c !== void 0 ? _c : [];
     const errors = [];
     const warnings = [];
-    const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, (_b = webpackOptions.resolve) === null || _b === void 0 ? void 0 : _b.symlinks);
+    const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, (_d = webpackOptions.resolve) === null || _d === void 0 ? void 0 : _d.symlinks);
     return { processor, errors, warnings };
 }
 function hashContent(content) {
@@ -63,8 +63,7 @@ class AngularWebpackPlugin {
     get options() {
         return this.pluginOptions;
     }
-    apply(webpackCompiler) {
-        const compiler = webpackCompiler;
+    apply(compiler) {
         // Setup file replacements with webpack
         for (const [key, value] of Object.entries(this.pluginOptions.fileReplacements)) {
             new webpack_1.NormalModuleReplacementPlugin(new RegExp('^' + key.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&') + '$'), value).apply(compiler);
@@ -72,28 +71,24 @@ class AngularWebpackPlugin {
         // Set resolver options
         const pathsPlugin = new paths_plugin_1.TypeScriptPathsPlugin();
         compiler.hooks.afterResolvers.tap('angular-compiler', (compiler) => {
-            // 'resolverFactory' is not present in the Webpack typings
-            // tslint:disable-next-line: no-any
-            const resolverFactoryHooks = compiler.resolverFactory.hooks;
             // When Ivy is enabled we need to add the fields added by NGCC
             // to take precedence over the provided mainFields.
             // NGCC adds fields in package.json suffixed with '_ivy_ngcc'
             // Example: module -> module__ivy_ngcc
-            resolverFactoryHooks.resolveOptions
+            compiler.resolverFactory.hooks.resolveOptions
                 .for('normal')
                 .tap(PLUGIN_NAME, (resolveOptions) => {
+                var _a, _b;
                 const originalMainFields = resolveOptions.mainFields;
-                const ivyMainFields = originalMainFields.map((f) => `${f}_ivy_ngcc`);
-                if (!resolveOptions.plugins) {
-                    resolveOptions.plugins = [];
-                }
+                const ivyMainFields = (_a = originalMainFields === null || originalMainFields === void 0 ? void 0 : originalMainFields.flat().map((f) => `${f}_ivy_ngcc`)) !== null && _a !== void 0 ? _a : [];
+                (_b = resolveOptions.plugins) !== null && _b !== void 0 ? _b : (resolveOptions.plugins = []);
                 resolveOptions.plugins.push(pathsPlugin);
                 // https://github.com/webpack/webpack/issues/11635#issuecomment-707016779
                 return webpack_1.util.cleverMerge(resolveOptions, { mainFields: [...ivyMainFields, '...'] });
             });
         });
         let ngccProcessor;
-        const resourceLoader = new resource_loader_1.WebpackResourceLoader();
+        let resourceLoader;
         let previousUnused;
         compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (thisCompilation) => {
             var _a;
@@ -105,6 +100,10 @@ class AngularWebpackPlugin {
             const emitRegistration = compilation[symbol_1.AngularPluginSymbol].register();
             // Store watch mode; assume true if not present (webpack < 4.23.0)
             this.watchMode = (_a = compiler.watchMode) !== null && _a !== void 0 ? _a : true;
+            // Initialize the resource loader if not already setup
+            if (!resourceLoader) {
+                resourceLoader = new resource_loader_1.WebpackResourceLoader(this.watchMode);
+            }
             // Initialize and process eager ngcc if not already setup
             if (!ngccProcessor) {
                 const { processor, errors, warnings } = initializeNgccProcessor(compiler, this.pluginOptions.tsconfig);
@@ -129,11 +128,14 @@ class AngularWebpackPlugin {
             let cache = this.sourceFileCache;
             let changedFiles;
             if (cache) {
-                // Invalidate existing cache based on compiler file timestamps
-                changedFiles = cache.invalidate(compiler.fileTimestamps, this.buildTimestamp);
-                // Invalidate file dependencies of changed files
-                for (const changedFile of changedFiles) {
-                    this.fileDependencies.delete(paths_1.normalizePath(changedFile));
+                changedFiles = new Set();
+                for (const changedFile of [...compiler.modifiedFiles, ...compiler.removedFiles]) {
+                    const normalizedChangedFile = paths_1.normalizePath(changedFile);
+                    // Invalidate file dependencies
+                    this.fileDependencies.delete(normalizedChangedFile);
+                    // Invalidate existing cache
+                    cache.invalidate(normalizedChangedFile);
+                    changedFiles.add(normalizedChangedFile);
                 }
             }
             else {
@@ -144,7 +146,6 @@ class AngularWebpackPlugin {
                     this.sourceFileCache = cache;
                 }
             }
-            this.buildTimestamp = Date.now();
             host_1.augmentHostWithCaching(host, cache);
             const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), host.getCanonicalFileName.bind(host), compilerOptions);
             // Setup source file dependency collection
@@ -172,6 +173,8 @@ class AngularWebpackPlugin {
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
                 // Rebuild any remaining AOT required modules
                 await this.rebuildRequiredFiles(modules, compilation, fileEmitter);
+                // Clear out the Webpack compilation to avoid an extra retaining reference
+                resourceLoader === null || resourceLoader === void 0 ? void 0 : resourceLoader.clearParentCompilation();
                 // Analyze program for unused files
                 if (compilation.errors.length > 0) {
                     return;
