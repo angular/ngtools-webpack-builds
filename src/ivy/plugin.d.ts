@@ -24,14 +24,13 @@ export declare class AngularWebpackPlugin {
     private ngtscNextProgram?;
     private builder?;
     private sourceFileCache?;
-    private buildTimestamp;
     private readonly fileDependencies;
     private readonly requiredFilesToEmit;
     private readonly requiredFilesToEmitCache;
     private readonly fileEmitHistory;
     constructor(options?: Partial<AngularWebpackPluginOptions>);
     get options(): AngularWebpackPluginOptions;
-    apply(webpackCompiler: Compiler): void;
+    apply(compiler: Compiler): void;
     private markResourceUsed;
     private rebuildRequiredFiles;
     private loadConfiguration;

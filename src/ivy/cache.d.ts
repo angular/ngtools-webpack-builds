@@ -8,9 +8,7 @@
 import * as ts from 'typescript';
 export declare class SourceFileCache extends Map<string, ts.SourceFile> {
     private readonly angularDiagnostics;
-    invalidate(fileTimestamps: Map<string, 'ignore' | number | {
-        safeTime: number;
-    } | null>, buildTimestamp: number): Set<string>;
+    invalidate(file: string): void;
     updateAngularDiagnostics(sourceFile: ts.SourceFile, diagnostics: ts.Diagnostic[]): void;
     getAngularDiagnostics(sourceFile: ts.SourceFile): ts.Diagnostic[] | undefined;
 }
