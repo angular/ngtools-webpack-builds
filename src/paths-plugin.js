@@ -1,13 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TypeScriptPathsPlugin = void 0;
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TypeScriptPathsPlugin = void 0;
 const path = require("path");
 const getInnerRequest = require('enhanced-resolve/lib/getInnerRequest');
 class TypeScriptPathsPlugin {
