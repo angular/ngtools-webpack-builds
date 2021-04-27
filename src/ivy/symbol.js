@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -15,13 +22,6 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _fileEmitter, _registrations;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileEmitterCollection = exports.FileEmitterRegistration = exports.AngularPluginSymbol = void 0;
-/**
- * @license
- * Copyright Google Inc. All Rights Reserved.
- *
- * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
- */
 exports.AngularPluginSymbol = Symbol.for('@angular-devkit/build-angular[angular-compiler]');
 class FileEmitterRegistration {
     constructor() {

@@ -1,13 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ivy = exports.default = exports.AngularWebpackPlugin = exports.AngularWebpackLoaderPath = void 0;
 /**
  * @license
- * Copyright Google Inc. All Rights Reserved.
+ * Copyright Google LLC All Rights Reserved.
  *
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ivy = exports.default = exports.AngularWebpackPlugin = exports.AngularWebpackLoaderPath = void 0;
 const ivyInternal = require("./ivy");
 var ivy_1 = require("./ivy");
 Object.defineProperty(exports, "AngularWebpackLoaderPath", { enumerable: true, get: function () { return ivy_1.AngularWebpackLoaderPath; } });
