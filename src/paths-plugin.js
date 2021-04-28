@@ -32,7 +32,9 @@ class TypeScriptPathsPlugin {
                 });
             });
         };
-        resolver.getHook('described-resolve').tapPromise('TypeScriptPathsPlugin', async (request, resolveContext) => {
+        resolver
+            .getHook('described-resolve')
+            .tapPromise('TypeScriptPathsPlugin', async (request, resolveContext) => {
             if (!this.options) {
                 throw new Error('TypeScriptPathsPlugin options were not provided.');
             }
@@ -139,7 +141,7 @@ function findReplacements(originalRequest, paths) {
         }
     });
     const replacements = [];
-    pathMapOptions.forEach(option => {
+    pathMapOptions.forEach((option) => {
         for (const potential of option.potentials) {
             let replacement;
             const starIndex = potential.indexOf('*');

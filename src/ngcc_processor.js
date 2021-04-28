@@ -111,14 +111,14 @@ class NgccProcessor {
         // as NGCC will create a lock file for both builds and it will cause builds to fails.
         const { status, error } = child_process_1.spawnSync(process.execPath, [
             require.resolve('@angular/compiler-cli/ngcc/main-ngcc.js'),
-            '--source',
+            '--source' /** basePath */,
             this._nodeModulesDirectory,
-            '--properties',
+            '--properties' /** propertiesToConsider */,
             ...this.propertiesToConsider,
-            '--first-only',
-            '--create-ivy-entry-points',
+            '--first-only' /** compileAllFormats */,
+            '--create-ivy-entry-points' /** createNewEntryPointFormats */,
             '--async',
-            '--tsconfig',
+            '--tsconfig' /** tsConfigPath */,
             this.tsConfigPath,
             '--use-program-dependencies',
         ], {
@@ -145,8 +145,9 @@ class NgccProcessor {
     /** Process a module and it's depedencies. */
     processModule(moduleName, resolvedModule) {
         const resolvedFileName = resolvedModule.resolvedFileName;
-        if (!resolvedFileName || moduleName.startsWith('.')
-            || this._processedModules.has(resolvedFileName)) {
+        if (!resolvedFileName ||
+            moduleName.startsWith('.') ||
+            this._processedModules.has(resolvedFileName)) {
             // Skip when module is unknown, relative or NGCC compiler is not found or already processed.
             return;
         }

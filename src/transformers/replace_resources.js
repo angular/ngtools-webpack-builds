@@ -68,9 +68,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
         const styleProperty = nodeFactory.createPropertyAssignment(nodeFactory.createIdentifier('styles'), nodeFactory.createArrayLiteralExpression(styleReplacements));
         properties = nodeFactory.createNodeArray([...properties, styleProperty]);
     }
-    return nodeFactory.updateDecorator(node, nodeFactory.updateCallExpression(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [
-        nodeFactory.updateObjectLiteralExpression(objectExpression, properties),
-    ]));
+    return nodeFactory.updateDecorator(node, nodeFactory.updateCallExpression(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [nodeFactory.updateObjectLiteralExpression(objectExpression, properties)]));
 }
 function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
@@ -96,7 +94,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
                 return node;
             }
             const isInlineStyle = name === 'styles';
-            const styles = ts.visitNodes(node.initializer.elements, node => {
+            const styles = ts.visitNodes(node.initializer.elements, (node) => {
                 if (!ts.isStringLiteral(node) && !ts.isNoSubstitutionTemplateLiteral(node)) {
                     return node;
                 }
