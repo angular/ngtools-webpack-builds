@@ -28,7 +28,8 @@ map) {
         callback(new Error('The Angular Webpack loader requires the AngularWebpackPlugin.'));
         return;
     }
-    fileEmitter.emit(this.resourcePath)
+    fileEmitter
+        .emit(this.resourcePath)
         .then((result) => {
         if (!result) {
             if (this.resourcePath.endsWith('.js')) {

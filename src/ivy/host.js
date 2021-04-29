@@ -85,7 +85,9 @@ function augmentResolveModuleNames(host, resolvedModuleModifier, moduleResolutio
 function augmentHostWithDependencyCollection(host, dependencies, moduleResolutionCache) {
     if (host.resolveModuleNames) {
         const baseResolveModuleNames = host.resolveModuleNames;
-        host.resolveModuleNames = function (moduleNames, containingFile, ...parameters) {
+        host.resolveModuleNames = function (moduleNames, containingFile, 
+        // tslint:disable-next-line: trailing-comma
+        ...parameters) {
             const results = baseResolveModuleNames.call(host, moduleNames, containingFile, ...parameters);
             const containingFilePath = paths_1.normalizePath(containingFile);
             for (const result of results) {

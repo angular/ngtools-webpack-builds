@@ -64,7 +64,8 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
                     // In all cases we need the type reference not to be elided.
                     isTypeReferenceForDecoratoredNode = !!(((_c = parent.decorators) === null || _c === void 0 ? void 0 : _c.length) ||
                         (ts.isSetAccessor(parent.parent) && !!((_d = parent.parent.decorators) === null || _d === void 0 ? void 0 : _d.length)) ||
-                        (ts.isConstructorDeclaration(parent.parent) && !!((_e = parent.parent.parent.decorators) === null || _e === void 0 ? void 0 : _e.length)));
+                        (ts.isConstructorDeclaration(parent.parent) &&
+                            !!((_e = parent.parent.parent.decorators) === null || _e === void 0 ? void 0 : _e.length)));
                     break;
             }
             if (isTypeReferenceForDecoratoredNode) {
@@ -132,9 +133,7 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
                     if (isUnused(specifier.name)) {
                         removedClausesCount++;
                         // in case we don't have any more namedImports we should remove the parent ie the {}
-                        const nodeToRemove = clausesCount === removedClausesCount
-                            ? specifier.parent
-                            : specifier;
+                        const nodeToRemove = clausesCount === removedClausesCount ? specifier.parent : specifier;
                         specifierOps.push(new interfaces_1.RemoveNodeOperation(sourceFile, nodeToRemove));
                     }
                 }
