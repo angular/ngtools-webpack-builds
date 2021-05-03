@@ -17,7 +17,7 @@ class TypeScriptPathsPlugin {
     update(options) {
         this.options = options;
     }
-    // tslint:disable-next-line:no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apply(resolver) {
         const target = resolver.ensureHook('resolve');
         const resolveAsync = (request, requestContext) => {

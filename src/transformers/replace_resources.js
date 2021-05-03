@@ -244,13 +244,13 @@ function visitDecoratorWorkaround(node) {
     const emptyArray = nodeFactory.createArrayLiteralExpression();
     const stylePropertyName = nodeFactory.createIdentifier('styles');
     const styleProperty = nodeFactory.createPropertyAssignment(stylePropertyName, emptyArray);
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stylePropertyName.parent = styleProperty;
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     emptyArray.parent = styleProperty;
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     styleProperty.parent = objectExpression;
-    // tslint:disable-next-line: no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objectExpression.properties = nodeFactory.createNodeArray([
         ...objectExpression.properties,
         styleProperty,

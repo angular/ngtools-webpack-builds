@@ -286,6 +286,7 @@ class AngularWebpackPlugin {
         }
         // Update semantic diagnostics cache
         const affectedFiles = new Set();
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const result = builder.getSemanticDiagnosticsOfNextAffectedFile(undefined, (sourceFile) => {
                 // If the affected file is a TTC shim, add the shim's original source file.
