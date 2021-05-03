@@ -12,7 +12,7 @@ exports.timeEnd = exports.time = void 0;
 // Use with CLI --no-progress flag for best results.
 // This should be false for commited code.
 const _benchmark = false;
-// tslint:disable:no-console
+/* eslint-disable no-console */
 function time(label) {
     if (_benchmark) {
         console.time(label);

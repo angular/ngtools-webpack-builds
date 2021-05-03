@@ -16,6 +16,7 @@ Object.defineProperty(exports, "default", { enumerable: true, get: function () {
 /** @deprecated Deprecated as of v12, please use the direct exports
  * (`AngularWebpackPlugin` instead of `ivy.AngularWebpackPlugin`)
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 var ivy;
 (function (ivy) {
     ivy.AngularWebpackLoaderPath = ivyInternal.AngularWebpackLoaderPath;

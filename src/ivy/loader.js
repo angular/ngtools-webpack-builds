@@ -12,7 +12,7 @@ const path = require("path");
 const symbol_1 = require("./symbol");
 function angularWebpackLoader(content, 
 // Source map types are broken in the webpack type definitions
-// tslint:disable-next-line: no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 map) {
     const callback = this.async();
     if (!callback) {
