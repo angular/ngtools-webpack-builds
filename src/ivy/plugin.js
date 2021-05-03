@@ -165,11 +165,20 @@ class AngularWebpackPlugin {
             const { fileEmitter, builder, internalFiles } = this.pluginOptions.jitMode
                 ? this.updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter)
                 : this.updateAotProgram(compilerOptions, rootNames, host, diagnosticsReporter, resourceLoader);
-            const allProgramFiles = builder
-                .getSourceFiles()
-                .filter((sourceFile) => !(internalFiles === null || internalFiles === void 0 ? void 0 : internalFiles.has(sourceFile)));
-            // Ensure all program files are considered part of the compilation and will be watched
-            allProgramFiles.forEach((sourceFile) => compilation.fileDependencies.add(sourceFile.fileName));
+            // Set of files used during the unused TypeScript file analysis
+            const currentUnused = new Set();
+            for (const sourceFile of builder.getSourceFiles()) {
+                if (internalFiles === null || internalFiles === void 0 ? void 0 : internalFiles.has(sourceFile)) {
+                    continue;
+                }
+                // Ensure all program files are considered part of the compilation and will be watched
+                compilation.fileDependencies.add(sourceFile.fileName);
+                // Add all non-declaration files to the initial set of unused files. The set will be
+                // analyzed and pruned after all Webpack modules are finished building.
+                if (!sourceFile.isDeclarationFile) {
+                    currentUnused.add(paths_1.normalizePath(sourceFile.fileName));
+                }
+            }
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
                 // Rebuild any remaining AOT required modules
                 await this.rebuildRequiredFiles(modules, compilation, fileEmitter);
@@ -179,14 +188,12 @@ class AngularWebpackPlugin {
                 if (compilation.errors.length > 0) {
                     return;
                 }
-                const currentUnused = new Set(allProgramFiles
-                    .filter((sourceFile) => !sourceFile.isDeclarationFile)
-                    .map((sourceFile) => paths_1.normalizePath(sourceFile.fileName)));
-                Array.from(modules).forEach(({ resource }) => {
+                for (const webpackModule of modules) {
+                    const resource = webpackModule.resource;
                     if (resource) {
                         this.markResourceUsed(paths_1.normalizePath(resource), currentUnused);
                     }
-                });
+                }
                 for (const unused of currentUnused) {
                     if (previousUnused && previousUnused.has(unused)) {
                         continue;
@@ -217,7 +224,6 @@ class AngularWebpackPlugin {
         if (this.requiredFilesToEmit.size === 0) {
             return;
         }
-        const rebuild = (webpackModule) => new Promise((resolve) => compilation.rebuildModule(webpackModule, () => resolve()));
         const filesToRebuild = new Set();
         for (const requiredFile of this.requiredFilesToEmit) {
             const history = this.fileEmitHistory.get(requiredFile);
@@ -238,12 +244,15 @@ class AngularWebpackPlugin {
             }
         }
         if (filesToRebuild.size > 0) {
-            for (const webpackModule of [...modules]) {
+            const rebuild = (webpackModule) => new Promise((resolve) => compilation.rebuildModule(webpackModule, () => resolve()));
+            const modulesToRebuild = [];
+            for (const webpackModule of modules) {
                 const resource = webpackModule.resource;
                 if (resource && filesToRebuild.has(paths_1.normalizePath(resource))) {
-                    await rebuild(webpackModule);
+                    modulesToRebuild.push(webpackModule);
                 }
             }
+            await Promise.all(modulesToRebuild.map((webpackModule) => rebuild(webpackModule)));
         }
         this.requiredFilesToEmit.clear();
         this.requiredFilesToEmitCache.clear();
