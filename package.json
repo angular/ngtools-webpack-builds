@@ -28,7 +28,7 @@
     "enhanced-resolve": "5.7.0"
   },
   "peerDependencies": {
-    "@angular/compiler-cli": "^12.0.0-next",
+    "@angular/compiler-cli": "^12.0.0",
     "typescript": "~4.2.3",
     "webpack": "^5.30.0"
   },
