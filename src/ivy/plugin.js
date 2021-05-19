@@ -258,7 +258,7 @@ class AngularWebpackPlugin {
         this.requiredFilesToEmitCache.clear();
     }
     loadConfiguration(compilation) {
-        const { options: compilerOptions, rootNames, errors } = compiler_cli_1.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
+        const { options: compilerOptions, rootNames, errors, } = compiler_cli_1.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
         compilerOptions.enableIvy = true;
         compilerOptions.noEmitOnError = false;
         compilerOptions.suppressOutputPathCheck = true;
@@ -287,39 +287,46 @@ class AngularWebpackPlugin {
         // The wrapped host inside NgtscProgram adds additional files that will not have versions.
         const typeScriptProgram = angularProgram.getTsProgram();
         host_1.augmentProgramWithVersioning(typeScriptProgram);
-        const builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(typeScriptProgram, host, this.builder);
-        // Save for next rebuild
+        let builder;
         if (this.watchMode) {
-            this.builder = builder;
+            builder = this.builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(typeScriptProgram, host, this.builder);
             this.ngtscNextProgram = angularProgram;
+        }
+        else {
+            // When not in watch mode, the startup cost of the incremental analysis can be avoided by
+            // using an abstract builder that only wraps a TypeScript program.
+            builder = ts.createAbstractBuilder(typeScriptProgram, host);
         }
         // Update semantic diagnostics cache
         const affectedFiles = new Set();
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const result = builder.getSemanticDiagnosticsOfNextAffectedFile(undefined, (sourceFile) => {
-                // If the affected file is a TTC shim, add the shim's original source file.
-                // This ensures that changes that affect TTC are typechecked even when the changes
-                // are otherwise unrelated from a TS perspective and do not result in Ivy codegen changes.
-                // For example, changing @Input property types of a directive used in another component's
-                // template.
-                if (ignoreForDiagnostics.has(sourceFile) &&
-                    sourceFile.fileName.endsWith('.ngtypecheck.ts')) {
-                    // This file name conversion relies on internal compiler logic and should be converted
-                    // to an official method when available. 15 is length of `.ngtypecheck.ts`
-                    const originalFilename = sourceFile.fileName.slice(0, -15) + '.ts';
-                    const originalSourceFile = builder.getSourceFile(originalFilename);
-                    if (originalSourceFile) {
-                        affectedFiles.add(originalSourceFile);
+        // Analyze affected files when in watch mode for incremental type checking
+        if ('getSemanticDiagnosticsOfNextAffectedFile' in builder) {
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                const result = builder.getSemanticDiagnosticsOfNextAffectedFile(undefined, (sourceFile) => {
+                    // If the affected file is a TTC shim, add the shim's original source file.
+                    // This ensures that changes that affect TTC are typechecked even when the changes
+                    // are otherwise unrelated from a TS perspective and do not result in Ivy codegen changes.
+                    // For example, changing @Input property types of a directive used in another component's
+                    // template.
+                    if (ignoreForDiagnostics.has(sourceFile) &&
+                        sourceFile.fileName.endsWith('.ngtypecheck.ts')) {
+                        // This file name conversion relies on internal compiler logic and should be converted
+                        // to an official method when available. 15 is length of `.ngtypecheck.ts`
+                        const originalFilename = sourceFile.fileName.slice(0, -15) + '.ts';
+                        const originalSourceFile = builder.getSourceFile(originalFilename);
+                        if (originalSourceFile) {
+                            affectedFiles.add(originalSourceFile);
+                        }
+                        return true;
                     }
-                    return true;
+                    return false;
+                });
+                if (!result) {
+                    break;
                 }
-                return false;
-            });
-            if (!result) {
-                break;
+                affectedFiles.add(result.affected);
             }
-            affectedFiles.add(result.affected);
         }
         // Collect non-semantic diagnostics
         const diagnostics = [
@@ -399,10 +406,14 @@ class AngularWebpackPlugin {
         };
     }
     updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter) {
-        const builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(rootNames, compilerOptions, host, this.builder);
-        // Save for next rebuild
+        let builder;
         if (this.watchMode) {
-            this.builder = builder;
+            builder = this.builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(rootNames, compilerOptions, host, this.builder);
+        }
+        else {
+            // When not in watch mode, the startup cost of the incremental analysis can be avoided by
+            // using an abstract builder that only wraps a TypeScript program.
+            builder = ts.createAbstractBuilder(rootNames, compilerOptions, host);
         }
         const diagnostics = [
             ...builder.getOptionsDiagnostics(),
