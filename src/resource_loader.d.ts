@@ -12,6 +12,7 @@ export declare class WebpackResourceLoader {
     private _reverseDependencies;
     private fileCache?;
     private inlineCache?;
+    private assetCache?;
     private modifiedResources;
     private outputPathCounter;
     constructor(shouldCache: boolean);

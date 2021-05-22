@@ -22,23 +22,37 @@ class WebpackResourceLoader {
         if (shouldCache) {
             this.fileCache = new Map();
             this.inlineCache = new Map();
+            this.assetCache = new Map();
         }
     }
     update(parentCompilation, changedFiles) {
-        var _a, _b;
+        var _a, _b, _c, _d, _e;
         this._parentCompilation = parentCompilation;
         // Update resource cache and modified resources
         this.modifiedResources.clear();
         if (changedFiles) {
             for (const changedFile of changedFiles) {
+                const changedFileNormalized = paths_1.normalizePath(changedFile);
+                (_a = this.assetCache) === null || _a === void 0 ? void 0 : _a.delete(changedFileNormalized);
                 for (const affectedResource of this.getAffectedResources(changedFile)) {
-                    (_a = this.fileCache) === null || _a === void 0 ? void 0 : _a.delete(paths_1.normalizePath(affectedResource));
+                    const affectedResourceNormalized = paths_1.normalizePath(affectedResource);
+                    (_b = this.fileCache) === null || _b === void 0 ? void 0 : _b.delete(affectedResourceNormalized);
                     this.modifiedResources.add(affectedResource);
+                    for (const effectedDependencies of this.getResourceDependencies(affectedResourceNormalized)) {
+                        (_c = this.assetCache) === null || _c === void 0 ? void 0 : _c.delete(paths_1.normalizePath(effectedDependencies));
+                    }
                 }
             }
         }
         else {
-            (_b = this.fileCache) === null || _b === void 0 ? void 0 : _b.clear();
+            (_d = this.fileCache) === null || _d === void 0 ? void 0 : _d.clear();
+            (_e = this.assetCache) === null || _e === void 0 ? void 0 : _e.clear();
+        }
+        // Re-emit all assets for un-effected files
+        if (this.assetCache) {
+            for (const [, { name, source, info }] of this.assetCache) {
+                this._parentCompilation.emitAsset(name, source, info);
+            }
         }
     }
     clearParentCompilation() {
@@ -133,7 +147,7 @@ class WebpackResourceLoader {
         });
         return new Promise((resolve, reject) => {
             childCompiler.runAsChild((error, _, childCompilation) => {
-                var _a;
+                var _a, _b;
                 if (error) {
                     reject(error);
                     return;
@@ -154,6 +168,12 @@ class WebpackResourceLoader {
                     parent.buildDependencies.addAll(childCompilation.buildDependencies);
                     parent.warnings.push(...childCompilation.warnings);
                     parent.errors.push(...childCompilation.errors);
+                    for (const { info, name, source } of childCompilation.getAssets()) {
+                        if (info.sourceFilename === undefined) {
+                            throw new Error(`'${name}' asset info 'sourceFilename' is 'undefined'.`);
+                        }
+                        (_a = this.assetCache) === null || _a === void 0 ? void 0 : _a.set(info.sourceFilename, { info, name, source });
+                    }
                 }
                 // Save the dependencies for this resource.
                 if (filePath) {
@@ -177,7 +197,7 @@ class WebpackResourceLoader {
                 }
                 resolve({
                     content: finalContent !== null && finalContent !== void 0 ? finalContent : '',
-                    success: ((_a = childCompilation.errors) === null || _a === void 0 ? void 0 : _a.length) === 0,
+                    success: ((_b = childCompilation.errors) === null || _b === void 0 ? void 0 : _b.length) === 0,
                 });
             });
         });
