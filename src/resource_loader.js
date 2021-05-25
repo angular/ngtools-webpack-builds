@@ -70,12 +70,12 @@ class WebpackResourceLoader {
     setAffectedResources(file, resources) {
         this._reverseDependencies.set(file, new Set(resources));
     }
-    async _compile(filePath, data, mimeType) {
+    async _compile(filePath, data, mimeType, resourceType, hash, containingFile) {
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
         // Create a special URL for reading the resource from memory
-        const entry = data ? 'angular-resource://' : filePath;
+        const entry = data ? `angular-resource:${resourceType},${hash}` : filePath;
         if (!entry) {
             throw new Error(`"filePath" or "data" must be specified.`);
         }
@@ -83,7 +83,8 @@ class WebpackResourceLoader {
         if (filePath === null || filePath === void 0 ? void 0 : filePath.match(/\.[jt]s$/)) {
             throw new Error(`Cannot use a JavaScript or TypeScript file (${filePath}) in a component's styleUrls or templateUrl.`);
         }
-        const outputFilePath = filePath || `angular-resource-output-${this.outputPathCounter++}.css`;
+        const outputFilePath = filePath ||
+            `${containingFile}-angular-inline--${this.outputPathCounter++}.${resourceType === 'template' ? 'html' : 'css'}`;
         const outputOptions = {
             filename: outputFilePath,
             library: {
@@ -162,7 +163,15 @@ class WebpackResourceLoader {
                 const parent = childCompiler.parentCompilation;
                 if (parent) {
                     parent.children = parent.children.filter((child) => child !== childCompilation);
-                    parent.fileDependencies.addAll(childCompilation.fileDependencies);
+                    for (const fileDependency of childCompilation.fileDependencies) {
+                        if (data && containingFile && fileDependency.endsWith(entry)) {
+                            // use containing file if the resource was inline
+                            parent.fileDependencies.add(containingFile);
+                        }
+                        else {
+                            parent.fileDependencies.add(fileDependency);
+                        }
+                    }
                     parent.contextDependencies.addAll(childCompilation.contextDependencies);
                     parent.missingDependencies.addAll(childCompilation.missingDependencies);
                     parent.buildDependencies.addAll(childCompilation.buildDependencies);
@@ -235,7 +244,7 @@ class WebpackResourceLoader {
         }
         return compilationResult.content;
     }
-    async process(data, mimeType) {
+    async process(data, mimeType, resourceType, containingFile) {
         var _a;
         if (data.trim().length === 0) {
             return '';
@@ -243,7 +252,7 @@ class WebpackResourceLoader {
         const cacheKey = crypto_1.createHash('md5').update(data).digest('hex');
         let compilationResult = (_a = this.inlineCache) === null || _a === void 0 ? void 0 : _a.get(cacheKey);
         if (compilationResult === undefined) {
-            compilationResult = await this._compile(undefined, data, mimeType);
+            compilationResult = await this._compile(undefined, data, mimeType, resourceType, cacheKey, containingFile);
             if (this.inlineCache && compilationResult.success) {
                 this.inlineCache.set(cacheKey, compilationResult);
             }
