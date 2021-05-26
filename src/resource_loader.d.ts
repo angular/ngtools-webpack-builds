@@ -15,6 +15,7 @@ export declare class WebpackResourceLoader {
     private assetCache?;
     private modifiedResources;
     private outputPathCounter;
+    private readonly inlineDataLoaderPath;
     constructor(shouldCache: boolean);
     update(parentCompilation: Compilation, changedFiles?: Iterable<string>): void;
     clearParentCompilation(): void;
@@ -25,5 +26,5 @@ export declare class WebpackResourceLoader {
     private _compile;
     private _evaluate;
     get(filePath: string): Promise<string>;
-    process(data: string, mimeType: string, resourceType: 'template' | 'style', containingFile?: string): Promise<string>;
+    process(data: string, mimeType: string | undefined, fileExtension: string | undefined, resourceType: 'template' | 'style', containingFile?: string): Promise<string>;
 }

@@ -41,8 +41,8 @@ function augmentHostWithResources(host, resourceLoader, options = {}) {
         if (context.resourceFile || context.type !== 'style') {
             return null;
         }
-        if (options.inlineStyleMimeType) {
-            const content = await resourceLoader.process(data, options.inlineStyleMimeType, context.type, context.containingFile);
+        if (options.inlineStyleMimeType || options.inlineStyleFileExtension) {
+            const content = await resourceLoader.process(data, options.inlineStyleMimeType, options.inlineStyleFileExtension, context.type, context.containingFile);
             return { content };
         }
         return null;

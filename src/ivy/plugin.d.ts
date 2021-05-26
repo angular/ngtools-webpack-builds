@@ -17,6 +17,7 @@ export interface AngularWebpackPluginOptions {
     emitNgModuleScope: boolean;
     jitMode: boolean;
     inlineStyleMimeType?: string;
+    inlineStyleFileExtension?: string;
 }
 export declare class AngularWebpackPlugin {
     private readonly pluginOptions;

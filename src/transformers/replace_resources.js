@@ -9,7 +9,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.workaroundStylePreprocessing = exports.getResourceUrl = exports.replaceResources = void 0;
 const ts = require("typescript");
-function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleMimeType) {
+const inlineDataLoaderPath = require.resolve('../inline-data-loader');
+function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleMimeType, inlineStyleFileExtension) {
     if (inlineStyleMimeType && !/^text\/[-.\w]+$/.test(inlineStyleMimeType)) {
         throw new Error('Invalid inline style MIME type.');
     }
@@ -21,7 +22,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
                 const decorators = ts.visitNodes(node.decorators, (node) => ts.isDecorator(node)
-                    ? visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType)
+                    ? visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension)
                     : node);
                 return nodeFactory.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
@@ -44,7 +45,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
     };
 }
 exports.replaceResources = replaceResources;
-function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType) {
+function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
     }
@@ -61,7 +62,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     const styleReplacements = [];
     // visit all properties
     let properties = ts.visitNodes(objectExpression.properties, (node) => ts.isObjectLiteralElementLike(node)
-        ? visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType)
+        ? visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension)
         : node);
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
@@ -70,7 +71,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     }
     return nodeFactory.updateDecorator(node, nodeFactory.updateCallExpression(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [nodeFactory.updateObjectLiteralExpression(objectExpression, properties)]));
 }
-function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType) {
+function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -103,6 +104,11 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
                     if (inlineStyleMimeType) {
                         const data = Buffer.from(node.text).toString('base64');
                         url = `data:${inlineStyleMimeType};charset=utf-8;base64,${data}`;
+                    }
+                    else if (inlineStyleFileExtension) {
+                        const data = Buffer.from(node.text).toString('base64');
+                        const containingFile = node.getSourceFile().fileName;
+                        url = `${containingFile}.${inlineStyleFileExtension}!=!${inlineDataLoaderPath}?data=${data}!${containingFile}`;
                     }
                     else {
                         return nodeFactory.createStringLiteral(node.text);

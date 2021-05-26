@@ -11,6 +11,7 @@ import { WebpackResourceLoader } from '../resource_loader';
 export declare function augmentHostWithResources(host: ts.CompilerHost, resourceLoader: WebpackResourceLoader, options?: {
     directTemplateLoading?: boolean;
     inlineStyleMimeType?: string;
+    inlineStyleFileExtension?: string;
 }): void;
 /**
  * Augments a TypeScript Compiler Host's resolveModuleNames function to collect dependencies
