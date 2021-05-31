@@ -171,8 +171,9 @@ class AngularWebpackPlugin {
                 if (internalFiles === null || internalFiles === void 0 ? void 0 : internalFiles.has(sourceFile)) {
                     continue;
                 }
-                // Ensure all program files are considered part of the compilation and will be watched
-                compilation.fileDependencies.add(sourceFile.fileName);
+                // Ensure all program files are considered part of the compilation and will be watched.
+                // Webpack does not normalize paths. Therefore, we need to normalize the path with FS seperators.
+                compilation.fileDependencies.add(paths_1.externalizePath(sourceFile.fileName));
                 // Add all non-declaration files to the initial set of unused files. The set will be
                 // analyzed and pruned after all Webpack modules are finished building.
                 if (!sourceFile.isDeclarationFile) {
