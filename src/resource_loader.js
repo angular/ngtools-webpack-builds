@@ -23,7 +23,6 @@ class WebpackResourceLoader {
         this.inlineDataLoaderPath = require.resolve('./inline-data-loader');
         if (shouldCache) {
             this.fileCache = new Map();
-            this.inlineCache = new Map();
             this.assetCache = new Map();
         }
     }
@@ -72,7 +71,7 @@ class WebpackResourceLoader {
     setAffectedResources(file, resources) {
         this._reverseDependencies.set(file, new Set(resources));
     }
-    async _compile(filePath, data, mimeType, fileExtension, resourceType, hash, containingFile) {
+    async _compile(filePath, data, mimeType, fileExtension, resourceType, containingFile) {
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
@@ -80,7 +79,8 @@ class WebpackResourceLoader {
         const entry = filePath ||
             (resourceType
                 ? `${containingFile}-${this.outputPathCounter}.${fileExtension}!=!${this.inlineDataLoaderPath}!${containingFile}`
-                : `angular-resource:${resourceType},${hash}`);
+                : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    `angular-resource:${resourceType},${crypto_1.createHash('md5').update(data).digest('hex')}`);
         if (!entry) {
             throw new Error(`"filePath" or "data" must be specified.`);
         }
@@ -251,18 +251,10 @@ class WebpackResourceLoader {
         return compilationResult.content;
     }
     async process(data, mimeType, fileExtension, resourceType, containingFile) {
-        var _a;
         if (data.trim().length === 0) {
             return '';
         }
-        const cacheKey = crypto_1.createHash('md5').update(data).digest('hex');
-        let compilationResult = (_a = this.inlineCache) === null || _a === void 0 ? void 0 : _a.get(cacheKey);
-        if (compilationResult === undefined) {
-            compilationResult = await this._compile(undefined, data, mimeType, fileExtension, resourceType, cacheKey, containingFile);
-            if (this.inlineCache && compilationResult.success) {
-                this.inlineCache.set(cacheKey, compilationResult);
-            }
-        }
+        const compilationResult = await this._compile(undefined, data, mimeType, fileExtension, resourceType, containingFile);
         return compilationResult.content;
     }
 }
