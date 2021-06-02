@@ -21,7 +21,6 @@ class WebpackResourceLoader {
         this.outputPathCounter = 1;
         if (shouldCache) {
             this.fileCache = new Map();
-            this.inlineCache = new Map();
             this.assetCache = new Map();
         }
     }
@@ -70,12 +69,14 @@ class WebpackResourceLoader {
     setAffectedResources(file, resources) {
         this._reverseDependencies.set(file, new Set(resources));
     }
-    async _compile(filePath, data, mimeType, resourceType, hash, containingFile) {
+    async _compile(filePath, data, mimeType, resourceType, containingFile) {
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
         // Create a special URL for reading the resource from memory
-        const entry = data ? `angular-resource:${resourceType},${hash}` : filePath;
+        const entry = data
+            ? `angular-resource:${resourceType},${crypto_1.createHash('md5').update(data).digest('hex')}`
+            : filePath;
         if (!entry) {
             throw new Error(`"filePath" or "data" must be specified.`);
         }
@@ -245,18 +246,10 @@ class WebpackResourceLoader {
         return compilationResult.content;
     }
     async process(data, mimeType, resourceType, containingFile) {
-        var _a;
         if (data.trim().length === 0) {
             return '';
         }
-        const cacheKey = crypto_1.createHash('md5').update(data).digest('hex');
-        let compilationResult = (_a = this.inlineCache) === null || _a === void 0 ? void 0 : _a.get(cacheKey);
-        if (compilationResult === undefined) {
-            compilationResult = await this._compile(undefined, data, mimeType, resourceType, cacheKey, containingFile);
-            if (this.inlineCache && compilationResult.success) {
-                this.inlineCache.set(cacheKey, compilationResult);
-            }
-        }
+        const compilationResult = await this._compile(undefined, data, mimeType, resourceType, containingFile);
         return compilationResult.content;
     }
 }
