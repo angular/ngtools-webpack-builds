@@ -91,15 +91,13 @@ class AngularWebpackPlugin {
         let resourceLoader;
         let previousUnused;
         compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (thisCompilation) => {
-            var _a;
             const compilation = thisCompilation;
             // Register plugin to ensure deterministic emit order in multi-plugin usage
             if (!compilation[symbol_1.AngularPluginSymbol]) {
                 compilation[symbol_1.AngularPluginSymbol] = new symbol_1.FileEmitterCollection();
             }
             const emitRegistration = compilation[symbol_1.AngularPluginSymbol].register();
-            // Store watch mode; assume true if not present (webpack < 4.23.0)
-            this.watchMode = (_a = compiler.watchMode) !== null && _a !== void 0 ? _a : true;
+            this.watchMode = compiler.watchMode;
             // Initialize the resource loader if not already setup
             if (!resourceLoader) {
                 resourceLoader = new resource_loader_1.WebpackResourceLoader(this.watchMode);
