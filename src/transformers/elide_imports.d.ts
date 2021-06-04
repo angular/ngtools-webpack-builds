@@ -6,4 +6,5 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import * as ts from 'typescript';
-export declare function elideImports(sourceFile: ts.SourceFile, removedNodes: ts.Node[], getTypeChecker: () => ts.TypeChecker, compilerOptions: ts.CompilerOptions): Set<ts.Node>;
+import { TransformOperation } from './interfaces';
+export declare function elideImports(sourceFile: ts.SourceFile, removedNodes: ts.Node[], getTypeChecker: () => ts.TypeChecker, compilerOptions: ts.CompilerOptions): TransformOperation[];

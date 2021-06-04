@@ -9,6 +9,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.elideImports = void 0;
 const ts = require("typescript");
+const interfaces_1 = require("./interfaces");
 // Remove imports for which all identifiers have been removed.
 // Needs type checker, and works even if it's not the first transformer.
 // Works by removing imports for symbols whose identifiers have all been removed.
@@ -16,9 +17,9 @@ const ts = require("typescript");
 // but the type checker doesn't know.
 // See https://github.com/Microsoft/TypeScript/issues/17552 for more information.
 function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions) {
-    const importNodeRemovals = new Set();
+    const ops = [];
     if (removedNodes.length === 0) {
-        return importNodeRemovals;
+        return [];
     }
     const typeChecker = getTypeChecker();
     // Collect all imports and used identifiers
@@ -99,7 +100,7 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
         ts.forEachChild(node, visit);
     });
     if (imports.length === 0) {
-        return importNodeRemovals;
+        return [];
     }
     const isUnused = (node) => {
         // Do not remove JSX factory imports
@@ -118,11 +119,11 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
         if (namedBindings && ts.isNamespaceImport(namedBindings)) {
             // "import * as XYZ from 'abc';"
             if (isUnused(namedBindings.name)) {
-                importNodeRemovals.add(node);
+                ops.push(new interfaces_1.RemoveNodeOperation(sourceFile, node));
             }
         }
         else {
-            const specifierNodeRemovals = [];
+            const specifierOps = [];
             let clausesCount = 0;
             // "import { XYZ, ... } from 'abc';"
             if (namedBindings && ts.isNamedImports(namedBindings)) {
@@ -133,7 +134,7 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
                         removedClausesCount++;
                         // in case we don't have any more namedImports we should remove the parent ie the {}
                         const nodeToRemove = clausesCount === removedClausesCount ? specifier.parent : specifier;
-                        specifierNodeRemovals.push(nodeToRemove);
+                        specifierOps.push(new interfaces_1.RemoveNodeOperation(sourceFile, nodeToRemove));
                     }
                 }
             }
@@ -141,19 +142,17 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
             if (node.importClause.name) {
                 clausesCount++;
                 if (isUnused(node.importClause.name)) {
-                    specifierNodeRemovals.push(node.importClause.name);
+                    specifierOps.push(new interfaces_1.RemoveNodeOperation(sourceFile, node.importClause.name));
                 }
             }
-            if (specifierNodeRemovals.length === clausesCount) {
-                importNodeRemovals.add(node);
+            if (specifierOps.length === clausesCount) {
+                ops.push(new interfaces_1.RemoveNodeOperation(sourceFile, node));
             }
             else {
-                for (const specifierNodeRemoval of specifierNodeRemovals) {
-                    importNodeRemovals.add(specifierNodeRemoval);
-                }
+                ops.push(...specifierOps);
             }
         }
     }
-    return importNodeRemovals;
+    return ops;
 }
 exports.elideImports = elideImports;
