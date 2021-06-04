@@ -79,9 +79,9 @@ function replaceBootstrap(getTypeChecker) {
             let updatedSourceFile = ts.visitEachChild(sourceFile, visitNode, context);
             if (bootstrapImport) {
                 // Remove any unused platform browser dynamic imports
-                const removals = elide_imports_1.elideImports(updatedSourceFile, replacedNodes, getTypeChecker, context.getCompilerOptions()).map((op) => op.target);
-                if (removals.length > 0) {
-                    updatedSourceFile = ts.visitEachChild(updatedSourceFile, (node) => (removals.includes(node) ? undefined : node), context);
+                const removals = elide_imports_1.elideImports(updatedSourceFile, replacedNodes, getTypeChecker, context.getCompilerOptions());
+                if (removals.size > 0) {
+                    updatedSourceFile = ts.visitEachChild(updatedSourceFile, (node) => (removals.has(node) ? undefined : node), context);
                 }
                 // Add new platform browser import
                 return nodeFactory.updateSourceFile(updatedSourceFile, ts.setTextRange(nodeFactory.createNodeArray([bootstrapImport, ...updatedSourceFile.statements]), sourceFile.statements));
