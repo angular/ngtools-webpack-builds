@@ -11,7 +11,6 @@ exports.NgccProcessor = void 0;
 const ngcc_1 = require("@angular/compiler-cli/ngcc");
 const child_process_1 = require("child_process");
 const crypto_1 = require("crypto");
-const enhanced_resolve_1 = require("enhanced-resolve");
 const fs_1 = require("fs");
 const path = require("path");
 const benchmark_1 = require("./benchmark");
@@ -23,25 +22,17 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(propertiesToConsider, compilationWarnings, compilationErrors, basePath, tsConfigPath, inputFileSystem, symlinks) {
+    constructor(propertiesToConsider, compilationWarnings, compilationErrors, basePath, tsConfigPath, inputFileSystem, resolver) {
         this.propertiesToConsider = propertiesToConsider;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
         this.basePath = basePath;
         this.tsConfigPath = tsConfigPath;
         this.inputFileSystem = inputFileSystem;
-        this.symlinks = symlinks;
+        this.resolver = resolver;
         this._processedModules = new Set();
         this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
         this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
-        this._resolver = enhanced_resolve_1.ResolverFactory.createResolver({
-            // NOTE: @types/webpack InputFileSystem is missing some methods
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            fileSystem: this.inputFileSystem,
-            extensions: ['.json'],
-            useSyncFileSystemCalls: true,
-            symlinks,
-        });
     }
     /** Process the entire node modules tree. */
     process() {
@@ -144,6 +135,7 @@ class NgccProcessor {
     }
     /** Process a module and it's depedencies. */
     processModule(moduleName, resolvedModule) {
+        var _a, _b;
         const resolvedFileName = resolvedModule.resolvedFileName;
         if (!resolvedFileName ||
             moduleName.startsWith('.') ||
@@ -173,10 +165,7 @@ class NgccProcessor {
         benchmark_1.timeEnd(timeLabel);
         // Purge this file from cache, since NGCC add new mainFields. Ex: module_ivy_ngcc
         // which are unknown in the cached file.
-        if (this.inputFileSystem.purge) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            this.inputFileSystem.purge(packageJsonPath);
-        }
+        (_b = (_a = this.inputFileSystem).purge) === null || _b === void 0 ? void 0 : _b.call(_a, packageJsonPath);
         this._processedModules.add(resolvedFileName);
     }
     invalidate(fileName) {
@@ -187,7 +176,7 @@ class NgccProcessor {
      */
     tryResolvePackage(moduleName, resolvedFileName) {
         try {
-            const resolvedPath = this._resolver.resolveSync({}, resolvedFileName, `${moduleName}/package.json`);
+            const resolvedPath = this.resolver.resolveSync({}, resolvedFileName, `${moduleName}/package.json`);
             return resolvedPath || undefined;
         }
         catch {

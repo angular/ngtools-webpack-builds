@@ -31,12 +31,16 @@ const transformation_1 = require("./transformation");
  */
 const DIAGNOSTICS_AFFECTED_THRESHOLD = 1;
 function initializeNgccProcessor(compiler, tsconfig) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     const { inputFileSystem, options: webpackOptions } = compiler;
     const mainFields = (_c = (_b = (_a = webpackOptions.resolve) === null || _a === void 0 ? void 0 : _a.mainFields) === null || _b === void 0 ? void 0 : _b.flat()) !== null && _c !== void 0 ? _c : [];
     const errors = [];
     const warnings = [];
-    const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, (_d = webpackOptions.resolve) === null || _d === void 0 ? void 0 : _d.symlinks);
+    const resolver = compiler.resolverFactory.get('normal', {
+        extensions: ['.json'],
+        useSyncFileSystemCalls: true,
+    });
+    const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, resolver);
     return { processor, errors, warnings };
 }
 function hashContent(content) {
