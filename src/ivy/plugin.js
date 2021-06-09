@@ -12,7 +12,6 @@ const compiler_cli_1 = require("@angular/compiler-cli");
 const program_1 = require("@angular/compiler-cli/src/ngtsc/program");
 const crypto_1 = require("crypto");
 const ts = require("typescript");
-const webpack_1 = require("webpack");
 const ngcc_processor_1 = require("../ngcc_processor");
 const paths_plugin_1 = require("../paths-plugin");
 const resource_loader_1 = require("../resource_loader");
@@ -64,9 +63,10 @@ class AngularWebpackPlugin {
         return this.pluginOptions;
     }
     apply(compiler) {
+        const { NormalModuleReplacementPlugin, util } = compiler.webpack;
         // Setup file replacements with webpack
         for (const [key, value] of Object.entries(this.pluginOptions.fileReplacements)) {
-            new webpack_1.NormalModuleReplacementPlugin(new RegExp('^' + key.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&') + '$'), value).apply(compiler);
+            new NormalModuleReplacementPlugin(new RegExp('^' + key.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&') + '$'), value).apply(compiler);
         }
         // Set resolver options
         const pathsPlugin = new paths_plugin_1.TypeScriptPathsPlugin();
@@ -84,7 +84,7 @@ class AngularWebpackPlugin {
                 (_b = resolveOptions.plugins) !== null && _b !== void 0 ? _b : (resolveOptions.plugins = []);
                 resolveOptions.plugins.push(pathsPlugin);
                 // https://github.com/webpack/webpack/issues/11635#issuecomment-707016779
-                return webpack_1.util.cleverMerge(resolveOptions, { mainFields: [...ivyMainFields, '...'] });
+                return util.cleverMerge(resolveOptions, { mainFields: [...ivyMainFields, '...'] });
             });
         });
         let ngccProcessor;

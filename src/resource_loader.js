@@ -11,7 +11,6 @@ exports.WebpackResourceLoader = void 0;
 const crypto_1 = require("crypto");
 const path = require("path");
 const vm = require("vm");
-const webpack_1 = require("webpack");
 const paths_1 = require("./ivy/paths");
 class WebpackResourceLoader {
     constructor(shouldCache) {
@@ -93,12 +92,13 @@ class WebpackResourceLoader {
                 name: 'resource',
             },
         };
-        const context = this._parentCompilation.compiler.context;
+        const { context, webpack } = this._parentCompilation.compiler;
+        const { EntryPlugin, NormalModule, library, node, sources } = webpack;
         const childCompiler = this._parentCompilation.createChildCompiler('angular-compiler:resource', outputOptions, [
-            new webpack_1.node.NodeTemplatePlugin(outputOptions),
-            new webpack_1.node.NodeTargetPlugin(),
-            new webpack_1.EntryPlugin(context, entry, { name: 'resource' }),
-            new webpack_1.library.EnableLibraryPlugin('var'),
+            new node.NodeTemplatePlugin(outputOptions),
+            new node.NodeTargetPlugin(),
+            new EntryPlugin(context, entry, { name: 'resource' }),
+            new library.EnableLibraryPlugin('var'),
         ]);
         childCompiler.hooks.thisCompilation.tap('angular-compiler', (compilation, { normalModuleFactory }) => {
             // If no data is provided, the resource will be read from the filesystem
@@ -115,7 +115,7 @@ class WebpackResourceLoader {
                     }
                     return true;
                 });
-                webpack_1.NormalModule.getCompilationHooks(compilation)
+                NormalModule.getCompilationHooks(compilation)
                     .readResourceForScheme.for('angular-resource')
                     .tap('angular-compiler', () => data);
             }
@@ -127,7 +127,7 @@ class WebpackResourceLoader {
                 try {
                     const output = this._evaluate(outputFilePath, asset.source().toString());
                     if (typeof output === 'string') {
-                        compilation.assets[outputFilePath] = new webpack_1.sources.RawSource(output);
+                        compilation.assets[outputFilePath] = new sources.RawSource(output);
                     }
                 }
                 catch (error) {
@@ -139,7 +139,7 @@ class WebpackResourceLoader {
         let finalContent;
         let finalMap;
         childCompiler.hooks.compilation.tap('angular-compiler', (childCompilation) => {
-            childCompilation.hooks.processAssets.tap({ name: 'angular-compiler', stage: webpack_1.Compilation.PROCESS_ASSETS_STAGE_REPORT }, () => {
+            childCompilation.hooks.processAssets.tap({ name: 'angular-compiler', stage: webpack.Compilation.PROCESS_ASSETS_STAGE_REPORT }, () => {
                 var _a, _b;
                 finalContent = (_a = childCompilation.assets[outputFilePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
                 finalMap = (_b = childCompilation.assets[outputFilePath + '.map']) === null || _b === void 0 ? void 0 : _b.source().toString();
