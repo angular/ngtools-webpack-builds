@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { Compilation } from 'webpack';
+import type { Compilation } from 'webpack';
 export declare class WebpackResourceLoader {
     private _parentCompilation?;
     private _fileDependencies;

@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { Compilation, LoaderContext } from 'webpack';
+import type { Compilation, LoaderContext } from 'webpack';
 export declare const InlineAngularResourceSymbol: unique symbol;
 export interface CompilationWithInlineAngularResource extends Compilation {
     [InlineAngularResourceSymbol]: string;
