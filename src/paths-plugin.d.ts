@@ -12,5 +12,5 @@ export declare class TypeScriptPathsPlugin {
     private options?;
     constructor(options?: TypeScriptPathsPluginOptions | undefined);
     update(options: TypeScriptPathsPluginOptions): void;
-    apply(resolver: any): void;
+    apply(resolver: import('enhanced-resolve').Resolver): void;
 }

@@ -20,55 +20,65 @@ class TypeScriptPathsPlugin {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apply(resolver) {
         const target = resolver.ensureHook('resolve');
-        const resolveAsync = (request, requestContext) => {
-            return new Promise((resolve, reject) => {
-                resolver.doResolve(target, request, '', requestContext, (error, result) => {
-                    if (error) {
-                        reject(error);
-                    }
-                    else {
-                        resolve(result);
-                    }
-                });
-            });
-        };
-        resolver
-            .getHook('described-resolve')
-            .tapPromise('TypeScriptPathsPlugin', async (request, resolveContext) => {
+        resolver.getHook('described-resolve').tapAsync('TypeScriptPathsPlugin', 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (request, resolveContext, callback) => {
             if (!this.options) {
-                throw new Error('TypeScriptPathsPlugin options were not provided.');
+                callback();
+                return;
             }
             if (!request || request.typescriptPathMapped) {
+                callback();
                 return;
             }
             const originalRequest = getInnerRequest(resolver, request);
             if (!originalRequest) {
+                callback();
                 return;
             }
             // Only work on Javascript/TypeScript issuers.
             if (!request.context.issuer || !request.context.issuer.match(/\.[jt]sx?$/)) {
+                callback();
                 return;
             }
             // Relative or absolute requests are not mapped
             if (originalRequest.startsWith('.') || originalRequest.startsWith('/')) {
+                callback();
                 return;
             }
             // Ignore all webpack special requests
             if (originalRequest.startsWith('!!')) {
+                callback();
                 return;
             }
             const replacements = findReplacements(originalRequest, this.options.paths || {});
-            for (const potential of replacements) {
+            const tryResolve = () => {
+                var _a;
+                const potential = replacements.shift();
+                if (!potential) {
+                    callback();
+                    return;
+                }
                 const potentialRequest = {
                     ...request,
-                    request: path.resolve(this.options.baseUrl || '', potential),
+                    request: path.resolve(((_a = this.options) === null || _a === void 0 ? void 0 : _a.baseUrl) || '', potential),
                     typescriptPathMapped: true,
                 };
-                const result = await resolveAsync(potentialRequest, resolveContext);
-                if (result) {
-                    return result;
-                }
-            }
+                resolver.doResolve(target, potentialRequest, '', resolveContext, 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (error, result) => {
+                    if (error) {
+                        callback(error);
+                    }
+                    else if (result) {
+                        callback(undefined, result);
+                    }
+                    else {
+                        tryResolve();
+                    }
+                });
+            };
+            tryResolve();
         });
     }
 }

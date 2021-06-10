@@ -36,6 +36,8 @@ function initializeNgccProcessor(compiler, tsconfig) {
     const errors = [];
     const warnings = [];
     const resolver = compiler.resolverFactory.get('normal', {
+        // Caching must be disabled because it causes the resolver to become async after a rebuild
+        cache: false,
         extensions: ['.json'],
         useSyncFileSystemCalls: true,
     });
