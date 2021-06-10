@@ -10,16 +10,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.angularWebpackLoader = void 0;
 const path = require("path");
 const symbol_1 = require("./symbol");
-function angularWebpackLoader(content, 
-// Source map types are broken in the webpack type definitions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-map) {
+function angularWebpackLoader(content, map) {
     const callback = this.async();
     if (!callback) {
         throw new Error('Invalid webpack version');
     }
-    const fileEmitter = this._compilation[symbol_1.AngularPluginSymbol];
-    if (typeof fileEmitter !== 'object') {
+    const fileEmitter = this[symbol_1.AngularPluginSymbol];
+    if (!fileEmitter || typeof fileEmitter !== 'object') {
         if (this.resourcePath.endsWith('.js')) {
             // Passthrough for JS files when no plugin is used
             this.callback(undefined, content, map);

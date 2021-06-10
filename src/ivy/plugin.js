@@ -48,6 +48,7 @@ function hashContent(content) {
     return crypto_1.createHash('md5').update(content).digest();
 }
 const PLUGIN_NAME = 'angular-compiler';
+const compilationFileEmitters = new WeakMap();
 class AngularWebpackPlugin {
     constructor(options = {}) {
         this.fileDependencies = new Map();
@@ -96,13 +97,9 @@ class AngularWebpackPlugin {
         let ngccProcessor;
         let resourceLoader;
         let previousUnused;
-        compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (thisCompilation) => {
-            const compilation = thisCompilation;
+        compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation) => {
             // Register plugin to ensure deterministic emit order in multi-plugin usage
-            if (!compilation[symbol_1.AngularPluginSymbol]) {
-                compilation[symbol_1.AngularPluginSymbol] = new symbol_1.FileEmitterCollection();
-            }
-            const emitRegistration = compilation[symbol_1.AngularPluginSymbol].register();
+            const emitRegistration = this.registerWithCompilation(compilation);
             this.watchMode = compiler.watchMode;
             // Initialize the resource loader if not already setup
             if (!resourceLoader) {
@@ -117,7 +114,7 @@ class AngularWebpackPlugin {
                 ngccProcessor = processor;
             }
             // Setup and read TypeScript and Angular compiler configuration
-            const { compilerOptions, rootNames, errors } = this.loadConfiguration(compilation);
+            const { compilerOptions, rootNames, errors } = this.loadConfiguration();
             // Create diagnostics reporter and report configuration file errors
             const diagnosticsReporter = diagnostics_1.createDiagnosticsReporter(compilation);
             diagnosticsReporter(errors);
@@ -213,6 +210,18 @@ class AngularWebpackPlugin {
             emitRegistration.update(fileEmitter);
         });
     }
+    registerWithCompilation(compilation) {
+        let fileEmitters = compilationFileEmitters.get(compilation);
+        if (!fileEmitters) {
+            fileEmitters = new symbol_1.FileEmitterCollection();
+            compilationFileEmitters.set(compilation, fileEmitters);
+            compilation.compiler.webpack.NormalModule.getCompilationHooks(compilation).loader.tap(PLUGIN_NAME, (loaderContext) => {
+                loaderContext[symbol_1.AngularPluginSymbol] = fileEmitters;
+            });
+        }
+        const emitRegistration = fileEmitters.register();
+        return emitRegistration;
+    }
     markResourceUsed(normalizedResourcePath, currentUnused) {
         if (!currentUnused.has(normalizedResourcePath)) {
             return;
@@ -263,7 +272,7 @@ class AngularWebpackPlugin {
         this.requiredFilesToEmit.clear();
         this.requiredFilesToEmitCache.clear();
     }
-    loadConfiguration(compilation) {
+    loadConfiguration() {
         const { options: compilerOptions, rootNames, errors, } = compiler_cli_1.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
         compilerOptions.enableIvy = true;
         compilerOptions.noEmitOnError = false;
