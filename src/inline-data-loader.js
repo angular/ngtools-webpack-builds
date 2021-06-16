@@ -8,7 +8,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InlineAngularResourceSymbol = void 0;
-exports.InlineAngularResourceSymbol = Symbol();
+exports.InlineAngularResourceSymbol = Symbol('@ngtools/webpack[angular-resource]');
 function default_1() {
     const callback = this.async();
     const { data } = this.getOptions();

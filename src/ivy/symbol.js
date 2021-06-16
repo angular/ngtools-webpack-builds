@@ -20,7 +20,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _FileEmitterRegistration_fileEmitter, _FileEmitterCollection_registrations;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileEmitterCollection = exports.FileEmitterRegistration = exports.AngularPluginSymbol = void 0;
-exports.AngularPluginSymbol = Symbol.for('@angular-devkit/build-angular[angular-compiler]');
+exports.AngularPluginSymbol = Symbol.for('@ngtools/webpack[angular-compiler]');
 class FileEmitterRegistration {
     constructor() {
         _FileEmitterRegistration_fileEmitter.set(this, void 0);

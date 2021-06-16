@@ -96,7 +96,7 @@ class AngularWebpackPlugin {
         }
         // Set resolver options
         const pathsPlugin = new paths_plugin_1.TypeScriptPathsPlugin();
-        compiler.hooks.afterResolvers.tap('angular-compiler', (compiler) => {
+        compiler.hooks.afterResolvers.tap(PLUGIN_NAME, (compiler) => {
             // When Ivy is enabled we need to add the fields added by NGCC
             // to take precedence over the provided mainFields.
             // NGCC adds fields in package.json suffixed with '_ivy_ngcc'
