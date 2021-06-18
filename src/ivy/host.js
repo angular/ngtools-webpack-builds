@@ -11,7 +11,6 @@ exports.augmentHostWithCaching = exports.augmentProgramWithVersioning = exports.
 const crypto_1 = require("crypto");
 const path = require("path");
 const ts = require("typescript");
-const transformers_1 = require("../transformers");
 const paths_1 = require("./paths");
 function augmentHostWithResources(host, resourceLoader, options = {}) {
     const resourceHost = host;
@@ -229,10 +228,6 @@ function augmentHostWithCaching(host, cache) {
         }
         const file = baseGetSourceFile.call(host, fileName, languageVersion, onError, true, ...parameters);
         if (file) {
-            // Temporary workaround for upstream transform resource defect
-            if (file && !file.isDeclarationFile && file.text.includes('@Component')) {
-                transformers_1.workaroundStylePreprocessing(file);
-            }
             cache.set(fileName, file);
         }
         return file;
