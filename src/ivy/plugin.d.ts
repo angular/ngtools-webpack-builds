@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import { CompilerOptions } from '@angular/compiler-cli';
-import type { Compiler } from 'webpack';
+import { Compiler } from 'webpack';
 export interface AngularWebpackPluginOptions {
     tsconfig: string;
     compilerOptions?: CompilerOptions;
