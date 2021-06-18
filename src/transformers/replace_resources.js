@@ -26,7 +26,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.workaroundStylePreprocessing = exports.getResourceUrl = exports.replaceResources = void 0;
+exports.getResourceUrl = exports.replaceResources = void 0;
 const ts = __importStar(require("typescript"));
 const inlineDataLoaderPath = require.resolve('../inline-data-loader');
 function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleMimeType, inlineStyleFileExtension) {
@@ -221,63 +221,4 @@ function getDecoratorOrigin(decorator, typeChecker) {
         return { name, module };
     }
     return null;
-}
-function workaroundStylePreprocessing(sourceFile) {
-    const visitNode = (node) => {
-        var _a;
-        if (ts.isClassDeclaration(node) && ((_a = node.decorators) === null || _a === void 0 ? void 0 : _a.length)) {
-            for (const decorator of node.decorators) {
-                visitDecoratorWorkaround(decorator);
-            }
-        }
-        return ts.forEachChild(node, visitNode);
-    };
-    ts.forEachChild(sourceFile, visitNode);
-}
-exports.workaroundStylePreprocessing = workaroundStylePreprocessing;
-function visitDecoratorWorkaround(node) {
-    if (!ts.isCallExpression(node.expression)) {
-        return;
-    }
-    const decoratorFactory = node.expression;
-    if (!ts.isIdentifier(decoratorFactory.expression) ||
-        decoratorFactory.expression.text !== 'Component') {
-        return;
-    }
-    const args = decoratorFactory.arguments;
-    if (args.length !== 1 || !ts.isObjectLiteralExpression(args[0])) {
-        // Unsupported component metadata
-        return;
-    }
-    const objectExpression = args[0];
-    // check if a `styles` property is present
-    let hasStyles = false;
-    for (const element of objectExpression.properties) {
-        if (!ts.isPropertyAssignment(element) || ts.isComputedPropertyName(element.name)) {
-            continue;
-        }
-        if (element.name.text === 'styles') {
-            hasStyles = true;
-            break;
-        }
-    }
-    if (hasStyles) {
-        return;
-    }
-    const nodeFactory = ts.factory;
-    // add a `styles` property to workaround upstream compiler defect
-    const emptyArray = nodeFactory.createArrayLiteralExpression();
-    const stylePropertyName = nodeFactory.createIdentifier('styles');
-    const styleProperty = nodeFactory.createPropertyAssignment(stylePropertyName, emptyArray);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stylePropertyName.parent = styleProperty;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    emptyArray.parent = styleProperty;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    styleProperty.parent = objectExpression;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    objectExpression.properties = nodeFactory.createNodeArray([
-        ...objectExpression.properties,
-        styleProperty,
-    ]);
 }
