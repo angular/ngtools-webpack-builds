@@ -161,12 +161,10 @@ class WebpackResourceLoader {
             });
         });
         let finalContent;
-        let finalMap;
         childCompiler.hooks.compilation.tap('angular-compiler', (childCompilation) => {
             childCompilation.hooks.processAssets.tap({ name: 'angular-compiler', stage: webpack.Compilation.PROCESS_ASSETS_STAGE_REPORT }, () => {
-                var _a, _b;
+                var _a;
                 finalContent = (_a = childCompilation.assets[outputFilePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
-                finalMap = (_b = childCompilation.assets[outputFilePath + '.map']) === null || _b === void 0 ? void 0 : _b.source().toString();
                 delete childCompilation.assets[outputFilePath];
                 delete childCompilation.assets[outputFilePath + '.map'];
             });
