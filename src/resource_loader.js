@@ -188,13 +188,38 @@ class WebpackResourceLoader {
                 const parent = childCompiler.parentCompilation;
                 if (parent) {
                     parent.children = parent.children.filter((child) => child !== childCompilation);
-                    for (const fileDependency of childCompilation.fileDependencies) {
-                        if (data && containingFile && fileDependency.endsWith(entry)) {
+                    let fileDependencies;
+                    for (const dependency of childCompilation.fileDependencies) {
+                        // Skip paths that do not appear to be files (have no extension).
+                        // `fileDependencies` can contain directories and not just files which can
+                        // cause incorrect cache invalidation on rebuilds.
+                        if (!path.extname(dependency)) {
+                            continue;
+                        }
+                        if (data && containingFile && dependency.endsWith(entry)) {
                             // use containing file if the resource was inline
                             parent.fileDependencies.add(containingFile);
                         }
                         else {
-                            parent.fileDependencies.add(fileDependency);
+                            parent.fileDependencies.add(dependency);
+                        }
+                        // Save the dependencies for this resource.
+                        if (filePath) {
+                            const resolvedFile = paths_1.normalizePath(dependency);
+                            const entry = this._reverseDependencies.get(resolvedFile);
+                            if (entry) {
+                                entry.add(filePath);
+                            }
+                            else {
+                                this._reverseDependencies.set(resolvedFile, new Set([filePath]));
+                            }
+                            if (fileDependencies) {
+                                fileDependencies.add(dependency);
+                            }
+                            else {
+                                fileDependencies = new Set([dependency]);
+                                this._fileDependencies.set(filePath, fileDependencies);
+                            }
                         }
                     }
                     parent.contextDependencies.addAll(childCompilation.contextDependencies);
@@ -207,26 +232,6 @@ class WebpackResourceLoader {
                             throw new Error(`'${name}' asset info 'sourceFilename' is 'undefined'.`);
                         }
                         (_a = this.assetCache) === null || _a === void 0 ? void 0 : _a.set(info.sourceFilename, { info, name, source });
-                    }
-                }
-                // Save the dependencies for this resource.
-                if (filePath) {
-                    this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
-                    for (const file of childCompilation.fileDependencies) {
-                        const resolvedFile = paths_1.normalizePath(file);
-                        // Skip paths that do not appear to be files (have no extension).
-                        // `fileDependencies` can contain directories and not just files which can
-                        // cause incorrect cache invalidation on rebuilds.
-                        if (!path.extname(resolvedFile)) {
-                            continue;
-                        }
-                        const entry = this._reverseDependencies.get(resolvedFile);
-                        if (entry) {
-                            entry.add(filePath);
-                        }
-                        else {
-                            this._reverseDependencies.set(resolvedFile, new Set([filePath]));
-                        }
                     }
                 }
                 resolve({
