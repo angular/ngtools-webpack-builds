@@ -28,7 +28,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getResourceUrl = exports.replaceResources = void 0;
 const ts = __importStar(require("typescript"));
-const inlineDataLoaderPath = require.resolve('../inline-data-loader');
+const direct_resource_1 = require("../loaders/direct-resource");
+const inline_resource_1 = require("../loaders/inline-resource");
 function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleMimeType, inlineStyleFileExtension) {
     if (inlineStyleMimeType && !/^text\/[-.\w]+$/.test(inlineStyleMimeType)) {
         throw new Error('Invalid inline style MIME type.');
@@ -99,7 +100,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
         case 'moduleId':
             return undefined;
         case 'templateUrl':
-            const url = getResourceUrl(node.initializer, directTemplateLoading ? '!raw-loader!' : '');
+            const url = getResourceUrl(node.initializer, directTemplateLoading ? `!${direct_resource_1.DirectAngularResourceLoaderPath}!` : '');
             if (!url) {
                 return node;
             }
@@ -127,7 +128,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
                     else if (inlineStyleFileExtension) {
                         const data = Buffer.from(node.text).toString('base64');
                         const containingFile = node.getSourceFile().fileName;
-                        url = `${containingFile}.${inlineStyleFileExtension}!=!${inlineDataLoaderPath}?data=${encodeURIComponent(data)}!${containingFile}`;
+                        url = `${containingFile}.${inlineStyleFileExtension}!=!${inline_resource_1.InlineAngularResourceLoaderPath}?data=${encodeURIComponent(data)}!${containingFile}`;
                     }
                     else {
                         return nodeFactory.createStringLiteral(node.text);

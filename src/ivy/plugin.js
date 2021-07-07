@@ -34,7 +34,6 @@ const ts = __importStar(require("typescript"));
 const ngcc_processor_1 = require("../ngcc_processor");
 const paths_plugin_1 = require("../paths-plugin");
 const resource_loader_1 = require("../resource_loader");
-const webpack_diagnostics_1 = require("../webpack-diagnostics");
 const cache_1 = require("./cache");
 const diagnostics_1 = require("./diagnostics");
 const host_1 = require("./host");
@@ -128,8 +127,8 @@ class AngularWebpackPlugin {
             if (!ngccProcessor) {
                 const { processor, errors, warnings } = initializeNgccProcessor(compiler, this.pluginOptions.tsconfig);
                 processor.process();
-                warnings.forEach((warning) => webpack_diagnostics_1.addWarning(compilation, warning));
-                errors.forEach((error) => webpack_diagnostics_1.addError(compilation, error));
+                warnings.forEach((warning) => diagnostics_1.addWarning(compilation, warning));
+                errors.forEach((error) => diagnostics_1.addError(compilation, error));
                 ngccProcessor = processor;
             }
             // Setup and read TypeScript and Angular compiler configuration
@@ -220,7 +219,7 @@ class AngularWebpackPlugin {
                     if (previousUnused && previousUnused.has(unused)) {
                         continue;
                     }
-                    webpack_diagnostics_1.addWarning(compilation, `${unused} is part of the TypeScript compilation but it's unused.\n` +
+                    diagnostics_1.addWarning(compilation, `${unused} is part of the TypeScript compilation but it's unused.\n` +
                         `Add only entry points to the 'files' or 'include' properties in your tsconfig.`);
                 }
                 previousUnused = currentUnused;

@@ -30,15 +30,15 @@ exports.WebpackResourceLoader = void 0;
 const crypto_1 = require("crypto");
 const path = __importStar(require("path"));
 const vm = __importStar(require("vm"));
-const inline_data_loader_1 = require("./inline-data-loader");
 const paths_1 = require("./ivy/paths");
+const inline_resource_1 = require("./loaders/inline-resource");
 class WebpackResourceLoader {
     constructor(shouldCache) {
         this._fileDependencies = new Map();
         this._reverseDependencies = new Map();
         this.modifiedResources = new Set();
         this.outputPathCounter = 1;
-        this.inlineDataLoaderPath = require.resolve('./inline-data-loader');
+        this.inlineDataLoaderPath = inline_resource_1.InlineAngularResourceLoaderPath;
         if (shouldCache) {
             this.fileCache = new Map();
             this.assetCache = new Map();
@@ -141,7 +141,7 @@ class WebpackResourceLoader {
                 NormalModule.getCompilationHooks(compilation)
                     .readResourceForScheme.for('angular-resource')
                     .tap('angular-compiler', () => data);
-                compilation[inline_data_loader_1.InlineAngularResourceSymbol] = data;
+                compilation[inline_resource_1.InlineAngularResourceSymbol] = data;
             }
             compilation.hooks.additionalAssets.tap('angular-compiler', () => {
                 const asset = compilation.assets[outputFilePath];
