@@ -227,11 +227,13 @@ class WebpackResourceLoader {
                     parent.buildDependencies.addAll(childCompilation.buildDependencies);
                     parent.warnings.push(...childCompilation.warnings);
                     parent.errors.push(...childCompilation.errors);
-                    for (const { info, name, source } of childCompilation.getAssets()) {
-                        if (info.sourceFilename === undefined) {
-                            throw new Error(`'${name}' asset info 'sourceFilename' is 'undefined'.`);
+                    if (this.assetCache) {
+                        for (const { info, name, source } of childCompilation.getAssets()) {
+                            // Use the originating file as the cache key if present
+                            // Otherwise, generate a cache key based on the generated name
+                            const cacheKey = (_a = info.sourceFilename) !== null && _a !== void 0 ? _a : `!![GENERATED]:${name}`;
+                            this.assetCache.set(cacheKey, { info, name, source });
                         }
-                        (_a = this.assetCache) === null || _a === void 0 ? void 0 : _a.set(info.sourceFilename, { info, name, source });
                     }
                 }
                 resolve({
