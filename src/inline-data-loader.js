@@ -7,8 +7,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InlineAngularResourceSymbol = exports.InlineAngularResourceLoaderPath = void 0;
-exports.InlineAngularResourceLoaderPath = __filename;
+exports.InlineAngularResourceSymbol = void 0;
 exports.InlineAngularResourceSymbol = Symbol('@ngtools/webpack[angular-resource]');
 function default_1() {
     const callback = this.async();

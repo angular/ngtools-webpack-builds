@@ -30,15 +30,15 @@ exports.WebpackResourceLoader = void 0;
 const crypto_1 = require("crypto");
 const path = __importStar(require("path"));
 const vm = __importStar(require("vm"));
+const inline_data_loader_1 = require("./inline-data-loader");
 const paths_1 = require("./ivy/paths");
-const inline_resource_1 = require("./loaders/inline-resource");
 class WebpackResourceLoader {
     constructor(shouldCache) {
         this._fileDependencies = new Map();
         this._reverseDependencies = new Map();
         this.modifiedResources = new Set();
         this.outputPathCounter = 1;
-        this.inlineDataLoaderPath = inline_resource_1.InlineAngularResourceLoaderPath;
+        this.inlineDataLoaderPath = require.resolve('./inline-data-loader');
         if (shouldCache) {
             this.fileCache = new Map();
             this.assetCache = new Map();
@@ -141,7 +141,7 @@ class WebpackResourceLoader {
                 NormalModule.getCompilationHooks(compilation)
                     .readResourceForScheme.for('angular-resource')
                     .tap('angular-compiler', () => data);
-                compilation[inline_resource_1.InlineAngularResourceSymbol] = data;
+                compilation[inline_data_loader_1.InlineAngularResourceSymbol] = data;
             }
             compilation.hooks.additionalAssets.tap('angular-compiler', () => {
                 const asset = compilation.assets[outputFilePath];
@@ -186,38 +186,13 @@ class WebpackResourceLoader {
                 const parent = childCompiler.parentCompilation;
                 if (parent) {
                     parent.children = parent.children.filter((child) => child !== childCompilation);
-                    let fileDependencies;
-                    for (const dependency of childCompilation.fileDependencies) {
-                        // Skip paths that do not appear to be files (have no extension).
-                        // `fileDependencies` can contain directories and not just files which can
-                        // cause incorrect cache invalidation on rebuilds.
-                        if (!path.extname(dependency)) {
-                            continue;
-                        }
-                        if (data && containingFile && dependency.endsWith(entry)) {
+                    for (const fileDependency of childCompilation.fileDependencies) {
+                        if (data && containingFile && fileDependency.endsWith(entry)) {
                             // use containing file if the resource was inline
                             parent.fileDependencies.add(containingFile);
                         }
                         else {
-                            parent.fileDependencies.add(dependency);
-                        }
-                        // Save the dependencies for this resource.
-                        if (filePath) {
-                            const resolvedFile = paths_1.normalizePath(dependency);
-                            const entry = this._reverseDependencies.get(resolvedFile);
-                            if (entry) {
-                                entry.add(filePath);
-                            }
-                            else {
-                                this._reverseDependencies.set(resolvedFile, new Set([filePath]));
-                            }
-                            if (fileDependencies) {
-                                fileDependencies.add(dependency);
-                            }
-                            else {
-                                fileDependencies = new Set([dependency]);
-                                this._fileDependencies.set(filePath, fileDependencies);
-                            }
+                            parent.fileDependencies.add(fileDependency);
                         }
                     }
                     parent.contextDependencies.addAll(childCompilation.contextDependencies);
@@ -225,12 +200,30 @@ class WebpackResourceLoader {
                     parent.buildDependencies.addAll(childCompilation.buildDependencies);
                     parent.warnings.push(...childCompilation.warnings);
                     parent.errors.push(...childCompilation.errors);
-                    if (this.assetCache) {
-                        for (const { info, name, source } of childCompilation.getAssets()) {
-                            // Use the originating file as the cache key if present
-                            // Otherwise, generate a cache key based on the generated name
-                            const cacheKey = (_a = info.sourceFilename) !== null && _a !== void 0 ? _a : `!![GENERATED]:${name}`;
-                            this.assetCache.set(cacheKey, { info, name, source });
+                    for (const { info, name, source } of childCompilation.getAssets()) {
+                        if (info.sourceFilename === undefined) {
+                            throw new Error(`'${name}' asset info 'sourceFilename' is 'undefined'.`);
+                        }
+                        (_a = this.assetCache) === null || _a === void 0 ? void 0 : _a.set(info.sourceFilename, { info, name, source });
+                    }
+                }
+                // Save the dependencies for this resource.
+                if (filePath) {
+                    this._fileDependencies.set(filePath, new Set(childCompilation.fileDependencies));
+                    for (const file of childCompilation.fileDependencies) {
+                        const resolvedFile = paths_1.normalizePath(file);
+                        // Skip paths that do not appear to be files (have no extension).
+                        // `fileDependencies` can contain directories and not just files which can
+                        // cause incorrect cache invalidation on rebuilds.
+                        if (!path.extname(resolvedFile)) {
+                            continue;
+                        }
+                        const entry = this._reverseDependencies.get(resolvedFile);
+                        if (entry) {
+                            entry.add(filePath);
+                        }
+                        else {
+                            this._reverseDependencies.set(resolvedFile, new Set([filePath]));
                         }
                     }
                 }
