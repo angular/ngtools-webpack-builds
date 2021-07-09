@@ -361,17 +361,17 @@ class AngularWebpackPlugin {
                 affectedFiles.add(result.affected);
             }
         }
-        // Collect program level diagnostics
+        // Collect non-semantic diagnostics
         const diagnostics = [
             ...angularCompiler.getOptionDiagnostics(),
             ...builder.getOptionsDiagnostics(),
             ...builder.getGlobalDiagnostics(),
+            ...builder.getSyntacticDiagnostics(),
         ];
         diagnosticsReporter(diagnostics);
-        // Collect source file specific diagnostics
+        // Collect semantic diagnostics
         for (const sourceFile of builder.getSourceFiles()) {
             if (!ignoreForDiagnostics.has(sourceFile)) {
-                diagnosticsReporter(builder.getSyntacticDiagnostics(sourceFile));
                 diagnosticsReporter(builder.getSemanticDiagnostics(sourceFile));
             }
         }
