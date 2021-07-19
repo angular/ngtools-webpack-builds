@@ -5,8 +5,6 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { AngularPluginSymbol, FileEmitterCollection } from './symbol';
-export declare function angularWebpackLoader(this: import('webpack').LoaderContext<unknown> & {
-    [AngularPluginSymbol]?: FileEmitterCollection;
-}, content: string, map: string): void;
+import type { LoaderContext } from 'webpack';
+export declare function angularWebpackLoader(this: LoaderContext<unknown>, content: string, map: string): void;
 export { angularWebpackLoader as default };
