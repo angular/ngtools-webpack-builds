@@ -5,9 +5,10 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { Resolver } from 'enhanced-resolve';
 import * as ts from 'typescript';
+import type { Compiler } from 'webpack';
 import { InputFileSystem } from './ivy/system';
+declare type ResolverWithOptions = ReturnType<Compiler['resolverFactory']['get']>;
 export declare class NgccProcessor {
     private readonly propertiesToConsider;
     private readonly compilationWarnings;
@@ -19,7 +20,7 @@ export declare class NgccProcessor {
     private _processedModules;
     private _logger;
     private _nodeModulesDirectory;
-    constructor(propertiesToConsider: string[], compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string, inputFileSystem: InputFileSystem, resolver: Resolver);
+    constructor(propertiesToConsider: string[], compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string, inputFileSystem: InputFileSystem, resolver: ResolverWithOptions);
     /** Process the entire node modules tree. */
     process(): void;
     /** Process a module and it's depedencies. */
@@ -31,3 +32,4 @@ export declare class NgccProcessor {
     private tryResolvePackage;
     private findNodeModulesDirectory;
 }
+export {};

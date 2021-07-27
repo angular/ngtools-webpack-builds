@@ -28,7 +28,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TypeScriptPathsPlugin = void 0;
 const path = __importStar(require("path"));
-const getInnerRequest = require('enhanced-resolve/lib/getInnerRequest');
 class TypeScriptPathsPlugin {
     constructor(options) {
         this.options = options;
@@ -36,7 +35,6 @@ class TypeScriptPathsPlugin {
     update(options) {
         this.options = options;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apply(resolver) {
         const target = resolver.ensureHook('resolve');
         resolver.getHook('described-resolve').tapAsync('TypeScriptPathsPlugin', 
@@ -50,7 +48,7 @@ class TypeScriptPathsPlugin {
                 callback();
                 return;
             }
-            const originalRequest = getInnerRequest(resolver, request);
+            const originalRequest = request.request || request.path;
             if (!originalRequest) {
                 callback();
                 return;
