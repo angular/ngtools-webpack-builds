@@ -11,8 +11,16 @@ export interface TypeScriptPathsPluginOptions extends Pick<CompilerOptions, 'pat
 }
 declare type Resolver = Exclude<Exclude<Configuration['resolve'], undefined>['resolver'], undefined>;
 export declare class TypeScriptPathsPlugin {
-    private options?;
-    constructor(options?: TypeScriptPathsPluginOptions | undefined);
+    private baseUrl?;
+    private patterns?;
+    constructor(options?: TypeScriptPathsPluginOptions);
+    /**
+     * Update the plugin with new path mapping option values.
+     * The options will also be preprocessed to reduce the overhead of individual resolve actions
+     * during a build.
+     *
+     * @param options The `paths` and `baseUrl` options from TypeScript's `CompilerOptions`.
+     */
     update(options: TypeScriptPathsPluginOptions): void;
     apply(resolver: Resolver): void;
 }
