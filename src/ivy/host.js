@@ -185,7 +185,7 @@ function augmentHostWithReplacements(host, replacements, moduleResolutionCache) 
         if (replacement) {
             return {
                 resolvedFileName: replacement,
-                isExternalLibraryImport: /[\/\\]node_modules[\/\\]/.test(replacement),
+                isExternalLibraryImport: /[/\\]node_modules[/\\]/.test(replacement),
             };
         }
         else {
