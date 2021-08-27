@@ -25,5 +25,5 @@ export declare class WebpackResourceLoader {
     private _compile;
     private _evaluate;
     get(filePath: string): Promise<string>;
-    process(data: string, mimeType: string | undefined, fileExtension: string | undefined, resourceType: 'template' | 'style', containingFile?: string): Promise<string>;
+    process(data: string, fileExtension: string | undefined, resourceType: 'template' | 'style', containingFile?: string): Promise<string>;
 }

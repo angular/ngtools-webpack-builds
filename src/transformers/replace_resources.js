@@ -30,10 +30,7 @@ exports.getResourceUrl = exports.replaceResources = void 0;
 const ts = __importStar(require("typescript"));
 const direct_resource_1 = require("../loaders/direct-resource");
 const inline_resource_1 = require("../loaders/inline-resource");
-function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleMimeType, inlineStyleFileExtension) {
-    if (inlineStyleMimeType && !/^text\/[-.\w]+$/.test(inlineStyleMimeType)) {
-        throw new Error('Invalid inline style MIME type.');
-    }
+function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleFileExtension) {
     return (context) => {
         const typeChecker = getTypeChecker();
         const resourceImportDeclarations = [];
@@ -42,7 +39,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
                 const decorators = ts.visitNodes(node.decorators, (node) => ts.isDecorator(node)
-                    ? visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension)
+                    ? visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension)
                     : node);
                 return nodeFactory.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
@@ -65,7 +62,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
     };
 }
 exports.replaceResources = replaceResources;
-function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension) {
+function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
     }
@@ -82,7 +79,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     const styleReplacements = [];
     // visit all properties
     let properties = ts.visitNodes(objectExpression.properties, (node) => ts.isObjectLiteralElementLike(node)
-        ? visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension)
+        ? visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension)
         : node);
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
@@ -91,7 +88,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     }
     return nodeFactory.updateDecorator(node, nodeFactory.updateCallExpression(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [nodeFactory.updateObjectLiteralExpression(objectExpression, properties)]));
 }
-function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleMimeType, inlineStyleFileExtension) {
+function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -121,11 +118,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
                 }
                 let url;
                 if (isInlineStyle) {
-                    if (inlineStyleMimeType) {
-                        const data = Buffer.from(node.text).toString('base64');
-                        url = `data:${inlineStyleMimeType};charset=utf-8;base64,${data}`;
-                    }
-                    else if (inlineStyleFileExtension) {
+                    if (inlineStyleFileExtension) {
                         const data = Buffer.from(node.text).toString('base64');
                         const containingFile = node.getSourceFile().fileName;
                         url = `${containingFile}.${inlineStyleFileExtension}!=!${inline_resource_1.InlineAngularResourceLoaderPath}?data=${encodeURIComponent(data)}!${containingFile}`;

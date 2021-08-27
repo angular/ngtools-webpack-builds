@@ -12,7 +12,6 @@ export declare function createAotTransformers(builder: ts.BuilderProgram, option
 }): ts.CustomTransformers;
 export declare function createJitTransformers(builder: ts.BuilderProgram, options: {
     directTemplateLoading?: boolean;
-    inlineStyleMimeType?: string;
     inlineStyleFileExtension?: string;
 }): ts.CustomTransformers;
 export declare function mergeTransformers(first: ts.CustomTransformers, second: ts.CustomTransformers): ts.CustomTransformers;

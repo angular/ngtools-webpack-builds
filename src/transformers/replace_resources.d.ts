@@ -6,5 +6,5 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import * as ts from 'typescript';
-export declare function replaceResources(shouldTransform: (fileName: string) => boolean, getTypeChecker: () => ts.TypeChecker, directTemplateLoading?: boolean, inlineStyleMimeType?: string, inlineStyleFileExtension?: string): ts.TransformerFactory<ts.SourceFile>;
+export declare function replaceResources(shouldTransform: (fileName: string) => boolean, getTypeChecker: () => ts.TypeChecker, directTemplateLoading?: boolean, inlineStyleFileExtension?: string): ts.TransformerFactory<ts.SourceFile>;
 export declare function getResourceUrl(node: ts.Node, loader?: string): string | null;

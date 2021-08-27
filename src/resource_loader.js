@@ -89,7 +89,7 @@ class WebpackResourceLoader {
     setAffectedResources(file, resources) {
         this._reverseDependencies.set(file, new Set(resources));
     }
-    async _compile(filePath, data, mimeType, fileExtension, resourceType, containingFile) {
+    async _compile(filePath, data, fileExtension, resourceType, containingFile) {
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
@@ -132,9 +132,6 @@ class WebpackResourceLoader {
                     if (filePath) {
                         resourceData.path = filePath;
                         resourceData.resource = filePath;
-                    }
-                    if (mimeType) {
-                        resourceData.data.mimetype = mimeType;
                     }
                     return true;
                 });
@@ -274,11 +271,11 @@ class WebpackResourceLoader {
         }
         return compilationResult.content;
     }
-    async process(data, mimeType, fileExtension, resourceType, containingFile) {
+    async process(data, fileExtension, resourceType, containingFile) {
         if (data.trim().length === 0) {
             return '';
         }
-        const compilationResult = await this._compile(undefined, data, mimeType, fileExtension, resourceType, containingFile);
+        const compilationResult = await this._compile(undefined, data, fileExtension, resourceType, containingFile);
         return compilationResult.content;
     }
 }

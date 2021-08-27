@@ -16,8 +16,6 @@ export interface AngularWebpackPluginOptions {
     emitClassMetadata: boolean;
     emitNgModuleScope: boolean;
     jitMode: boolean;
-    /** @deprecated use `inlineStyleFileExtension` instead. */
-    inlineStyleMimeType?: string;
     inlineStyleFileExtension?: string;
 }
 export declare class AngularWebpackPlugin {

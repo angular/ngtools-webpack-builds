@@ -10,7 +10,6 @@ import { NgccProcessor } from '../ngcc_processor';
 import { WebpackResourceLoader } from '../resource_loader';
 export declare function augmentHostWithResources(host: ts.CompilerHost, resourceLoader: WebpackResourceLoader, options?: {
     directTemplateLoading?: boolean;
-    inlineStyleMimeType?: string;
     inlineStyleFileExtension?: string;
 }): void;
 /**

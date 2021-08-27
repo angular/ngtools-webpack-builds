@@ -175,7 +175,6 @@ class AngularWebpackPlugin {
             resourceLoader.update(compilation, changedFiles);
             host_1.augmentHostWithResources(host, resourceLoader, {
                 directTemplateLoading: this.pluginOptions.directTemplateLoading,
-                inlineStyleMimeType: this.pluginOptions.inlineStyleMimeType,
                 inlineStyleFileExtension: this.pluginOptions.inlineStyleFileExtension,
             });
             // Setup source file adjustment options
