@@ -28,7 +28,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AngularWebpackPlugin = void 0;
 const compiler_cli_1 = require("@angular/compiler-cli");
-const program_1 = require("@angular/compiler-cli/src/ngtsc/program");
 const crypto_1 = require("crypto");
 const ts = __importStar(require("typescript"));
 const ngcc_processor_1 = require("../ngcc_processor");
@@ -306,7 +305,7 @@ class AngularWebpackPlugin {
     }
     updateAotProgram(compilerOptions, rootNames, host, diagnosticsReporter, resourceLoader) {
         // Create the Angular specific program that contains the Angular compiler
-        const angularProgram = new program_1.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
+        const angularProgram = new compiler_cli_1.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
         const angularCompiler = angularProgram.compiler;
         // The `ignoreForEmit` return value can be safely ignored when emitting. Only files
         // that will be bundled (requested by Webpack) will be emitted. Combined with TypeScript's
