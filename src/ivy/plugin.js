@@ -27,7 +27,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AngularWebpackPlugin = void 0;
-const compiler_cli_1 = require("@angular/compiler-cli");
+const assert_1 = require("assert");
 const crypto_1 = require("crypto");
 const ts = __importStar(require("typescript"));
 const ngcc_processor_1 = require("../ngcc_processor");
@@ -46,7 +46,7 @@ const transformation_1 = require("./transformation");
  * program optimization will be used.
  */
 const DIAGNOSTICS_AFFECTED_THRESHOLD = 1;
-function initializeNgccProcessor(compiler, tsconfig) {
+function initializeNgccProcessor(compiler, tsconfig, compilerNgccModule) {
     var _a, _b, _c;
     const { inputFileSystem, options: webpackOptions } = compiler;
     const mainFields = (_c = (_b = (_a = webpackOptions.resolve) === null || _a === void 0 ? void 0 : _a.mainFields) === null || _b === void 0 ? void 0 : _b.flat()) !== null && _c !== void 0 ? _c : [];
@@ -58,7 +58,11 @@ function initializeNgccProcessor(compiler, tsconfig) {
         extensions: ['.json'],
         useSyncFileSystemCalls: true,
     });
-    const processor = new ngcc_processor_1.NgccProcessor(mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, resolver);
+    // The compilerNgccModule field is guaranteed to be defined during a compilation
+    // due to the `beforeCompile` hook. Usage of this property accessor prior to the
+    // hook execution is an implementation error.
+    assert_1.strict.ok(compilerNgccModule, `'@angular/compiler-cli/ngcc' used prior to Webpack compilation.`);
+    const processor = new ngcc_processor_1.NgccProcessor(compilerNgccModule, mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, resolver);
     return { processor, errors, warnings };
 }
 function hashContent(content) {
@@ -82,6 +86,13 @@ class AngularWebpackPlugin {
             tsconfig: 'tsconfig.json',
             ...options,
         };
+    }
+    get compilerCli() {
+        // The compilerCliModule field is guaranteed to be defined during a compilation
+        // due to the `beforeCompile` hook. Usage of this property accessor prior to the
+        // hook execution is an implementation error.
+        assert_1.strict.ok(this.compilerCliModule, `'@angular/compiler-cli' used prior to Webpack compilation.`);
+        return this.compilerCliModule;
     }
     get options() {
         return this.pluginOptions;
@@ -111,6 +122,8 @@ class AngularWebpackPlugin {
                 return util.cleverMerge(resolveOptions, { mainFields: [...ivyMainFields, '...'] });
             });
         });
+        // Load the compiler-cli if not already available
+        compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, () => this.initializeCompilerCli());
         let ngccProcessor;
         let resourceLoader;
         let previousUnused;
@@ -124,7 +137,7 @@ class AngularWebpackPlugin {
             }
             // Initialize and process eager ngcc if not already setup
             if (!ngccProcessor) {
-                const { processor, errors, warnings } = initializeNgccProcessor(compiler, this.pluginOptions.tsconfig);
+                const { processor, errors, warnings } = initializeNgccProcessor(compiler, this.pluginOptions.tsconfig, this.compilerNgccModule);
                 processor.process();
                 warnings.forEach((warning) => diagnostics_1.addWarning(compilation, warning));
                 errors.forEach((error) => diagnostics_1.addError(compilation, error));
@@ -133,7 +146,7 @@ class AngularWebpackPlugin {
             // Setup and read TypeScript and Angular compiler configuration
             const { compilerOptions, rootNames, errors } = this.loadConfiguration();
             // Create diagnostics reporter and report configuration file errors
-            const diagnosticsReporter = diagnostics_1.createDiagnosticsReporter(compilation);
+            const diagnosticsReporter = diagnostics_1.createDiagnosticsReporter(compilation, (diagnostic) => this.compilerCli.formatDiagnostics([diagnostic]));
             diagnosticsReporter(errors);
             // Update TypeScript path mapping plugin with new configuration
             pathsPlugin.update(compilerOptions);
@@ -289,7 +302,7 @@ class AngularWebpackPlugin {
         this.requiredFilesToEmitCache.clear();
     }
     loadConfiguration() {
-        const { options: compilerOptions, rootNames, errors, } = compiler_cli_1.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
+        const { options: compilerOptions, rootNames, errors, } = this.compilerCli.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
         compilerOptions.enableIvy = true;
         compilerOptions.noEmitOnError = false;
         compilerOptions.suppressOutputPathCheck = true;
@@ -305,7 +318,7 @@ class AngularWebpackPlugin {
     }
     updateAotProgram(compilerOptions, rootNames, host, diagnosticsReporter, resourceLoader) {
         // Create the Angular specific program that contains the Angular compiler
-        const angularProgram = new compiler_cli_1.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
+        const angularProgram = new this.compilerCli.NgtscProgram(rootNames, compilerOptions, host, this.ngtscNextProgram);
         const angularCompiler = angularProgram.compiler;
         // The `ignoreForEmit` return value can be safely ignored when emitting. Only files
         // that will be bundled (requested by Webpack) will be emitted. Combined with TypeScript's
@@ -386,7 +399,7 @@ class AngularWebpackPlugin {
         // Required to support asynchronous resource loading
         // Must be done before creating transformers or getting template diagnostics
         const pendingAnalysis = angularCompiler.analyzeAsync().then(() => {
-            var _a;
+            var _a, _b;
             this.requiredFilesToEmit.clear();
             for (const sourceFile of builder.getSourceFiles()) {
                 if (sourceFile.isDeclarationFile) {
@@ -411,15 +424,20 @@ class AngularWebpackPlugin {
                     }
                 }
             }
+            // Temporary workaround during transition to ESM-only @angular/compiler-cli
+            // TODO_ESM: This workaround should be removed prior to the final release of v13
+            //       and replaced with only `this.compilerCli.OptimizeFor`.
+            const OptimizeFor = 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (_a = this.compilerCli.OptimizeFor) !== null && _a !== void 0 ? _a : require('@angular/compiler-cli/src/ngtsc/typecheck/api').OptimizeFor;
             // Collect new Angular diagnostics for files affected by changes
-            const { OptimizeFor } = require('@angular/compiler-cli/src/ngtsc/typecheck/api');
             const optimizeDiagnosticsFor = affectedFiles.size <= DIAGNOSTICS_AFFECTED_THRESHOLD
                 ? OptimizeFor.SingleFile
                 : OptimizeFor.WholeProgram;
             for (const affectedFile of affectedFiles) {
                 const angularDiagnostics = angularCompiler.getDiagnosticsForFile(affectedFile, optimizeDiagnosticsFor);
                 diagnosticsReporter(angularDiagnostics);
-                (_a = this.sourceFileCache) === null || _a === void 0 ? void 0 : _a.updateAngularDiagnostics(affectedFile, angularDiagnostics);
+                (_b = this.sourceFileCache) === null || _b === void 0 ? void 0 : _b.updateAngularDiagnostics(affectedFile, angularDiagnostics);
             }
             return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
                 this.requiredFilesToEmit.delete(paths_1.normalizePath(sourceFile.fileName));
@@ -454,7 +472,7 @@ class AngularWebpackPlugin {
             ...builder.getSemanticDiagnostics(),
         ];
         diagnosticsReporter(diagnostics);
-        const transformers = transformation_1.createJitTransformers(builder, this.pluginOptions);
+        const transformers = transformation_1.createJitTransformers(builder, this.compilerCli, this.pluginOptions);
         return {
             fileEmitter: this.createFileEmitter(builder, transformers, () => []),
             builder,
@@ -494,6 +512,36 @@ class AngularWebpackPlugin {
             ].map(paths_1.externalizePath);
             return { content, map, dependencies, hash };
         };
+    }
+    async initializeCompilerCli() {
+        if (this.compilerCliModule) {
+            return;
+        }
+        // This uses a dynamic import to load `@angular/compiler-cli` which may be ESM.
+        // CommonJS code can load ESM code via a dynamic import. Unfortunately, TypeScript
+        // will currently, unconditionally downlevel dynamic import into a require call.
+        // require calls cannot load ESM code and will result in a runtime error. To workaround
+        // this, a Function constructor is used to prevent TypeScript from changing the dynamic import.
+        // Once TypeScript provides support for keeping the dynamic import this workaround can
+        // be dropped.
+        const compilerCliModule = await new Function(`return import('@angular/compiler-cli');`)();
+        let compilerNgccModule;
+        try {
+            compilerNgccModule = await new Function(`return import('@angular/compiler-cli/ngcc');`)();
+        }
+        catch {
+            // If the `exports` field entry is not present then try the file directly.
+            // TODO_ESM: This try/catch can be removed once the `exports` field is present in `@angular/compiler-cli`
+            compilerNgccModule = await new Function(`return import('@angular/compiler-cli/ngcc/index.js');`)();
+        }
+        // If it is not ESM then the functions needed will be stored in the `default` property.
+        // TODO_ESM: This conditional can be removed when `@angular/compiler-cli` is ESM only.
+        this.compilerCliModule = compilerCliModule.readConfiguration
+            ? compilerCliModule
+            : compilerCliModule.default;
+        this.compilerNgccModule = compilerNgccModule.process
+            ? compilerNgccModule
+            : compilerNgccModule.default;
     }
 }
 exports.AngularWebpackPlugin = AngularWebpackPlugin;

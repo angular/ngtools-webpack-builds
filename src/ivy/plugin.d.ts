@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { CompilerOptions } from '@angular/compiler-cli';
+import type { CompilerOptions } from '@angular/compiler-cli';
 import type { Compiler } from 'webpack';
 export interface AngularWebpackPluginOptions {
     tsconfig: string;
@@ -20,6 +20,8 @@ export interface AngularWebpackPluginOptions {
 }
 export declare class AngularWebpackPlugin {
     private readonly pluginOptions;
+    private compilerCliModule?;
+    private compilerNgccModule?;
     private watchMode?;
     private ngtscNextProgram?;
     private builder?;
@@ -29,6 +31,7 @@ export declare class AngularWebpackPlugin {
     private readonly requiredFilesToEmitCache;
     private readonly fileEmitHistory;
     constructor(options?: Partial<AngularWebpackPluginOptions>);
+    private get compilerCli();
     get options(): AngularWebpackPluginOptions;
     apply(compiler: Compiler): void;
     private registerWithCompilation;
@@ -38,4 +41,5 @@ export declare class AngularWebpackPlugin {
     private updateAotProgram;
     private updateJitProgram;
     private createFileEmitter;
+    private initializeCompilerCli;
 }

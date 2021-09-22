@@ -10,6 +10,7 @@ import type { Compiler } from 'webpack';
 import { InputFileSystem } from './ivy/system';
 declare type ResolverWithOptions = ReturnType<Compiler['resolverFactory']['get']>;
 export declare class NgccProcessor {
+    private readonly compilerNgcc;
     private readonly propertiesToConsider;
     private readonly compilationWarnings;
     private readonly compilationErrors;
@@ -20,7 +21,7 @@ export declare class NgccProcessor {
     private _processedModules;
     private _logger;
     private _nodeModulesDirectory;
-    constructor(propertiesToConsider: string[], compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string, inputFileSystem: InputFileSystem, resolver: ResolverWithOptions);
+    constructor(compilerNgcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string, inputFileSystem: InputFileSystem, resolver: ResolverWithOptions);
     /** Process the entire node modules tree. */
     process(): void;
     /** Process a module and it's depedencies. */

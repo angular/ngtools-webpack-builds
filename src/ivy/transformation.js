@@ -27,7 +27,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.replaceBootstrap = exports.mergeTransformers = exports.createJitTransformers = exports.createAotTransformers = void 0;
-const compiler_cli_1 = require("@angular/compiler-cli");
 const ts = __importStar(require("typescript"));
 const elide_imports_1 = require("../transformers/elide_imports");
 const remove_ivy_jit_support_calls_1 = require("../transformers/remove-ivy-jit-support-calls");
@@ -47,12 +46,12 @@ function createAotTransformers(builder, options) {
     return transformers;
 }
 exports.createAotTransformers = createAotTransformers;
-function createJitTransformers(builder, options) {
+function createJitTransformers(builder, compilerCli, options) {
     const getTypeChecker = () => builder.getProgram().getTypeChecker();
     return {
         before: [
             replace_resources_1.replaceResources(() => true, getTypeChecker, options.directTemplateLoading, options.inlineStyleFileExtension),
-            compiler_cli_1.constructorParametersDownlevelTransform(builder.getProgram()),
+            compilerCli.constructorParametersDownlevelTransform(builder.getProgram()),
         ],
     };
 }

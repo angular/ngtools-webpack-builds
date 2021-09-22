@@ -8,12 +8,11 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addError = exports.addWarning = exports.createDiagnosticsReporter = void 0;
-const compiler_cli_1 = require("@angular/compiler-cli");
 const typescript_1 = require("typescript");
-function createDiagnosticsReporter(compilation) {
+function createDiagnosticsReporter(compilation, formatter) {
     return (diagnostics) => {
         for (const diagnostic of diagnostics) {
-            const text = compiler_cli_1.formatDiagnostics([diagnostic]);
+            const text = formatter(diagnostic);
             if (diagnostic.category === typescript_1.DiagnosticCategory.Error) {
                 addError(compilation, text);
             }

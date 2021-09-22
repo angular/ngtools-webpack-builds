@@ -10,7 +10,7 @@ export declare function createAotTransformers(builder: ts.BuilderProgram, option
     emitClassMetadata?: boolean;
     emitNgModuleScope?: boolean;
 }): ts.CustomTransformers;
-export declare function createJitTransformers(builder: ts.BuilderProgram, options: {
+export declare function createJitTransformers(builder: ts.BuilderProgram, compilerCli: typeof import('@angular/compiler-cli'), options: {
     directTemplateLoading?: boolean;
     inlineStyleFileExtension?: string;
 }): ts.CustomTransformers;

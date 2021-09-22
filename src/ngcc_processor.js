@@ -27,7 +27,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NgccProcessor = void 0;
-const ngcc_1 = require("@angular/compiler-cli/ngcc");
 const child_process_1 = require("child_process");
 const crypto_1 = require("crypto");
 const fs_1 = require("fs");
@@ -41,7 +40,8 @@ const benchmark_1 = require("./benchmark");
 // but could not be resolved to an NgModule class
 // We now transform a package and it's typings when NGTSC is resolving a module.
 class NgccProcessor {
-    constructor(propertiesToConsider, compilationWarnings, compilationErrors, basePath, tsConfigPath, inputFileSystem, resolver) {
+    constructor(compilerNgcc, propertiesToConsider, compilationWarnings, compilationErrors, basePath, tsConfigPath, inputFileSystem, resolver) {
+        this.compilerNgcc = compilerNgcc;
         this.propertiesToConsider = propertiesToConsider;
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
@@ -50,11 +50,12 @@ class NgccProcessor {
         this.inputFileSystem = inputFileSystem;
         this.resolver = resolver;
         this._processedModules = new Set();
-        this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors);
+        this._logger = new NgccLogger(this.compilationWarnings, this.compilationErrors, compilerNgcc.LogLevel.info);
         this._nodeModulesDirectory = this.findNodeModulesDirectory(this.basePath);
     }
     /** Process the entire node modules tree. */
     process() {
+        var _a;
         // Under Bazel when running in sandbox mode parts of the filesystem is read-only.
         if (process.env.BAZEL_TARGET) {
             return;
@@ -114,13 +115,19 @@ class NgccProcessor {
         }
         const timeLabel = 'NgccProcessor.process';
         benchmark_1.time(timeLabel);
+        // Temporary workaround during transition to ESM-only @angular/compiler-cli
+        // TODO_ESM: This workaround should be removed prior to the final release of v13
+        //       and replaced with only `this.compilerNgcc.ngccMainFilePath`.
+        const ngccExecutablePath = 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (_a = this.compilerNgcc.ngccMainFilePath) !== null && _a !== void 0 ? _a : require.resolve('@angular/compiler-cli/ngcc/main-ngcc.js');
         // We spawn instead of using the API because:
         // - NGCC Async uses clustering which is problematic when used via the API which means
         // that we cannot setup multiple cluster masters with different options.
         // - We will not be able to have concurrent builds otherwise Ex: App-Shell,
         // as NGCC will create a lock file for both builds and it will cause builds to fails.
         const { status, error } = child_process_1.spawnSync(process.execPath, [
-            require.resolve('@angular/compiler-cli/ngcc/main-ngcc.js'),
+            ngccExecutablePath,
             '--source' /** basePath */,
             this._nodeModulesDirectory,
             '--properties' /** propertiesToConsider */,
@@ -172,7 +179,7 @@ class NgccProcessor {
         }
         const timeLabel = `NgccProcessor.processModule.ngcc.process+${moduleName}`;
         benchmark_1.time(timeLabel);
-        ngcc_1.process({
+        this.compilerNgcc.process({
             basePath: this._nodeModulesDirectory,
             targetEntryPointPath: path.dirname(packageJsonPath),
             propertiesToConsider: this.propertiesToConsider,
@@ -219,10 +226,10 @@ class NgccProcessor {
 }
 exports.NgccProcessor = NgccProcessor;
 class NgccLogger {
-    constructor(compilationWarnings, compilationErrors) {
+    constructor(compilationWarnings, compilationErrors, level) {
         this.compilationWarnings = compilationWarnings;
         this.compilationErrors = compilationErrors;
-        this.level = ngcc_1.LogLevel.info;
+        this.level = level;
     }
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     debug() { }
