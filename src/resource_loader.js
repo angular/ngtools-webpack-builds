@@ -51,14 +51,14 @@ class WebpackResourceLoader {
         this.modifiedResources.clear();
         if (changedFiles) {
             for (const changedFile of changedFiles) {
-                const changedFileNormalized = paths_1.normalizePath(changedFile);
+                const changedFileNormalized = (0, paths_1.normalizePath)(changedFile);
                 (_a = this.assetCache) === null || _a === void 0 ? void 0 : _a.delete(changedFileNormalized);
                 for (const affectedResource of this.getAffectedResources(changedFile)) {
-                    const affectedResourceNormalized = paths_1.normalizePath(affectedResource);
+                    const affectedResourceNormalized = (0, paths_1.normalizePath)(affectedResource);
                     (_b = this.fileCache) === null || _b === void 0 ? void 0 : _b.delete(affectedResourceNormalized);
                     this.modifiedResources.add(affectedResource);
                     for (const effectedDependencies of this.getResourceDependencies(affectedResourceNormalized)) {
-                        (_c = this.assetCache) === null || _c === void 0 ? void 0 : _c.delete(paths_1.normalizePath(effectedDependencies));
+                        (_c = this.assetCache) === null || _c === void 0 ? void 0 : _c.delete((0, paths_1.normalizePath)(effectedDependencies));
                     }
                 }
             }
@@ -98,7 +98,7 @@ class WebpackResourceLoader {
             (resourceType
                 ? `${containingFile}-${this.outputPathCounter}.${fileExtension}!=!${this.inlineDataLoaderPath}!${containingFile}`
                 : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    `angular-resource:${resourceType},${crypto_1.createHash('md5').update(data).digest('hex')}`);
+                    `angular-resource:${resourceType},${(0, crypto_1.createHash)('md5').update(data).digest('hex')}`);
         if (!entry) {
             throw new Error(`"filePath" or "data" must be specified.`);
         }
@@ -200,7 +200,7 @@ class WebpackResourceLoader {
                         }
                         // Save the dependencies for this resource.
                         if (filePath) {
-                            const resolvedFile = paths_1.normalizePath(dependency);
+                            const resolvedFile = (0, paths_1.normalizePath)(dependency);
                             const entry = this._reverseDependencies.get(resolvedFile);
                             if (entry) {
                                 entry.add(filePath);
@@ -259,7 +259,7 @@ class WebpackResourceLoader {
     }
     async get(filePath) {
         var _a;
-        const normalizedFile = paths_1.normalizePath(filePath);
+        const normalizedFile = (0, paths_1.normalizePath)(filePath);
         let compilationResult = (_a = this.fileCache) === null || _a === void 0 ? void 0 : _a.get(normalizedFile);
         if (compilationResult === undefined) {
             // cache miss so compile resource

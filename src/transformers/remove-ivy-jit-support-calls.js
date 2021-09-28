@@ -57,7 +57,7 @@ function removeIvyJitSupportCalls(classMetadata, ngModuleScope, getTypeChecker) 
             let updatedSourceFile = ts.visitEachChild(sourceFile, visitNode, context);
             if (removedNodes.length > 0) {
                 // Remove any unused imports
-                const importRemovals = elide_imports_1.elideImports(updatedSourceFile, removedNodes, getTypeChecker, context.getCompilerOptions());
+                const importRemovals = (0, elide_imports_1.elideImports)(updatedSourceFile, removedNodes, getTypeChecker, context.getCompilerOptions());
                 if (importRemovals.size > 0) {
                     updatedSourceFile = ts.visitEachChild(updatedSourceFile, function visitForRemoval(node) {
                         return importRemovals.has(node)

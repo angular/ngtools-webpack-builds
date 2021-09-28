@@ -34,7 +34,7 @@ const paths_1 = require("./paths");
 function augmentHostWithResources(host, resourceLoader, options = {}) {
     const resourceHost = host;
     resourceHost.readResource = function (fileName) {
-        const filePath = paths_1.normalizePath(fileName);
+        const filePath = (0, paths_1.normalizePath)(fileName);
         if (options.directTemplateLoading &&
             (filePath.endsWith('.html') || filePath.endsWith('.svg'))) {
             const content = this.readFile(filePath);
@@ -105,7 +105,7 @@ function augmentHostWithDependencyCollection(host, dependencies, moduleResolutio
         const baseResolveModuleNames = host.resolveModuleNames;
         host.resolveModuleNames = function (moduleNames, containingFile, ...parameters) {
             const results = baseResolveModuleNames.call(host, moduleNames, containingFile, ...parameters);
-            const containingFilePath = paths_1.normalizePath(containingFile);
+            const containingFilePath = (0, paths_1.normalizePath)(containingFile);
             for (const result of results) {
                 if (result) {
                     const containingFileDependencies = dependencies.get(containingFilePath);
@@ -125,7 +125,7 @@ function augmentHostWithDependencyCollection(host, dependencies, moduleResolutio
             return moduleNames.map((name) => {
                 const result = ts.resolveModuleName(name, containingFile, options, host, moduleResolutionCache, redirectedReference).resolvedModule;
                 if (result) {
-                    const containingFilePath = paths_1.normalizePath(containingFile);
+                    const containingFilePath = (0, paths_1.normalizePath)(containingFile);
                     const containingFileDependencies = dependencies.get(containingFilePath);
                     if (containingFileDependencies) {
                         containingFileDependencies.add(result.resolvedFileName);
@@ -178,7 +178,7 @@ function augmentHostWithReplacements(host, replacements, moduleResolutionCache) 
     }
     const normalizedReplacements = {};
     for (const [key, value] of Object.entries(replacements)) {
-        normalizedReplacements[paths_1.normalizePath(key)] = paths_1.normalizePath(value);
+        normalizedReplacements[(0, paths_1.normalizePath)(key)] = (0, paths_1.normalizePath)(value);
     }
     const tryReplace = (resolvedModule) => {
         const replacement = resolvedModule && normalizedReplacements[resolvedModule.resolvedFileName];
@@ -220,7 +220,7 @@ function augmentHostWithVersioning(host) {
     host.getSourceFile = function (...parameters) {
         const file = baseGetSourceFile.call(host, ...parameters);
         if (file && file.version === undefined) {
-            file.version = crypto_1.createHash('sha256').update(file.text).digest('hex');
+            file.version = (0, crypto_1.createHash)('sha256').update(file.text).digest('hex');
         }
         return file;
     };
@@ -232,7 +232,7 @@ function augmentProgramWithVersioning(program) {
         const files = baseGetSourceFiles(...parameters);
         for (const file of files) {
             if (file.version === undefined) {
-                file.version = crypto_1.createHash('sha256').update(file.text).digest('hex');
+                file.version = (0, crypto_1.createHash)('sha256').update(file.text).digest('hex');
             }
         }
         return files;
