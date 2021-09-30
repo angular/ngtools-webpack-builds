@@ -76,23 +76,23 @@ class NgccProcessor {
             let lockData;
             let lockFile = 'yarn.lock';
             try {
-                lockData = fs_1.readFileSync(path.join(projectBasePath, lockFile));
+                lockData = (0, fs_1.readFileSync)(path.join(projectBasePath, lockFile));
             }
             catch {
                 lockFile = 'package-lock.json';
-                lockData = fs_1.readFileSync(path.join(projectBasePath, lockFile));
+                lockData = (0, fs_1.readFileSync)(path.join(projectBasePath, lockFile));
             }
             let ngccConfigData;
             try {
-                ngccConfigData = fs_1.readFileSync(path.join(projectBasePath, 'ngcc.config.js'));
+                ngccConfigData = (0, fs_1.readFileSync)(path.join(projectBasePath, 'ngcc.config.js'));
             }
             catch {
                 ngccConfigData = '';
             }
             const relativeTsconfigPath = path.relative(projectBasePath, this.tsConfigPath);
-            const tsconfigData = fs_1.readFileSync(this.tsConfigPath);
+            const tsconfigData = (0, fs_1.readFileSync)(this.tsConfigPath);
             // Generate a hash that represents the state of the package lock file and used tsconfig
-            const runHash = crypto_1.createHash('sha256')
+            const runHash = (0, crypto_1.createHash)('sha256')
                 .update(lockData)
                 .update(lockFile)
                 .update(ngccConfigData)
@@ -103,7 +103,7 @@ class NgccProcessor {
             // conditions as well as to only require a file existence check
             runHashFilePath = path.join(runHashBasePath, runHash + '.lock');
             // If the run hash lock file exists, then ngcc was already run against this project state
-            if (fs_1.existsSync(runHashFilePath)) {
+            if ((0, fs_1.existsSync)(runHashFilePath)) {
                 skipProcessing = true;
             }
         }
@@ -114,7 +114,7 @@ class NgccProcessor {
             return;
         }
         const timeLabel = 'NgccProcessor.process';
-        benchmark_1.time(timeLabel);
+        (0, benchmark_1.time)(timeLabel);
         // Temporary workaround during transition to ESM-only @angular/compiler-cli
         // TODO_ESM: This workaround should be removed prior to the final release of v13
         //       and replaced with only `this.compilerNgcc.ngccMainFilePath`.
@@ -126,7 +126,7 @@ class NgccProcessor {
         // that we cannot setup multiple cluster masters with different options.
         // - We will not be able to have concurrent builds otherwise Ex: App-Shell,
         // as NGCC will create a lock file for both builds and it will cause builds to fails.
-        const { status, error } = child_process_1.spawnSync(process.execPath, [
+        const { status, error } = (0, child_process_1.spawnSync)(process.execPath, [
             ngccExecutablePath,
             '--source' /** basePath */,
             this._nodeModulesDirectory,
@@ -145,14 +145,14 @@ class NgccProcessor {
             const errorMessage = (error === null || error === void 0 ? void 0 : error.message) || '';
             throw new Error(errorMessage + `NGCC failed${errorMessage ? ', see above' : ''}.`);
         }
-        benchmark_1.timeEnd(timeLabel);
+        (0, benchmark_1.timeEnd)(timeLabel);
         // ngcc was successful so if a run hash was generated, write it for next time
         if (runHashFilePath) {
             try {
-                if (!fs_1.existsSync(runHashBasePath)) {
-                    fs_1.mkdirSync(runHashBasePath, { recursive: true });
+                if (!(0, fs_1.existsSync)(runHashBasePath)) {
+                    (0, fs_1.mkdirSync)(runHashBasePath, { recursive: true });
                 }
-                fs_1.writeFileSync(runHashFilePath, '');
+                (0, fs_1.writeFileSync)(runHashFilePath, '');
             }
             catch {
                 // Errors are non-fatal
@@ -178,7 +178,7 @@ class NgccProcessor {
             return;
         }
         const timeLabel = `NgccProcessor.processModule.ngcc.process+${moduleName}`;
-        benchmark_1.time(timeLabel);
+        (0, benchmark_1.time)(timeLabel);
         this.compilerNgcc.process({
             basePath: this._nodeModulesDirectory,
             targetEntryPointPath: path.dirname(packageJsonPath),
@@ -188,7 +188,7 @@ class NgccProcessor {
             logger: this._logger,
             tsConfigPath: this.tsConfigPath,
         });
-        benchmark_1.timeEnd(timeLabel);
+        (0, benchmark_1.timeEnd)(timeLabel);
         // Purge this file from cache, since NGCC add new mainFields. Ex: module_ivy_ngcc
         // which are unknown in the cached file.
         (_b = (_a = this.inputFileSystem).purge) === null || _b === void 0 ? void 0 : _b.call(_a, packageJsonPath);
@@ -209,14 +209,14 @@ class NgccProcessor {
             // Ex: @angular/compiler/src/i18n/i18n_ast/package.json
             // or local libraries which don't reside in node_modules
             const packageJsonPath = path.resolve(resolvedFileName, '../package.json');
-            return fs_1.existsSync(packageJsonPath) ? packageJsonPath : undefined;
+            return (0, fs_1.existsSync)(packageJsonPath) ? packageJsonPath : undefined;
         }
     }
     findNodeModulesDirectory(startPoint) {
         let current = startPoint;
         while (path.dirname(current) !== current) {
             const nodePath = path.join(current, 'node_modules');
-            if (fs_1.existsSync(nodePath)) {
+            if ((0, fs_1.existsSync)(nodePath)) {
                 return nodePath;
             }
             current = path.dirname(current);
@@ -246,7 +246,7 @@ class NgccLogger {
 }
 function isReadOnlyFile(fileName) {
     try {
-        fs_1.accessSync(fileName, fs_1.constants.W_OK);
+        (0, fs_1.accessSync)(fileName, fs_1.constants.W_OK);
         return false;
     }
     catch {

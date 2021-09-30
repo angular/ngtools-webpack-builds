@@ -66,7 +66,7 @@ function initializeNgccProcessor(compiler, tsconfig, compilerNgccModule) {
     return { processor, errors, warnings };
 }
 function hashContent(content) {
-    return crypto_1.createHash('md5').update(content).digest();
+    return (0, crypto_1.createHash)('md5').update(content).digest();
 }
 const PLUGIN_NAME = 'angular-compiler';
 const compilationFileEmitters = new WeakMap();
@@ -139,21 +139,21 @@ class AngularWebpackPlugin {
             if (!ngccProcessor) {
                 const { processor, errors, warnings } = initializeNgccProcessor(compiler, this.pluginOptions.tsconfig, this.compilerNgccModule);
                 processor.process();
-                warnings.forEach((warning) => diagnostics_1.addWarning(compilation, warning));
-                errors.forEach((error) => diagnostics_1.addError(compilation, error));
+                warnings.forEach((warning) => (0, diagnostics_1.addWarning)(compilation, warning));
+                errors.forEach((error) => (0, diagnostics_1.addError)(compilation, error));
                 ngccProcessor = processor;
             }
             // Setup and read TypeScript and Angular compiler configuration
             const { compilerOptions, rootNames, errors } = this.loadConfiguration();
             // Create diagnostics reporter and report configuration file errors
-            const diagnosticsReporter = diagnostics_1.createDiagnosticsReporter(compilation, (diagnostic) => this.compilerCli.formatDiagnostics([diagnostic]));
+            const diagnosticsReporter = (0, diagnostics_1.createDiagnosticsReporter)(compilation, (diagnostic) => this.compilerCli.formatDiagnostics([diagnostic]));
             diagnosticsReporter(errors);
             // Update TypeScript path mapping plugin with new configuration
             pathsPlugin.update(compilerOptions);
             // Create a Webpack-based TypeScript compiler host
-            const system = system_1.createWebpackSystem(
+            const system = (0, system_1.createWebpackSystem)(
             // Webpack lacks an InputFileSytem type definition with sync functions
-            compiler.inputFileSystem, paths_1.normalizePath(compiler.context));
+            compiler.inputFileSystem, (0, paths_1.normalizePath)(compiler.context));
             const host = ts.createIncrementalCompilerHost(compilerOptions, system);
             // Setup source file caching and reuse cache from previous compilation if present
             let cache = this.sourceFileCache;
@@ -161,7 +161,7 @@ class AngularWebpackPlugin {
             if (cache) {
                 changedFiles = new Set();
                 for (const changedFile of [...compiler.modifiedFiles, ...compiler.removedFiles]) {
-                    const normalizedChangedFile = paths_1.normalizePath(changedFile);
+                    const normalizedChangedFile = (0, paths_1.normalizePath)(changedFile);
                     // Invalidate file dependencies
                     this.fileDependencies.delete(normalizedChangedFile);
                     // Invalidate existing cache
@@ -177,21 +177,21 @@ class AngularWebpackPlugin {
                     this.sourceFileCache = cache;
                 }
             }
-            host_1.augmentHostWithCaching(host, cache);
+            (0, host_1.augmentHostWithCaching)(host, cache);
             const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), host.getCanonicalFileName.bind(host), compilerOptions);
             // Setup source file dependency collection
-            host_1.augmentHostWithDependencyCollection(host, this.fileDependencies, moduleResolutionCache);
+            (0, host_1.augmentHostWithDependencyCollection)(host, this.fileDependencies, moduleResolutionCache);
             // Setup on demand ngcc
-            host_1.augmentHostWithNgcc(host, ngccProcessor, moduleResolutionCache);
+            (0, host_1.augmentHostWithNgcc)(host, ngccProcessor, moduleResolutionCache);
             // Setup resource loading
             resourceLoader.update(compilation, changedFiles);
-            host_1.augmentHostWithResources(host, resourceLoader, {
+            (0, host_1.augmentHostWithResources)(host, resourceLoader, {
                 directTemplateLoading: this.pluginOptions.directTemplateLoading,
                 inlineStyleFileExtension: this.pluginOptions.inlineStyleFileExtension,
             });
             // Setup source file adjustment options
-            host_1.augmentHostWithReplacements(host, this.pluginOptions.fileReplacements, moduleResolutionCache);
-            host_1.augmentHostWithSubstitutions(host, this.pluginOptions.substitutions);
+            (0, host_1.augmentHostWithReplacements)(host, this.pluginOptions.fileReplacements, moduleResolutionCache);
+            (0, host_1.augmentHostWithSubstitutions)(host, this.pluginOptions.substitutions);
             // Create the file emitter used by the webpack loader
             const { fileEmitter, builder, internalFiles } = this.pluginOptions.jitMode
                 ? this.updateJitProgram(compilerOptions, rootNames, host, diagnosticsReporter)
@@ -204,11 +204,11 @@ class AngularWebpackPlugin {
                 }
                 // Ensure all program files are considered part of the compilation and will be watched.
                 // Webpack does not normalize paths. Therefore, we need to normalize the path with FS seperators.
-                compilation.fileDependencies.add(paths_1.externalizePath(sourceFile.fileName));
+                compilation.fileDependencies.add((0, paths_1.externalizePath)(sourceFile.fileName));
                 // Add all non-declaration files to the initial set of unused files. The set will be
                 // analyzed and pruned after all Webpack modules are finished building.
                 if (!sourceFile.isDeclarationFile) {
-                    currentUnused.add(paths_1.normalizePath(sourceFile.fileName));
+                    currentUnused.add((0, paths_1.normalizePath)(sourceFile.fileName));
                 }
             }
             compilation.hooks.finishModules.tapPromise(PLUGIN_NAME, async (modules) => {
@@ -223,14 +223,14 @@ class AngularWebpackPlugin {
                 for (const webpackModule of modules) {
                     const resource = webpackModule.resource;
                     if (resource) {
-                        this.markResourceUsed(paths_1.normalizePath(resource), currentUnused);
+                        this.markResourceUsed((0, paths_1.normalizePath)(resource), currentUnused);
                     }
                 }
                 for (const unused of currentUnused) {
                     if (previousUnused && previousUnused.has(unused)) {
                         continue;
                     }
-                    diagnostics_1.addWarning(compilation, `${unused} is part of the TypeScript compilation but it's unused.\n` +
+                    (0, diagnostics_1.addWarning)(compilation, `${unused} is part of the TypeScript compilation but it's unused.\n` +
                         `Add only entry points to the 'files' or 'include' properties in your tsconfig.`);
                 }
                 previousUnused = currentUnused;
@@ -261,7 +261,7 @@ class AngularWebpackPlugin {
             return;
         }
         for (const dependency of dependencies) {
-            this.markResourceUsed(paths_1.normalizePath(dependency), currentUnused);
+            this.markResourceUsed((0, paths_1.normalizePath)(dependency), currentUnused);
         }
     }
     async rebuildRequiredFiles(modules, compilation, fileEmitter) {
@@ -292,7 +292,7 @@ class AngularWebpackPlugin {
             const modulesToRebuild = [];
             for (const webpackModule of modules) {
                 const resource = webpackModule.resource;
-                if (resource && filesToRebuild.has(paths_1.normalizePath(resource))) {
+                if (resource && filesToRebuild.has((0, paths_1.normalizePath)(resource))) {
                     modulesToRebuild.push(webpackModule);
                 }
             }
@@ -330,7 +330,7 @@ class AngularWebpackPlugin {
         // SourceFile versions are required for builder programs.
         // The wrapped host inside NgtscProgram adds additional files that will not have versions.
         const typeScriptProgram = angularProgram.getTsProgram();
-        host_1.augmentProgramWithVersioning(typeScriptProgram);
+        (0, host_1.augmentProgramWithVersioning)(typeScriptProgram);
         let builder;
         if (this.watchMode) {
             builder = this.builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(typeScriptProgram, host, this.builder);
@@ -386,7 +386,7 @@ class AngularWebpackPlugin {
                 diagnosticsReporter(builder.getSemanticDiagnostics(sourceFile));
             }
         }
-        const transformers = transformation_1.createAotTransformers(builder, this.pluginOptions);
+        const transformers = (0, transformation_1.createAotTransformers)(builder, this.pluginOptions);
         const getDependencies = (sourceFile) => {
             const dependencies = [];
             for (const resourcePath of angularCompiler.getResourceDependencies(sourceFile)) {
@@ -408,7 +408,7 @@ class AngularWebpackPlugin {
                 // Collect sources that are required to be emitted
                 if (!ignoreForEmit.has(sourceFile) &&
                     !angularCompiler.incrementalDriver.safeToSkipEmit(sourceFile)) {
-                    this.requiredFilesToEmit.add(paths_1.normalizePath(sourceFile.fileName));
+                    this.requiredFilesToEmit.add((0, paths_1.normalizePath)(sourceFile.fileName));
                     // If required to emit, diagnostics may have also changed
                     if (!ignoreForDiagnostics.has(sourceFile)) {
                         affectedFiles.add(sourceFile);
@@ -439,8 +439,8 @@ class AngularWebpackPlugin {
                 diagnosticsReporter(angularDiagnostics);
                 (_b = this.sourceFileCache) === null || _b === void 0 ? void 0 : _b.updateAngularDiagnostics(affectedFile, angularDiagnostics);
             }
-            return this.createFileEmitter(builder, transformation_1.mergeTransformers(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
-                this.requiredFilesToEmit.delete(paths_1.normalizePath(sourceFile.fileName));
+            return this.createFileEmitter(builder, (0, transformation_1.mergeTransformers)(angularCompiler.prepareEmit().transformers, transformers), getDependencies, (sourceFile) => {
+                this.requiredFilesToEmit.delete((0, paths_1.normalizePath)(sourceFile.fileName));
                 angularCompiler.incrementalDriver.recordSuccessfulEmit(sourceFile);
             });
         });
@@ -472,7 +472,7 @@ class AngularWebpackPlugin {
             ...builder.getSemanticDiagnostics(),
         ];
         diagnosticsReporter(diagnostics);
-        const transformers = transformation_1.createJitTransformers(builder, this.compilerCli, this.pluginOptions);
+        const transformers = (0, transformation_1.createJitTransformers)(builder, this.compilerCli, this.pluginOptions);
         return {
             fileEmitter: this.createFileEmitter(builder, transformers, () => []),
             builder,
@@ -481,7 +481,7 @@ class AngularWebpackPlugin {
     }
     createFileEmitter(program, transformers = {}, getExtraDependencies, onAfterEmit) {
         return async (file) => {
-            const filePath = paths_1.normalizePath(file);
+            const filePath = (0, paths_1.normalizePath)(file);
             if (this.requiredFilesToEmitCache.has(filePath)) {
                 return this.requiredFilesToEmitCache.get(filePath);
             }

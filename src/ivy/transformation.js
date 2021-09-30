@@ -41,7 +41,7 @@ function createAotTransformers(builder, options) {
     const removeNgModuleScope = !options.emitNgModuleScope;
     if (removeClassMetadata || removeNgModuleScope) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        transformers.before.push(remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls(removeClassMetadata, removeNgModuleScope, getTypeChecker));
+        transformers.before.push((0, remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls)(removeClassMetadata, removeNgModuleScope, getTypeChecker));
     }
     return transformers;
 }
@@ -50,7 +50,7 @@ function createJitTransformers(builder, compilerCli, options) {
     const getTypeChecker = () => builder.getProgram().getTypeChecker();
     return {
         before: [
-            replace_resources_1.replaceResources(() => true, getTypeChecker, options.directTemplateLoading, options.inlineStyleFileExtension),
+            (0, replace_resources_1.replaceResources)(() => true, getTypeChecker, options.directTemplateLoading, options.inlineStyleFileExtension),
             compilerCli.constructorParametersDownlevelTransform(builder.getProgram()),
         ],
     };
@@ -97,7 +97,7 @@ function replaceBootstrap(getTypeChecker) {
             let updatedSourceFile = ts.visitEachChild(sourceFile, visitNode, context);
             if (bootstrapImport) {
                 // Remove any unused platform browser dynamic imports
-                const removals = elide_imports_1.elideImports(updatedSourceFile, replacedNodes, getTypeChecker, context.getCompilerOptions());
+                const removals = (0, elide_imports_1.elideImports)(updatedSourceFile, replacedNodes, getTypeChecker, context.getCompilerOptions());
                 if (removals.size > 0) {
                     updatedSourceFile = ts.visitEachChild(updatedSourceFile, (node) => (removals.has(node) ? undefined : node), context);
                 }

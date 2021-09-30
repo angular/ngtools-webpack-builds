@@ -44,7 +44,7 @@ function createWebpackSystem(input, currentDirectory) {
         readFile(path) {
             let data;
             try {
-                data = input.readFileSync(paths_1.externalizePath(path));
+                data = input.readFileSync((0, paths_1.externalizePath)(path));
             }
             catch {
                 return undefined;
@@ -58,7 +58,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         getFileSize(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).size;
+                return input.statSync((0, paths_1.externalizePath)(path)).size;
             }
             catch {
                 return 0;
@@ -66,7 +66,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         fileExists(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).isFile();
+                return input.statSync((0, paths_1.externalizePath)(path)).isFile();
             }
             catch {
                 return false;
@@ -74,7 +74,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         directoryExists(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).isDirectory();
+                return input.statSync((0, paths_1.externalizePath)(path)).isDirectory();
             }
             catch {
                 return false;
@@ -82,7 +82,7 @@ function createWebpackSystem(input, currentDirectory) {
         },
         getModifiedTime(path) {
             try {
-                return input.statSync(paths_1.externalizePath(path)).mtime;
+                return input.statSync((0, paths_1.externalizePath)(path)).mtime;
             }
             catch {
                 return undefined;

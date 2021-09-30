@@ -53,7 +53,7 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, extr
     const baseFileExists = compilerHost.fileExists;
     compilerHost.fileExists = function (compilerFileName) {
         return (compilerFileName === fileName ||
-            !!(additionalFiles === null || additionalFiles === void 0 ? void 0 : additionalFiles[path_1.basename(compilerFileName)]) ||
+            !!(additionalFiles === null || additionalFiles === void 0 ? void 0 : additionalFiles[(0, path_1.basename)(compilerFileName)]) ||
             baseFileExists(compilerFileName));
     };
     const baseReadFile = compilerHost.readFile;
@@ -61,8 +61,8 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, extr
         if (compilerFileName === fileName) {
             return content;
         }
-        else if (additionalFiles === null || additionalFiles === void 0 ? void 0 : additionalFiles[path_1.basename(compilerFileName)]) {
-            return additionalFiles[path_1.basename(compilerFileName)];
+        else if (additionalFiles === null || additionalFiles === void 0 ? void 0 : additionalFiles[(0, path_1.basename)(compilerFileName)]) {
+            return additionalFiles[(0, path_1.basename)(compilerFileName)];
         }
         else {
             return baseReadFile(compilerFileName);
