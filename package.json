@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/angular/angular-cli",
   "dependencies": {
-    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#fefc11535",
+    "@angular-devkit/core": "github:angular/angular-devkit-core-builds#7f36f8b2e",
     "enhanced-resolve": "5.7.0",
     "webpack-sources": "2.2.0"
   },
