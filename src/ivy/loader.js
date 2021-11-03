@@ -29,6 +29,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = exports.angularWebpackLoader = void 0;
 const path = __importStar(require("path"));
 const symbol_1 = require("./symbol");
+const JS_FILE_REGEXP = /\.[cm]?js$/;
 function angularWebpackLoader(content, map) {
     const callback = this.async();
     if (!callback) {
@@ -36,7 +37,7 @@ function angularWebpackLoader(content, map) {
     }
     const fileEmitter = this[symbol_1.AngularPluginSymbol];
     if (!fileEmitter || typeof fileEmitter !== 'object') {
-        if (this.resourcePath.endsWith('.js')) {
+        if (JS_FILE_REGEXP.test(this.resourcePath)) {
             // Passthrough for JS files when no plugin is used
             this.callback(undefined, content, map);
             return;
@@ -48,7 +49,7 @@ function angularWebpackLoader(content, map) {
         .emit(this.resourcePath)
         .then((result) => {
         if (!result) {
-            if (this.resourcePath.endsWith('.js')) {
+            if (JS_FILE_REGEXP.test(this.resourcePath)) {
                 // Return original content for JS files if not compiled by TypeScript ("allowJs")
                 this.callback(undefined, content, map);
             }
