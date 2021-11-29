@@ -10,6 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DirectAngularResourceLoaderPath = void 0;
 exports.DirectAngularResourceLoaderPath = __filename;
 function default_1(content) {
-    return `export default ${JSON.stringify(content)};`;
+    const { esModule } = this.getOptions();
+    return `${esModule === 'false' ? 'module.exports =' : 'export default'} ${JSON.stringify(content)};`;
 }
 exports.default = default_1;
