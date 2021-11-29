@@ -88,7 +88,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     }
     return nodeFactory.updateDecorator(node, nodeFactory.updateCallExpression(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [nodeFactory.updateObjectLiteralExpression(objectExpression, properties)]));
 }
-function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension) {
+function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind = ts.ModuleKind.ES2015, inlineStyleFileExtension) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -97,7 +97,8 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
         case 'moduleId':
             return undefined;
         case 'templateUrl':
-            const url = getResourceUrl(node.initializer, directTemplateLoading ? `!${direct_resource_1.DirectAngularResourceLoaderPath}!` : '');
+            const loaderOptions = moduleKind < ts.ModuleKind.ES2015 ? '?esModule=false' : '';
+            const url = getResourceUrl(node.initializer, directTemplateLoading ? `!${direct_resource_1.DirectAngularResourceLoaderPath}${loaderOptions}!` : '');
             if (!url) {
                 return node;
             }
@@ -165,10 +166,10 @@ function isComponentDecorator(node, typeChecker) {
     }
     return false;
 }
-function createResourceImport(nodeFactory, url, resourceImportDeclarations, moduleKind = ts.ModuleKind.ES2015) {
+function createResourceImport(nodeFactory, url, resourceImportDeclarations, moduleKind) {
     const urlLiteral = nodeFactory.createStringLiteral(url);
     if (moduleKind < ts.ModuleKind.ES2015) {
-        return nodeFactory.createPropertyAccessExpression(nodeFactory.createCallExpression(nodeFactory.createIdentifier('require'), [], [urlLiteral]), 'default');
+        return nodeFactory.createCallExpression(nodeFactory.createIdentifier('require'), [], [urlLiteral]);
     }
     else {
         const importName = nodeFactory.createIdentifier(`__NG_CLI_RESOURCE__${resourceImportDeclarations.length}`);
