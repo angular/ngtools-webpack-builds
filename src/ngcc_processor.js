@@ -55,7 +55,6 @@ class NgccProcessor {
     }
     /** Process the entire node modules tree. */
     process() {
-        var _a;
         // Under Bazel when running in sandbox mode parts of the filesystem is read-only.
         if (process.env.BAZEL_TARGET) {
             return;
@@ -115,19 +114,13 @@ class NgccProcessor {
         }
         const timeLabel = 'NgccProcessor.process';
         (0, benchmark_1.time)(timeLabel);
-        // Temporary workaround during transition to ESM-only @angular/compiler-cli
-        // TODO_ESM: This workaround should be removed prior to the final release of v13
-        //       and replaced with only `this.compilerNgcc.ngccMainFilePath`.
-        const ngccExecutablePath = 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (_a = this.compilerNgcc.ngccMainFilePath) !== null && _a !== void 0 ? _a : require.resolve('@angular/compiler-cli/ngcc/main-ngcc.js');
         // We spawn instead of using the API because:
         // - NGCC Async uses clustering which is problematic when used via the API which means
         // that we cannot setup multiple cluster masters with different options.
         // - We will not be able to have concurrent builds otherwise Ex: App-Shell,
         // as NGCC will create a lock file for both builds and it will cause builds to fails.
         const { status, error } = (0, child_process_1.spawnSync)(process.execPath, [
-            ngccExecutablePath,
+            this.compilerNgcc.ngccMainFilePath,
             '--source' /** basePath */,
             this._nodeModulesDirectory,
             '--properties' /** propertiesToConsider */,
