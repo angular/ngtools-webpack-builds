@@ -162,8 +162,11 @@ class WebpackResourceLoader {
             childCompilation.hooks.processAssets.tap({ name: 'angular-compiler', stage: webpack.Compilation.PROCESS_ASSETS_STAGE_REPORT }, () => {
                 var _a;
                 finalContent = (_a = childCompilation.assets[outputFilePath]) === null || _a === void 0 ? void 0 : _a.source().toString();
-                delete childCompilation.assets[outputFilePath];
-                delete childCompilation.assets[outputFilePath + '.map'];
+                for (const { files } of childCompilation.chunks) {
+                    for (const file of files) {
+                        childCompilation.deleteAsset(file);
+                    }
+                }
             });
         });
         return new Promise((resolve, reject) => {
