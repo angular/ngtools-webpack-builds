@@ -26,11 +26,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getResourceUrl = exports.replaceResources = void 0;
+exports.getResourceUrl = exports.replaceResources = exports.NG_COMPONENT_RESOURCE_QUERY = void 0;
 const ts = __importStar(require("typescript"));
-const direct_resource_1 = require("../loaders/direct-resource");
 const inline_resource_1 = require("../loaders/inline-resource");
-function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading = false, inlineStyleFileExtension) {
+exports.NG_COMPONENT_RESOURCE_QUERY = 'ngResource';
+function replaceResources(shouldTransform, getTypeChecker, inlineStyleFileExtension) {
     return (context) => {
         const typeChecker = getTypeChecker();
         const resourceImportDeclarations = [];
@@ -39,7 +39,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
         const visitNode = (node) => {
             if (ts.isClassDeclaration(node)) {
                 const decorators = ts.visitNodes(node.decorators, (node) => ts.isDecorator(node)
-                    ? visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension)
+                    ? visitDecorator(nodeFactory, node, typeChecker, resourceImportDeclarations, moduleKind, inlineStyleFileExtension)
                     : node);
                 return nodeFactory.updateClassDeclaration(node, decorators, node.modifiers, node.name, node.typeParameters, node.heritageClauses, node.members);
             }
@@ -62,7 +62,7 @@ function replaceResources(shouldTransform, getTypeChecker, directTemplateLoading
     };
 }
 exports.replaceResources = replaceResources;
-function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension) {
+function visitDecorator(nodeFactory, node, typeChecker, resourceImportDeclarations, moduleKind, inlineStyleFileExtension) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
     }
@@ -79,7 +79,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     const styleReplacements = [];
     // visit all properties
     let properties = ts.visitNodes(objectExpression.properties, (node) => ts.isObjectLiteralElementLike(node)
-        ? visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind, inlineStyleFileExtension)
+        ? visitComponentMetadata(nodeFactory, node, styleReplacements, resourceImportDeclarations, moduleKind, inlineStyleFileExtension)
         : node);
     // replace properties with updated properties
     if (styleReplacements.length > 0) {
@@ -88,7 +88,7 @@ function visitDecorator(nodeFactory, node, typeChecker, directTemplateLoading, r
     }
     return nodeFactory.updateDecorator(node, nodeFactory.updateCallExpression(decoratorFactory, decoratorFactory.expression, decoratorFactory.typeArguments, [nodeFactory.updateObjectLiteralExpression(objectExpression, properties)]));
 }
-function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemplateLoading, resourceImportDeclarations, moduleKind = ts.ModuleKind.ES2015, inlineStyleFileExtension) {
+function visitComponentMetadata(nodeFactory, node, styleReplacements, resourceImportDeclarations, moduleKind = ts.ModuleKind.ES2015, inlineStyleFileExtension) {
     if (!ts.isPropertyAssignment(node) || ts.isComputedPropertyName(node.name)) {
         return node;
     }
@@ -97,8 +97,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
         case 'moduleId':
             return undefined;
         case 'templateUrl':
-            const loaderOptions = moduleKind < ts.ModuleKind.ES2015 ? '?esModule=false' : '';
-            const url = getResourceUrl(node.initializer, directTemplateLoading ? `!${direct_resource_1.DirectAngularResourceLoaderPath}${loaderOptions}!` : '');
+            const url = getResourceUrl(node.initializer);
             if (!url) {
                 return node;
             }
@@ -122,7 +121,10 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
                     if (inlineStyleFileExtension) {
                         const data = Buffer.from(node.text).toString('base64');
                         const containingFile = node.getSourceFile().fileName;
-                        url = `${containingFile}.${inlineStyleFileExtension}!=!${inline_resource_1.InlineAngularResourceLoaderPath}?data=${encodeURIComponent(data)}!${containingFile}`;
+                        // app.component.ts.css?ngResource!=!@ngtools/webpack/src/loaders/inline-resource.js?data=...!app.component.ts
+                        url =
+                            `${containingFile}.${inlineStyleFileExtension}?${exports.NG_COMPONENT_RESOURCE_QUERY}` +
+                                `!=!${inline_resource_1.InlineAngularResourceLoaderPath}?data=${encodeURIComponent(data)}!${containingFile}`;
                     }
                     else {
                         return nodeFactory.createStringLiteral(node.text);
@@ -148,12 +150,12 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, directTemp
             return node;
     }
 }
-function getResourceUrl(node, loader = '') {
+function getResourceUrl(node) {
     // only analyze strings
     if (!ts.isStringLiteral(node) && !ts.isNoSubstitutionTemplateLiteral(node)) {
         return null;
     }
-    return `${loader}${/^\.?\.\//.test(node.text) ? '' : './'}${node.text}`;
+    return `${/^\.?\.\//.test(node.text) ? '' : './'}${node.text}?${exports.NG_COMPONENT_RESOURCE_QUERY}`;
 }
 exports.getResourceUrl = getResourceUrl;
 function isComponentDecorator(node, typeChecker) {

@@ -50,7 +50,7 @@ function createJitTransformers(builder, compilerCli, options) {
     const getTypeChecker = () => builder.getProgram().getTypeChecker();
     return {
         before: [
-            (0, replace_resources_1.replaceResources)(() => true, getTypeChecker, options.directTemplateLoading, options.inlineStyleFileExtension),
+            (0, replace_resources_1.replaceResources)(() => true, getTypeChecker, options.inlineStyleFileExtension),
             compilerCli.constructorParametersDownlevelTransform(builder.getProgram()),
         ],
     };

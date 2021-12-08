@@ -32,6 +32,7 @@ const path = __importStar(require("path"));
 const vm = __importStar(require("vm"));
 const paths_1 = require("./ivy/paths");
 const inline_resource_1 = require("./loaders/inline-resource");
+const replace_resources_1 = require("./transformers/replace_resources");
 class WebpackResourceLoader {
     constructor(shouldCache) {
         this._fileDependencies = new Map();
@@ -93,15 +94,23 @@ class WebpackResourceLoader {
         if (!this._parentCompilation) {
             throw new Error('WebpackResourceLoader cannot be used without parentCompilation');
         }
-        // Create a special URL for reading the resource from memory
-        const entry = filePath ||
-            (resourceType
-                ? `${containingFile}-${this.outputPathCounter}.${fileExtension}!=!${this.inlineDataLoaderPath}!${containingFile}`
-                : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    `angular-resource:${resourceType},${(0, crypto_1.createHash)('md5').update(data).digest('hex')}`);
-        if (!entry) {
-            throw new Error(`"filePath" or "data" must be specified.`);
-        }
+        const getEntry = () => {
+            if (filePath) {
+                return `${filePath}?${replace_resources_1.NG_COMPONENT_RESOURCE_QUERY}`;
+            }
+            else if (resourceType) {
+                return (
+                // app.component.ts-2.css?ngResource!=!@ngtools/webpack/src/loaders/inline-resource.js!app.component.ts
+                `${containingFile}-${this.outputPathCounter}.${fileExtension}` +
+                    `?${replace_resources_1.NG_COMPONENT_RESOURCE_QUERY}!=!${this.inlineDataLoaderPath}!${containingFile}`);
+            }
+            else if (data) {
+                // Create a special URL for reading the resource from memory
+                return `angular-resource:${resourceType},${(0, crypto_1.createHash)('md5').update(data).digest('hex')}`;
+            }
+            throw new Error(`"filePath", "resourceType" or "data" must be specified.`);
+        };
+        const entry = getEntry();
         // Simple sanity check.
         if (filePath === null || filePath === void 0 ? void 0 : filePath.match(/\.[jt]s$/)) {
             throw new Error(`Cannot use a JavaScript or TypeScript file (${filePath}) in a component's styleUrls or templateUrl.`);
