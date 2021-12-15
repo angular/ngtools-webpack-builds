@@ -65,9 +65,6 @@ function initializeNgccProcessor(compiler, tsconfig, compilerNgccModule) {
     const processor = new ngcc_processor_1.NgccProcessor(compilerNgccModule, mainFields, warnings, errors, compiler.context, tsconfig, inputFileSystem, resolver);
     return { processor, errors, warnings };
 }
-function hashContent(content) {
-    return (0, crypto_1.createHash)('md5').update(content).digest();
-}
 const PLUGIN_NAME = 'angular-compiler';
 const compilationFileEmitters = new WeakMap();
 class AngularWebpackPlugin {
@@ -97,6 +94,7 @@ class AngularWebpackPlugin {
     get options() {
         return this.pluginOptions;
     }
+    // eslint-disable-next-line max-lines-per-function
     apply(compiler) {
         const { NormalModuleReplacementPlugin, util } = compiler.webpack;
         // Setup file replacements with webpack
@@ -131,6 +129,10 @@ class AngularWebpackPlugin {
             // Register plugin to ensure deterministic emit order in multi-plugin usage
             const emitRegistration = this.registerWithCompilation(compilation);
             this.watchMode = compiler.watchMode;
+            // Initialize webpack cache
+            if (!this.webpackCache && compilation.options.cache) {
+                this.webpackCache = compilation.getCache(PLUGIN_NAME);
+            }
             // Initialize the resource loader if not already setup
             if (!resourceLoader) {
                 resourceLoader = new resource_loader_1.WebpackResourceLoader(this.watchMode);
@@ -270,7 +272,7 @@ class AngularWebpackPlugin {
         }
         const filesToRebuild = new Set();
         for (const requiredFile of this.requiredFilesToEmit) {
-            const history = this.fileEmitHistory.get(requiredFile);
+            const history = await this.getFileEmitHistory(requiredFile);
             if (history) {
                 const emitResult = await fileEmitter(requiredFile);
                 if ((emitResult === null || emitResult === void 0 ? void 0 : emitResult.content) === undefined ||
@@ -503,12 +505,8 @@ class AngularWebpackPlugin {
                 }
             }, undefined, undefined, transformers);
             onAfterEmit === null || onAfterEmit === void 0 ? void 0 : onAfterEmit(sourceFile);
-            let hash;
-            if (content !== undefined && this.watchMode) {
-                // Capture emit history info for Angular rebuild analysis
-                hash = hashContent(content);
-                this.fileEmitHistory.set(filePath, { length: content.length, hash });
-            }
+            // Capture emit history info for Angular rebuild analysis
+            const hash = content ? (await this.addFileEmitHistory(filePath, content)).hash : undefined;
             const dependencies = [
                 ...(this.fileDependencies.get(filePath) || []),
                 ...getExtraDependencies(sourceFile),
@@ -529,6 +527,29 @@ class AngularWebpackPlugin {
         // be dropped.
         this.compilerCliModule = await new Function(`return import('@angular/compiler-cli');`)();
         this.compilerNgccModule = await new Function(`return import('@angular/compiler-cli/ngcc');`)();
+    }
+    async addFileEmitHistory(filePath, content) {
+        const historyData = {
+            length: content.length,
+            hash: (0, crypto_1.createHash)('md5').update(content).digest(),
+        };
+        if (this.webpackCache) {
+            const history = await this.getFileEmitHistory(filePath);
+            if (!history || Buffer.compare(history.hash, historyData.hash) !== 0) {
+                // Hash doesn't match or item doesn't exist.
+                await this.webpackCache.storePromise(filePath, null, historyData);
+            }
+        }
+        else if (this.watchMode) {
+            // The in memory file emit history is only required during watch mode.
+            this.fileEmitHistory.set(filePath, historyData);
+        }
+        return historyData;
+    }
+    async getFileEmitHistory(filePath) {
+        return this.webpackCache
+            ? this.webpackCache.getPromise(filePath, null)
+            : this.fileEmitHistory.get(filePath);
     }
 }
 exports.AngularWebpackPlugin = AngularWebpackPlugin;

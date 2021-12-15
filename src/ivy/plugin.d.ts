@@ -26,6 +26,7 @@ export declare class AngularWebpackPlugin {
     private ngtscNextProgram?;
     private builder?;
     private sourceFileCache?;
+    private webpackCache?;
     private readonly fileDependencies;
     private readonly requiredFilesToEmit;
     private readonly requiredFilesToEmitCache;
@@ -42,4 +43,6 @@ export declare class AngularWebpackPlugin {
     private updateJitProgram;
     private createFileEmitter;
     private initializeCompilerCli;
+    private addFileEmitHistory;
+    private getFileEmitHistory;
 }
