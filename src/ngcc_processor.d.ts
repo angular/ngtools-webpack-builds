@@ -32,5 +32,6 @@ export declare class NgccProcessor {
      */
     private tryResolvePackage;
     private findNodeModulesDirectory;
+    private findPackageManagerLockFile;
 }
 export {};
