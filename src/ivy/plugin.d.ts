@@ -27,6 +27,7 @@ export declare class AngularWebpackPlugin {
     private builder?;
     private sourceFileCache?;
     private webpackCache?;
+    private webpackCreateHash?;
     private readonly fileDependencies;
     private readonly requiredFilesToEmit;
     private readonly requiredFilesToEmitCache;
