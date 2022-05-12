@@ -6,10 +6,16 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import { CompilerOptions } from 'typescript';
-import type { Configuration } from 'webpack';
+import type { Resolver } from 'webpack';
 export interface TypeScriptPathsPluginOptions extends Pick<CompilerOptions, 'paths' | 'baseUrl'> {
 }
-declare type Resolver = Exclude<Exclude<Configuration['resolve'], undefined>['resolver'], undefined>;
+declare type ResolverRequest = NonNullable<Parameters<Parameters<Resolver['resolve']>[4]>[2]>;
+interface PathPluginResolverRequest extends ResolverRequest {
+    context?: {
+        issuer?: string;
+    };
+    typescriptPathMapped?: boolean;
+}
 export declare class TypeScriptPathsPlugin {
     private baseUrl?;
     private patterns?;
@@ -23,5 +29,7 @@ export declare class TypeScriptPathsPlugin {
      */
     update(options: TypeScriptPathsPluginOptions): void;
     apply(resolver: Resolver): void;
+    findReplacements(originalRequest: string): IterableIterator<string>;
+    createReplacementRequests(request: PathPluginResolverRequest, originalRequest: string): IterableIterator<PathPluginResolverRequest>;
 }
 export {};
