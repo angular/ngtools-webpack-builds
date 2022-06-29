@@ -36,6 +36,7 @@ export declare class AngularWebpackPlugin {
     private get compilerCli();
     get options(): AngularWebpackPluginOptions;
     apply(compiler: Compiler): void;
+    private setupCompilation;
     private registerWithCompilation;
     private markResourceUsed;
     private rebuildRequiredFiles;
