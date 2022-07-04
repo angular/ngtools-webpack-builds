@@ -24,7 +24,7 @@ export declare class NgccProcessor {
     constructor(compilerNgcc: typeof import('@angular/compiler-cli/ngcc'), propertiesToConsider: string[], compilationWarnings: (Error | string)[], compilationErrors: (Error | string)[], basePath: string, tsConfigPath: string, inputFileSystem: InputFileSystem, resolver: ResolverWithOptions);
     /** Process the entire node modules tree. */
     process(): void;
-    /** Process a module and it's depedencies. */
+    /** Process a module and its dependencies. */
     processModule(moduleName: string, resolvedModule: ts.ResolvedModule | ts.ResolvedTypeReferenceDirective): void;
     invalidate(fileName: string): void;
     /**
