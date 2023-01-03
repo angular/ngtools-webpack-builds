@@ -9,7 +9,7 @@ import { CompilerOptions } from 'typescript';
 import type { Resolver } from 'webpack';
 export interface TypeScriptPathsPluginOptions extends Pick<CompilerOptions, 'paths' | 'baseUrl'> {
 }
-declare type ResolverRequest = NonNullable<Parameters<Parameters<Resolver['resolve']>[4]>[2]>;
+type ResolverRequest = NonNullable<Parameters<Parameters<Resolver['resolve']>[4]>[2]>;
 interface PathPluginResolverRequest extends ResolverRequest {
     context?: {
         issuer?: string;

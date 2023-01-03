@@ -8,7 +8,7 @@
 /// <reference types="node" />
 import * as ts from 'typescript';
 import { Compiler } from 'webpack';
-export declare type InputFileSystem = Compiler['inputFileSystem'];
+export type InputFileSystem = Compiler['inputFileSystem'];
 export interface InputFileSystemSync extends InputFileSystem {
     readFileSync(path: string): Buffer;
     statSync(path: string): {
