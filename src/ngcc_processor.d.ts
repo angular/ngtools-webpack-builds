@@ -8,7 +8,7 @@
 import * as ts from 'typescript';
 import type { Compiler } from 'webpack';
 import { InputFileSystem } from './ivy/system';
-declare type ResolverWithOptions = ReturnType<Compiler['resolverFactory']['get']>;
+type ResolverWithOptions = ReturnType<Compiler['resolverFactory']['get']>;
 export declare class NgccProcessor {
     private readonly compilerNgcc;
     private readonly propertiesToConsider;

@@ -12,7 +12,7 @@ export interface EmitFileResult {
     dependencies: readonly string[];
     hash?: Uint8Array;
 }
-export declare type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
+export type FileEmitter = (file: string) => Promise<EmitFileResult | undefined>;
 export declare class FileEmitterRegistration {
     #private;
     update(emitter: FileEmitter): void;
