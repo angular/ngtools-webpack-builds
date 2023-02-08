@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "15.2.0-next.3+sha-dd8c66b",
+  "version": "15.2.0-next.4+sha-6d0eb65",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
