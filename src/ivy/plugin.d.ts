@@ -21,7 +21,6 @@ export interface AngularWebpackPluginOptions {
 export declare class AngularWebpackPlugin {
     private readonly pluginOptions;
     private compilerCliModule?;
-    private compilerNgccModule?;
     private watchMode?;
     private ngtscNextProgram?;
     private builder?;
