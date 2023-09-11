@@ -7,6 +7,7 @@
  */
 import type { CompilerOptions } from '@angular/compiler-cli';
 import type { Compiler } from 'webpack';
+export declare const imageDomains: Set<string>;
 export interface AngularWebpackPluginOptions {
     tsconfig: string;
     compilerOptions?: CompilerOptions;
