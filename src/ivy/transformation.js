@@ -44,9 +44,10 @@ function createAotTransformers(builder, options, imageDomains) {
     };
     const removeClassMetadata = !options.emitClassMetadata;
     const removeNgModuleScope = !options.emitNgModuleScope;
-    if (removeClassMetadata || removeNgModuleScope) {
+    const removeSetClassDebugInfo = !options.emitSetClassDebugInfo;
+    if (removeClassMetadata || removeNgModuleScope || removeSetClassDebugInfo) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        transformers.before.push((0, remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls)(removeClassMetadata, removeNgModuleScope, getTypeChecker));
+        transformers.before.push((0, remove_ivy_jit_support_calls_1.removeIvyJitSupportCalls)(removeClassMetadata, removeNgModuleScope, removeSetClassDebugInfo, getTypeChecker));
     }
     return transformers;
 }
