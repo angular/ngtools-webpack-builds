@@ -33,7 +33,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeIvyJitSupportCalls = void 0;
 const ts = __importStar(require("typescript"));
 const elide_imports_1 = require("./elide_imports");
-function removeIvyJitSupportCalls(classMetadata, ngModuleScope, getTypeChecker) {
+function removeIvyJitSupportCalls(classMetadata, ngModuleScope, debugInfo, getTypeChecker) {
     return (context) => {
         const removedNodes = [];
         const visitNode = (node) => {
@@ -54,6 +54,12 @@ function removeIvyJitSupportCalls(classMetadata, ngModuleScope, getTypeChecker) 
                         removedNodes.push(innerExpression);
                         return undefined;
                     }
+                }
+                if (debugInfo &&
+                    ts.isBinaryExpression(innerExpression) &&
+                    isIvyPrivateCallExpression(innerExpression.right, 'ɵsetClassDebugInfo')) {
+                    removedNodes.push(innerExpression);
+                    return undefined;
                 }
             }
             return ts.visitEachChild(node, visitNode, context);

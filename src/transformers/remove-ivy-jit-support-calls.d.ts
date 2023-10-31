@@ -6,4 +6,4 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import * as ts from 'typescript';
-export declare function removeIvyJitSupportCalls(classMetadata: boolean, ngModuleScope: boolean, getTypeChecker: () => ts.TypeChecker): ts.TransformerFactory<ts.SourceFile>;
+export declare function removeIvyJitSupportCalls(classMetadata: boolean, ngModuleScope: boolean, debugInfo: boolean, getTypeChecker: () => ts.TypeChecker): ts.TransformerFactory<ts.SourceFile>;

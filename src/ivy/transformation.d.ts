@@ -9,6 +9,7 @@ import * as ts from 'typescript';
 export declare function createAotTransformers(builder: ts.BuilderProgram, options: {
     emitClassMetadata?: boolean;
     emitNgModuleScope?: boolean;
+    emitSetClassDebugInfo?: boolean;
 }, imageDomains: Set<string>): ts.CustomTransformers;
 export declare function createJitTransformers(builder: ts.BuilderProgram, compilerCli: typeof import('@angular/compiler-cli'), options: {
     inlineStyleFileExtension?: string;
