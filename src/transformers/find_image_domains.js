@@ -93,7 +93,7 @@ function findImageDomains(imageDomains) {
                 }
                 return node;
             }
-            function findPropertyAssignment(node) {
+            function findProvidersAssignment(node) {
                 if (ts.isPropertyAssignment(node)) {
                     if (ts.isIdentifier(node.name) && node.name.escapedText === 'providers') {
                         ts.visitEachChild(node.initializer, findImageLoaders, context);
@@ -101,18 +101,44 @@ function findImageDomains(imageDomains) {
                 }
                 return node;
             }
-            function findPropertyDeclaration(node) {
-                if (ts.isPropertyDeclaration(node) &&
-                    ts.isIdentifier(node.name) &&
-                    node.name.escapedText === 'ɵinj' &&
-                    node.initializer &&
-                    ts.isCallExpression(node.initializer) &&
-                    node.initializer.arguments[0]) {
-                    ts.visitEachChild(node.initializer.arguments[0], findPropertyAssignment, context);
+            function findFeaturesAssignment(node) {
+                if (ts.isPropertyAssignment(node)) {
+                    if (ts.isIdentifier(node.name) &&
+                        node.name.escapedText === 'features' &&
+                        ts.isArrayLiteralExpression(node.initializer)) {
+                        const providerElement = node.initializer.elements.find(isProvidersFeatureElement);
+                        if (providerElement &&
+                            ts.isCallExpression(providerElement) &&
+                            providerElement.arguments[0]) {
+                            ts.visitEachChild(providerElement.arguments[0], findImageLoaders, context);
+                        }
+                    }
                 }
                 return node;
             }
-            // Continue traversal if node is ClassDeclaration and has name "AppModule"
+            function isProvidersFeatureElement(node) {
+                return (ts.isCallExpression(node) &&
+                    ts.isPropertyAccessExpression(node.expression) &&
+                    ts.isIdentifier(node.expression.expression) &&
+                    node.expression.expression.escapedText === 'i0' &&
+                    ts.isIdentifier(node.expression.name) &&
+                    node.expression.name.escapedText === 'ɵɵProvidersFeature');
+            }
+            function findPropertyDeclaration(node) {
+                if (ts.isPropertyDeclaration(node) &&
+                    ts.isIdentifier(node.name) &&
+                    node.initializer &&
+                    ts.isCallExpression(node.initializer) &&
+                    node.initializer.arguments[0]) {
+                    if (node.name.escapedText === 'ɵinj') {
+                        ts.visitEachChild(node.initializer.arguments[0], findProvidersAssignment, context);
+                    }
+                    else if (node.name.escapedText === 'ɵcmp') {
+                        ts.visitEachChild(node.initializer.arguments[0], findFeaturesAssignment, context);
+                    }
+                }
+                return node;
+            }
             function findClassDeclaration(node) {
                 if (ts.isClassDeclaration(node)) {
                     ts.visitEachChild(node, findPropertyDeclaration, context);
