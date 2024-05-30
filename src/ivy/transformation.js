@@ -30,7 +30,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.replaceBootstrap = exports.mergeTransformers = exports.createJitTransformers = exports.createAotTransformers = void 0;
+exports.createAotTransformers = createAotTransformers;
+exports.createJitTransformers = createJitTransformers;
+exports.mergeTransformers = mergeTransformers;
+exports.replaceBootstrap = replaceBootstrap;
 const ts = __importStar(require("typescript"));
 const elide_imports_1 = require("../transformers/elide_imports");
 const find_image_domains_1 = require("../transformers/find_image_domains");
@@ -51,7 +54,6 @@ function createAotTransformers(builder, options, imageDomains) {
     }
     return transformers;
 }
-exports.createAotTransformers = createAotTransformers;
 function createJitTransformers(builder, compilerCli, options) {
     const getTypeChecker = () => builder.getProgram().getTypeChecker();
     return {
@@ -61,7 +63,6 @@ function createJitTransformers(builder, compilerCli, options) {
         ],
     };
 }
-exports.createJitTransformers = createJitTransformers;
 function mergeTransformers(first, second) {
     const result = {};
     if (first.before || second.before) {
@@ -78,7 +79,6 @@ function mergeTransformers(first, second) {
     }
     return result;
 }
-exports.mergeTransformers = mergeTransformers;
 /**
  * The name of the Angular platform that should be replaced within
  * bootstrap call expressions to support AOT.
@@ -124,4 +124,3 @@ function replaceBootstrap(getTypeChecker) {
         };
     };
 }
-exports.replaceBootstrap = replaceBootstrap;

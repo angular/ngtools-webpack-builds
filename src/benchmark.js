@@ -7,7 +7,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.timeEnd = exports.time = void 0;
+exports.time = time;
+exports.timeEnd = timeEnd;
 // Internal benchmark reporting flag.
 // Use with CLI --no-progress flag for best results.
 // This should be false for commited code.
@@ -18,10 +19,8 @@ function time(label) {
         console.time(label);
     }
 }
-exports.time = time;
 function timeEnd(label) {
     if (_benchmark) {
         console.timeEnd(label);
     }
 }
-exports.timeEnd = timeEnd;

@@ -30,7 +30,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getResourceUrl = exports.replaceResources = exports.NG_COMPONENT_RESOURCE_QUERY = void 0;
+exports.NG_COMPONENT_RESOURCE_QUERY = void 0;
+exports.replaceResources = replaceResources;
+exports.getResourceUrl = getResourceUrl;
 const ts = __importStar(require("typescript"));
 const inline_resource_1 = require("../loaders/inline-resource");
 exports.NG_COMPONENT_RESOURCE_QUERY = 'ngResource';
@@ -69,7 +71,6 @@ function replaceResources(shouldTransform, getTypeChecker, inlineStyleFileExtens
         };
     };
 }
-exports.replaceResources = replaceResources;
 function visitDecorator(nodeFactory, node, typeChecker, resourceImportDeclarations, moduleKind, inlineStyleFileExtension) {
     if (!isComponentDecorator(node, typeChecker)) {
         return node;
@@ -173,7 +174,6 @@ function getResourceUrl(node) {
     }
     return `${/^\.?\.\//.test(node.text) ? '' : './'}${node.text}?${exports.NG_COMPONENT_RESOURCE_QUERY}`;
 }
-exports.getResourceUrl = getResourceUrl;
 function isComponentDecorator(node, typeChecker) {
     if (!ts.isDecorator(node)) {
         return false;

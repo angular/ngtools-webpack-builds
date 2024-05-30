@@ -30,7 +30,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = exports.angularWebpackLoader = void 0;
+exports.default = void 0;
+exports.angularWebpackLoader = angularWebpackLoader;
+exports.default = angularWebpackLoader;
 const path = __importStar(require("path"));
 const symbol_1 = require("./symbol");
 const JS_FILE_REGEXP = /\.[cm]?js$/;
@@ -81,5 +83,3 @@ function angularWebpackLoader(content, map) {
         callback(new Error(message));
     });
 }
-exports.angularWebpackLoader = angularWebpackLoader;
-exports.default = angularWebpackLoader;

@@ -30,7 +30,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.transformTypescript = exports.createTypescriptContext = void 0;
+exports.createTypescriptContext = createTypescriptContext;
+exports.transformTypescript = transformTypescript;
 const path_1 = require("path");
 const ts = __importStar(require("typescript"));
 // Test transform helpers.
@@ -76,7 +77,6 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, extr
     const program = ts.createProgram([fileName], compilerOptions, compilerHost);
     return { compilerHost, program };
 }
-exports.createTypescriptContext = createTypescriptContext;
 function transformTypescript(content, transformers, program, compilerHost) {
     // Use given context or create a new one.
     if (content !== undefined) {
@@ -106,4 +106,3 @@ function transformTypescript(content, transformers, program, compilerHost) {
     // Return the transpiled js.
     return outputContent;
 }
-exports.transformTypescript = transformTypescript;

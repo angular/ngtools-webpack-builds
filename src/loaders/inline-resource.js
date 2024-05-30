@@ -8,6 +8,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InlineAngularResourceSymbol = exports.InlineAngularResourceLoaderPath = void 0;
+exports.default = default_1;
 exports.InlineAngularResourceLoaderPath = __filename;
 exports.InlineAngularResourceSymbol = Symbol('@ngtools/webpack[angular-resource]');
 function default_1() {
@@ -21,4 +22,3 @@ function default_1() {
         callback(undefined, content);
     }
 }
-exports.default = default_1;

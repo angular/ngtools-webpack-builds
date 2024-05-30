@@ -30,7 +30,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findImageDomains = void 0;
+exports.findImageDomains = findImageDomains;
 const ts = __importStar(require("typescript"));
 const TARGET_TEXT = '@NgModule';
 const BUILTIN_LOADERS = new Set([
@@ -150,4 +150,3 @@ function findImageDomains(imageDomains) {
         };
     };
 }
-exports.findImageDomains = findImageDomains;

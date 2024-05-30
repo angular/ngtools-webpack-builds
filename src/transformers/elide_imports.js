@@ -30,7 +30,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.elideImports = void 0;
+exports.elideImports = elideImports;
 const ts = __importStar(require("typescript"));
 // Remove imports for which all identifiers have been removed.
 // Needs type checker, and works even if it's not the first transformer.
@@ -153,4 +153,3 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
     }
     return importNodeRemovals;
 }
-exports.elideImports = elideImports;

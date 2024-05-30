@@ -30,7 +30,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeIvyJitSupportCalls = void 0;
+exports.removeIvyJitSupportCalls = removeIvyJitSupportCalls;
 const ts = __importStar(require("typescript"));
 const elide_imports_1 = require("./elide_imports");
 function removeIvyJitSupportCalls(classMetadata, ngModuleScope, debugInfo, getTypeChecker) {
@@ -81,7 +81,6 @@ function removeIvyJitSupportCalls(classMetadata, ngModuleScope, debugInfo, getTy
         };
     };
 }
-exports.removeIvyJitSupportCalls = removeIvyJitSupportCalls;
 // Each Ivy private call expression is inside an IIFE
 function getIifeExpression(exprStmt) {
     const expression = exprStmt.expression;

@@ -30,7 +30,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createWebpackSystem = void 0;
+exports.createWebpackSystem = createWebpackSystem;
 const ts = __importStar(require("typescript"));
 const paths_1 = require("./paths");
 function shouldNotWrite() {
@@ -102,4 +102,3 @@ function createWebpackSystem(input, currentDirectory) {
     };
     return system;
 }
-exports.createWebpackSystem = createWebpackSystem;

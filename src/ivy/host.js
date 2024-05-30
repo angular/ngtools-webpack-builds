@@ -30,7 +30,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.augmentHostWithCaching = exports.augmentProgramWithVersioning = exports.augmentHostWithVersioning = exports.augmentHostWithSubstitutions = exports.augmentHostWithReplacements = exports.augmentHostWithDependencyCollection = exports.augmentHostWithResources = void 0;
+exports.augmentHostWithResources = augmentHostWithResources;
+exports.augmentHostWithDependencyCollection = augmentHostWithDependencyCollection;
+exports.augmentHostWithReplacements = augmentHostWithReplacements;
+exports.augmentHostWithSubstitutions = augmentHostWithSubstitutions;
+exports.augmentHostWithVersioning = augmentHostWithVersioning;
+exports.augmentProgramWithVersioning = augmentProgramWithVersioning;
+exports.augmentHostWithCaching = augmentHostWithCaching;
 const crypto_1 = require("crypto");
 const path = __importStar(require("path"));
 const ts = __importStar(require("typescript"));
@@ -70,7 +76,6 @@ function augmentHostWithResources(host, resourceLoader, options = {}) {
         return null;
     };
 }
-exports.augmentHostWithResources = augmentHostWithResources;
 function augmentResolveModuleNames(host, resolvedModuleModifier, moduleResolutionCache) {
     if (host.resolveModuleNames) {
         const baseResolveModuleNames = host.resolveModuleNames;
@@ -143,7 +148,6 @@ function augmentHostWithDependencyCollection(host, dependencies, moduleResolutio
         };
     }
 }
-exports.augmentHostWithDependencyCollection = augmentHostWithDependencyCollection;
 function augmentHostWithReplacements(host, replacements, moduleResolutionCache) {
     if (Object.keys(replacements).length === 0) {
         return;
@@ -166,7 +170,6 @@ function augmentHostWithReplacements(host, replacements, moduleResolutionCache) 
     };
     augmentResolveModuleNames(host, tryReplace, moduleResolutionCache);
 }
-exports.augmentHostWithReplacements = augmentHostWithReplacements;
 function augmentHostWithSubstitutions(host, substitutions) {
     const regexSubstitutions = [];
     for (const [key, value] of Object.entries(substitutions)) {
@@ -186,7 +189,6 @@ function augmentHostWithSubstitutions(host, substitutions) {
         return file;
     };
 }
-exports.augmentHostWithSubstitutions = augmentHostWithSubstitutions;
 function augmentHostWithVersioning(host) {
     const baseGetSourceFile = host.getSourceFile;
     host.getSourceFile = function (...parameters) {
@@ -197,7 +199,6 @@ function augmentHostWithVersioning(host) {
         return file;
     };
 }
-exports.augmentHostWithVersioning = augmentHostWithVersioning;
 function augmentProgramWithVersioning(program) {
     const baseGetSourceFiles = program.getSourceFiles;
     program.getSourceFiles = function (...parameters) {
@@ -210,7 +211,6 @@ function augmentProgramWithVersioning(program) {
         return files;
     };
 }
-exports.augmentProgramWithVersioning = augmentProgramWithVersioning;
 function augmentHostWithCaching(host, cache) {
     const baseGetSourceFile = host.getSourceFile;
     host.getSourceFile = function (fileName, languageVersion, onError, shouldCreateNewSourceFile, ...parameters) {
@@ -224,4 +224,3 @@ function augmentHostWithCaching(host, cache) {
         return file;
     };
 }
-exports.augmentHostWithCaching = augmentHostWithCaching;

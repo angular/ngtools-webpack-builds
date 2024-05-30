@@ -7,7 +7,9 @@
  * found in the LICENSE file at https://angular.io/license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addError = exports.addWarning = exports.createDiagnosticsReporter = void 0;
+exports.createDiagnosticsReporter = createDiagnosticsReporter;
+exports.addWarning = addWarning;
+exports.addError = addError;
 const typescript_1 = require("typescript");
 function createDiagnosticsReporter(compilation, formatter) {
     return (diagnostics) => {
@@ -22,12 +24,9 @@ function createDiagnosticsReporter(compilation, formatter) {
         }
     };
 }
-exports.createDiagnosticsReporter = createDiagnosticsReporter;
 function addWarning(compilation, message) {
     compilation.warnings.push(new compilation.compiler.webpack.WebpackError(message));
 }
-exports.addWarning = addWarning;
 function addError(compilation, message) {
     compilation.errors.push(new compilation.compiler.webpack.WebpackError(message));
 }
-exports.addError = addError;

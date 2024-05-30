@@ -30,7 +30,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.externalizePath = exports.normalizePath = void 0;
+exports.externalizePath = void 0;
+exports.normalizePath = normalizePath;
 const nodePath = __importStar(require("path"));
 const normalizationCache = new Map();
 function normalizePath(path) {
@@ -41,7 +42,6 @@ function normalizePath(path) {
     }
     return result;
 }
-exports.normalizePath = normalizePath;
 const externalizationCache = new Map();
 function externalizeForWindows(path) {
     let result = externalizationCache.get(path);
