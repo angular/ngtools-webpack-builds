@@ -30,7 +30,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = void 0;
+exports.angularWebpackLoader = angularWebpackLoader;
+exports.default = angularWebpackLoader;
 exports.angularWebpackLoader = angularWebpackLoader;
 exports.default = angularWebpackLoader;
 const path = __importStar(require("path"));
