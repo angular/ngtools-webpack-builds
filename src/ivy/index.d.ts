@@ -6,5 +6,5 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 export { angularWebpackLoader as default } from './loader';
-export { AngularWebpackPluginOptions, AngularWebpackPlugin, imageDomains } from './plugin';
+export { type AngularWebpackPluginOptions, AngularWebpackPlugin, imageDomains } from './plugin';
 export declare const AngularWebpackLoaderPath: string;
