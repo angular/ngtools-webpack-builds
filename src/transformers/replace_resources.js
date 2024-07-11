@@ -105,7 +105,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, resourceIm
     switch (name) {
         case 'moduleId':
             return undefined;
-        case 'templateUrl':
+        case 'templateUrl': {
             const url = getResourceUrl(node.initializer);
             if (!url) {
                 return node;
@@ -115,9 +115,10 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, resourceIm
                 return node;
             }
             return nodeFactory.updatePropertyAssignment(node, nodeFactory.createIdentifier('template'), importName);
+        }
         case 'styles':
         case 'styleUrl':
-        case 'styleUrls':
+        case 'styleUrls': {
             const isInlineStyle = name === 'styles';
             let styles;
             if (ts.isStringLiteralLike(node.initializer)) {
@@ -139,6 +140,7 @@ function visitComponentMetadata(nodeFactory, node, styleReplacements, resourceIm
                 styleReplacements.push(...styles);
             }
             return undefined;
+        }
         default:
             return node;
     }
