@@ -11,7 +11,7 @@ export declare function createAotTransformers(builder: ts.BuilderProgram, option
     emitNgModuleScope?: boolean;
     emitSetClassDebugInfo?: boolean;
 }, imageDomains: Set<string>): ts.CustomTransformers;
-export declare function createJitTransformers(builder: ts.BuilderProgram, compilerCli: typeof import('@angular/compiler-cli'), options: {
+export declare function createJitTransformers(builder: ts.BuilderProgram, compilerCli: typeof import('@angular/compiler-cli/private/tooling'), options: {
     inlineStyleFileExtension?: string;
 }): ts.CustomTransformers;
 export declare function mergeTransformers(first: ts.CustomTransformers, second: ts.CustomTransformers): ts.CustomTransformers;

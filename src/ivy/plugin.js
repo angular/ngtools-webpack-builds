@@ -54,6 +54,7 @@ const compilationFileEmitters = new WeakMap();
 class AngularWebpackPlugin {
     pluginOptions;
     compilerCliModule;
+    compilerCliToolingModule;
     watchMode;
     ngtscNextProgram;
     builder;
@@ -82,6 +83,13 @@ class AngularWebpackPlugin {
         // hook execution is an implementation error.
         assert_1.strict.ok(this.compilerCliModule, `'@angular/compiler-cli' used prior to Webpack compilation.`);
         return this.compilerCliModule;
+    }
+    get compilerCliTooling() {
+        // The compilerCliToolingModule field is guaranteed to be defined during a compilation
+        // due to the `beforeCompile` hook. Usage of this property accessor prior to the
+        // hook execution is an implementation error.
+        assert_1.strict.ok(this.compilerCliToolingModule, `'@angular/compiler-cli' used prior to Webpack compilation.`);
+        return this.compilerCliToolingModule;
     }
     get options() {
         return this.pluginOptions;
@@ -497,9 +505,6 @@ class AngularWebpackPlugin {
         };
     }
     async initializeCompilerCli() {
-        if (this.compilerCliModule) {
-            return;
-        }
         // This uses a dynamic import to load `@angular/compiler-cli` which may be ESM.
         // CommonJS code can load ESM code via a dynamic import. Unfortunately, TypeScript
         // will currently, unconditionally downlevel dynamic import into a require call.
@@ -507,7 +512,8 @@ class AngularWebpackPlugin {
         // this, a Function constructor is used to prevent TypeScript from changing the dynamic import.
         // Once TypeScript provides support for keeping the dynamic import this workaround can
         // be dropped.
-        this.compilerCliModule = await new Function(`return import('@angular/compiler-cli');`)();
+        this.compilerCliModule ??= await new Function(`return import('@angular/compiler-cli');`)();
+        this.compilerCliToolingModule ??= await new Function(`return import('@angular/compiler-cli/private/tooling');`)();
     }
     async addFileEmitHistory(filePath, content) {
         assert_1.strict.ok(this.webpackCreateHash, 'File emitter is used prior to Webpack compilation');

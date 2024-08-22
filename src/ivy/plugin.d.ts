@@ -23,6 +23,7 @@ export interface AngularWebpackPluginOptions {
 export declare class AngularWebpackPlugin {
     private readonly pluginOptions;
     private compilerCliModule?;
+    private compilerCliToolingModule?;
     private watchMode?;
     private ngtscNextProgram?;
     private builder?;
@@ -35,6 +36,7 @@ export declare class AngularWebpackPlugin {
     private readonly fileEmitHistory;
     constructor(options?: Partial<AngularWebpackPluginOptions>);
     private get compilerCli();
+    private get compilerCliTooling();
     get options(): AngularWebpackPluginOptions;
     apply(compiler: Compiler): void;
     private setupCompilation;
