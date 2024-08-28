@@ -230,7 +230,8 @@ class AngularWebpackPlugin {
         if (!fileEmitters) {
             fileEmitters = new symbol_1.FileEmitterCollection();
             compilationFileEmitters.set(compilation, fileEmitters);
-            compilation.compiler.webpack.NormalModule.getCompilationHooks(compilation).loader.tap(PLUGIN_NAME, (loaderContext) => {
+            compilation.compiler.webpack.NormalModule.getCompilationHooks(compilation).loader.tap(PLUGIN_NAME, (context) => {
+                const loaderContext = context;
                 loaderContext[symbol_1.AngularPluginSymbol] = fileEmitters;
             });
         }
