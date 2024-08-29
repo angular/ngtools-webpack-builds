@@ -7,14 +7,9 @@
  */
 import * as ts from 'typescript';
 import { Compiler } from 'webpack';
-export type InputFileSystem = Compiler['inputFileSystem'];
+export type InputFileSystem = NonNullable<Compiler['inputFileSystem']>;
 export interface InputFileSystemSync extends InputFileSystem {
-    readFileSync(path: string): Buffer;
-    statSync(path: string): {
-        size: number;
-        mtime: Date;
-        isDirectory(): boolean;
-        isFile(): boolean;
-    };
+    readFileSync: NonNullable<InputFileSystem['readFileSync']>;
+    statSync: NonNullable<InputFileSystem['statSync']>;
 }
 export declare function createWebpackSystem(input: InputFileSystemSync, currentDirectory: string): ts.System;
