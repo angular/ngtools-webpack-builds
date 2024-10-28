@@ -28,6 +28,5 @@ export declare function augmentHostWithResources(host: ts.CompilerHost, resource
 export declare function augmentHostWithDependencyCollection(host: ts.CompilerHost, dependencies: Map<string, Set<string>>, moduleResolutionCache?: ts.ModuleResolutionCache): void;
 export declare function augmentHostWithReplacements(host: ts.CompilerHost, replacements: Record<string, string>, moduleResolutionCache?: ts.ModuleResolutionCache): void;
 export declare function augmentHostWithSubstitutions(host: ts.CompilerHost, substitutions: Record<string, string>): void;
-export declare function augmentHostWithVersioning(host: ts.CompilerHost): void;
 export declare function augmentProgramWithVersioning(program: ts.Program): void;
 export declare function augmentHostWithCaching(host: ts.CompilerHost, cache: Map<string, ts.SourceFile>): void;
