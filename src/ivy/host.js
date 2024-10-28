@@ -34,7 +34,6 @@ exports.augmentHostWithResources = augmentHostWithResources;
 exports.augmentHostWithDependencyCollection = augmentHostWithDependencyCollection;
 exports.augmentHostWithReplacements = augmentHostWithReplacements;
 exports.augmentHostWithSubstitutions = augmentHostWithSubstitutions;
-exports.augmentHostWithVersioning = augmentHostWithVersioning;
 exports.augmentProgramWithVersioning = augmentProgramWithVersioning;
 exports.augmentHostWithCaching = augmentHostWithCaching;
 const crypto_1 = require("crypto");
@@ -185,16 +184,6 @@ function augmentHostWithSubstitutions(host, substitutions) {
             for (const entry of regexSubstitutions) {
                 file = file.replace(entry[0], entry[1]);
             }
-        }
-        return file;
-    };
-}
-function augmentHostWithVersioning(host) {
-    const baseGetSourceFile = host.getSourceFile;
-    host.getSourceFile = function (...parameters) {
-        const file = baseGetSourceFile.call(host, ...parameters);
-        if (file && file.version === undefined) {
-            file.version = (0, crypto_1.createHash)('sha256').update(file.text).digest('hex');
         }
         return file;
     };
