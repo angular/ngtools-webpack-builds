@@ -51,7 +51,7 @@ function augmentHostWithResources(host, resourceLoader, options = {}) {
                 throw new Error('Unable to locate component resource: ' + fileName);
             }
             resourceLoader.setAffectedResources(filePath, [filePath]);
-            return content;
+            return Promise.resolve(content);
         }
         else {
             return resourceLoader.get(filePath);
