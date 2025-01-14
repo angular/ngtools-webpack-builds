@@ -19,8 +19,8 @@ export declare class WebpackResourceLoader {
     update(parentCompilation: Compilation, changedFiles?: Iterable<string>): void;
     clearParentCompilation(): void;
     getModifiedResourceFiles(): Set<string>;
-    getResourceDependencies(filePath: string): never[] | Set<string>;
-    getAffectedResources(file: string): never[] | Set<string>;
+    getResourceDependencies(filePath: string): Iterable<string>;
+    getAffectedResources(file: string): Iterable<string>;
     setAffectedResources(file: string, resources: Iterable<string>): void;
     private _compile;
     private _evaluate;

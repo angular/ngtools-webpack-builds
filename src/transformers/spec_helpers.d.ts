@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.dev/license
  */
-import * as ts from 'typescript';
+import ts from 'typescript';
 export declare function createTypescriptContext(content: string, additionalFiles?: Record<string, string>, useLibs?: boolean, extraCompilerOptions?: ts.CompilerOptions, jsxFile?: boolean): {
     compilerHost: ts.CompilerHost;
     program: ts.Program;
