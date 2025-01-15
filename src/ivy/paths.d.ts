@@ -6,4 +6,6 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 export declare function normalizePath(path: string): string;
-export declare const externalizePath: (path: string) => string;
+declare function externalizeForWindows(path: string): string;
+export declare const externalizePath: typeof externalizeForWindows;
+export {};
