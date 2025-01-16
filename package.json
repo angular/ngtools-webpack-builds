@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "19.1.1+sha-5261b5a",
+  "version": "19.1.1+sha-069818b",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -33,16 +33,5 @@
     "node": "^18.19.1 || ^20.11.1 || >=22.0.0",
     "npm": "^6.11.0 || ^7.5.6 || >=8.0.0",
     "yarn": ">= 1.13.0"
-  },
-  "dependenciesMeta": {
-    "esbuild": {
-      "built": true
-    },
-    "puppeteer": {
-      "built": true
-    }
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": []
   }
 }
