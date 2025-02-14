@@ -42,7 +42,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.angularWebpackLoader = angularWebpackLoader;
 exports.default = angularWebpackLoader;
-const path = __importStar(require("path"));
+const path = __importStar(require("node:path"));
 const symbol_1 = require("./symbol");
 const JS_FILE_REGEXP = /\.[cm]?js$/;
 function angularWebpackLoader(content, map) {
