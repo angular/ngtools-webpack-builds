@@ -42,7 +42,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.externalizePath = void 0;
 exports.normalizePath = normalizePath;
-const nodePath = __importStar(require("path"));
+const nodePath = __importStar(require("node:path"));
 const normalizationCache = new Map();
 function normalizePath(path) {
     let result = normalizationCache.get(path);

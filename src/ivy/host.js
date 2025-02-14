@@ -46,8 +46,8 @@ exports.augmentHostWithReplacements = augmentHostWithReplacements;
 exports.augmentHostWithSubstitutions = augmentHostWithSubstitutions;
 exports.augmentProgramWithVersioning = augmentProgramWithVersioning;
 exports.augmentHostWithCaching = augmentHostWithCaching;
-const crypto_1 = require("crypto");
-const path = __importStar(require("path"));
+const node_crypto_1 = require("node:crypto");
+const path = __importStar(require("node:path"));
 const ts = __importStar(require("typescript"));
 const paths_1 = require("./paths");
 function augmentHostWithResources(host, resourceLoader, options = {}) {
@@ -204,7 +204,7 @@ function augmentProgramWithVersioning(program) {
         const files = baseGetSourceFiles(...parameters);
         for (const file of files) {
             if (file.version === undefined) {
-                file.version = (0, crypto_1.createHash)('sha256').update(file.text).digest('hex');
+                file.version = (0, node_crypto_1.createHash)('sha256').update(file.text).digest('hex');
             }
         }
         return files;
