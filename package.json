@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "21.0.0-next.2+sha-722c44f",
+  "version": "21.0.0-next.2+sha-1529595",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -26,7 +26,7 @@
   "homepage": "https://github.com/angular/angular-cli",
   "peerDependencies": {
     "@angular/compiler-cli": "^21.0.0-next.0",
-    "typescript": ">=5.8 <6.0",
+    "typescript": ">=5.9 <6.0",
     "webpack": "^5.54.0"
   },
   "packageManager": "pnpm@10.15.1",
