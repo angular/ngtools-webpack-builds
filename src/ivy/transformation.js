@@ -106,7 +106,7 @@ function replaceBootstrap(getTypeChecker) {
                 if (target.text === PLATFORM_BROWSER_DYNAMIC_NAME) {
                     if (!bootstrapNamespace) {
                         bootstrapNamespace = nodeFactory.createUniqueName('__NgCli_bootstrap_');
-                        bootstrapImport = nodeFactory.createImportDeclaration(undefined, nodeFactory.createImportClause(false, undefined, nodeFactory.createNamespaceImport(bootstrapNamespace)), nodeFactory.createStringLiteral('@angular/platform-browser'));
+                        bootstrapImport = nodeFactory.createImportDeclaration(undefined, nodeFactory.createImportClause(undefined, undefined, nodeFactory.createNamespaceImport(bootstrapNamespace)), nodeFactory.createStringLiteral('@angular/platform-browser'));
                     }
                     replacedNodes.push(target);
                     return nodeFactory.updateCallExpression(node, nodeFactory.createPropertyAccessExpression(bootstrapNamespace, 'platformBrowser'), node.typeArguments, node.arguments);
