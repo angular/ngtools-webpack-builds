@@ -42,3 +42,4 @@ class FileEmitterCollection {
     }
 }
 exports.FileEmitterCollection = FileEmitterCollection;
+//# sourceMappingURL=symbol.js.map

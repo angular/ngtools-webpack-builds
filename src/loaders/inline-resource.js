@@ -22,3 +22,4 @@ function default_1() {
         callback(undefined, content);
     }
 }
+//# sourceMappingURL=inline-resource.js.map

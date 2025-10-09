@@ -30,3 +30,4 @@ class SourceFileCache extends Map {
     }
 }
 exports.SourceFileCache = SourceFileCache;
+//# sourceMappingURL=cache.js.map

@@ -252,3 +252,4 @@ class TypeScriptPathsPlugin {
     }
 }
 exports.TypeScriptPathsPlugin = TypeScriptPathsPlugin;
+//# sourceMappingURL=paths-plugin.js.map

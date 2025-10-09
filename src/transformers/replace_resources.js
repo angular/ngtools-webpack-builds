@@ -247,3 +247,4 @@ function getDecoratorOrigin(decorator, typeChecker) {
     }
     return null;
 }
+//# sourceMappingURL=replace_resources.js.map

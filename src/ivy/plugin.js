@@ -553,3 +553,4 @@ class AngularWebpackPlugin {
     }
 }
 exports.AngularWebpackPlugin = AngularWebpackPlugin;
+//# sourceMappingURL=plugin.js.map

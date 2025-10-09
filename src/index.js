@@ -16,3 +16,4 @@ Object.defineProperty(exports, "AngularWebpackLoaderPath", { enumerable: true, g
 Object.defineProperty(exports, "AngularWebpackPlugin", { enumerable: true, get: function () { return ivy_1.AngularWebpackPlugin; } });
 Object.defineProperty(exports, "imageDomains", { enumerable: true, get: function () { return ivy_1.imageDomains; } });
 Object.defineProperty(exports, "default", { enumerable: true, get: function () { return __importDefault(ivy_1).default; } });
+//# sourceMappingURL=index.js.map

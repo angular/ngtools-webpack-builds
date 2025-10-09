@@ -14,3 +14,4 @@ var plugin_1 = require("./plugin");
 Object.defineProperty(exports, "AngularWebpackPlugin", { enumerable: true, get: function () { return plugin_1.AngularWebpackPlugin; } });
 Object.defineProperty(exports, "imageDomains", { enumerable: true, get: function () { return plugin_1.imageDomains; } });
 exports.AngularWebpackLoaderPath = __filename;
+//# sourceMappingURL=index.js.map

@@ -24,3 +24,4 @@ function timeEnd(label) {
         console.timeEnd(label);
     }
 }
+//# sourceMappingURL=benchmark.js.map

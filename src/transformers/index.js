@@ -23,3 +23,4 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./elide_imports"), exports);
 __exportStar(require("./replace_resources"), exports);
+//# sourceMappingURL=index.js.map

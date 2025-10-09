@@ -92,3 +92,4 @@ function angularWebpackLoader(content, map) {
         callback(new Error(message));
     });
 }
+//# sourceMappingURL=loader.js.map
