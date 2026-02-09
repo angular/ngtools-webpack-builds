@@ -11,9 +11,6 @@ export interface TypeScriptPathsPluginOptions extends Pick<CompilerOptions, 'pat
 }
 type ResolverRequest = NonNullable<Parameters<Parameters<Resolver['resolve']>[4]>[2]>;
 interface PathPluginResolverRequest extends ResolverRequest {
-    context?: {
-        issuer?: string;
-    };
     typescriptPathMapped?: boolean;
 }
 export declare class TypeScriptPathsPlugin {
