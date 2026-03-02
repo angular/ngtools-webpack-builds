@@ -308,6 +308,7 @@ class AngularWebpackPlugin {
     }
     loadConfiguration() {
         const { options: compilerOptions, rootNames, errors, } = this.compilerCli.readConfiguration(this.pluginOptions.tsconfig, this.pluginOptions.compilerOptions);
+        compilerOptions.baseUrl ??= compilerOptions['pathsBasePath'];
         compilerOptions.composite = false;
         compilerOptions.noEmitOnError = false;
         compilerOptions.suppressOutputPathCheck = true;
