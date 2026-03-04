@@ -23,7 +23,7 @@ function createTypescriptContext(content, additionalFiles, useLibs = false, extr
         noEmitOnError: useLibs,
         allowJs: true,
         newLine: typescript_1.default.NewLineKind.LineFeed,
-        moduleResolution: typescript_1.default.ModuleResolutionKind.Node10,
+        moduleResolution: typescript_1.default.ModuleResolutionKind.Bundler,
         module: typescript_1.default.ModuleKind.ES2020,
         target: typescript_1.default.ScriptTarget.ES2020,
         skipLibCheck: true,
