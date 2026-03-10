@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "22.0.0-next.0+sha-598a690",
+  "version": "22.0.0-next.0+sha-76448a3",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -29,7 +29,7 @@
     "typescript": ">=5.9 <6.1",
     "webpack": "^5.54.0"
   },
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@10.31.0",
   "engines": {
     "node": "^22.22.0 || >=24.13.1",
     "npm": "^6.11.0 || ^7.5.6 || >=8.0.0",
