@@ -13,5 +13,9 @@ Object.defineProperty(exports, "default", { enumerable: true, get: function () {
 var plugin_1 = require("./plugin");
 Object.defineProperty(exports, "AngularWebpackPlugin", { enumerable: true, get: function () { return plugin_1.AngularWebpackPlugin; } });
 Object.defineProperty(exports, "imageDomains", { enumerable: true, get: function () { return plugin_1.imageDomains; } });
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 exports.AngularWebpackLoaderPath = __filename;
 //# sourceMappingURL=index.js.map

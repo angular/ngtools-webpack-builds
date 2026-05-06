@@ -45,6 +45,10 @@ exports.default = angularWebpackLoader;
 const path = __importStar(require("node:path"));
 const symbol_1 = require("./symbol");
 const JS_FILE_REGEXP = /\.[cm]?js$/;
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 function angularWebpackLoader(content, map) {
     const callback = this.async();
     if (!callback) {

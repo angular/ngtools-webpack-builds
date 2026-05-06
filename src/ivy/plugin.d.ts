@@ -7,7 +7,15 @@
  */
 import type { CompilerOptions } from '@angular/compiler-cli';
 import type { Compiler } from 'webpack';
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 export declare const imageDomains: Set<string>;
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 export interface AngularWebpackPluginOptions {
     tsconfig: string;
     compilerOptions?: CompilerOptions;
@@ -20,6 +28,10 @@ export interface AngularWebpackPluginOptions {
     jitMode: boolean;
     inlineStyleFileExtension?: string;
 }
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 export declare class AngularWebpackPlugin {
     private readonly pluginOptions;
     private compilerCliModule?;

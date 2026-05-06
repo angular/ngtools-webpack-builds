@@ -58,9 +58,17 @@ const transformation_1 = require("./transformation");
  * program optimization will be used.
  */
 const DIAGNOSTICS_AFFECTED_THRESHOLD = 1;
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 exports.imageDomains = new Set();
 const PLUGIN_NAME = 'angular-compiler';
 const compilationFileEmitters = new WeakMap();
+/**
+ * @deprecated Part of Angular's Webpack support deprecation.
+ * Deprecated since v22.
+ */
 class AngularWebpackPlugin {
     pluginOptions;
     compilerCliModule;
