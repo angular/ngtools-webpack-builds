@@ -1,10 +1,9 @@
 {
   "name": "@ngtools/webpack",
-  "version": "22.0.0-next.8+sha-653e4e9",
+  "version": "22.0.0-next.7+sha-ea95e1a",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
-  "license": "MIT",
   "keywords": [
     "Angular CLI",
     "Angular DevKit",
@@ -15,24 +14,24 @@
     "sdk",
     "webpack"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/angular/angular-cli.git"
-  },
-  "author": "Angular Authors",
-  "bugs": {
-    "url": "https://github.com/angular/angular-cli/issues"
-  },
-  "homepage": "https://github.com/angular/angular-cli",
   "peerDependencies": {
     "@angular/compiler-cli": "^22.0.0-next.0",
     "typescript": ">=6.0 <6.1",
     "webpack": "^5.54.0"
   },
-  "packageManager": "pnpm@10.33.4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/angular/angular-cli.git"
+  },
   "engines": {
     "node": "^22.22.0 || ^24.13.1 || >=26.0.0",
     "npm": "^6.11.0 || ^7.5.6 || >=8.0.0",
     "yarn": ">= 1.13.0"
-  }
+  },
+  "author": "Angular Authors",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/angular/angular-cli/issues"
+  },
+  "homepage": "https://github.com/angular/angular-cli"
 }
