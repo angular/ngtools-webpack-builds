@@ -1,6 +1,6 @@
 {
   "name": "@ngtools/webpack",
-  "version": "22.0.0-rc.0+sha-327cc24",
+  "version": "22.0.0-rc.0+sha-f32c36c",
   "description": "Webpack plugin that AoT compiles your Angular components and modules.",
   "main": "./src/index.js",
   "typings": "src/index.d.ts",
@@ -24,7 +24,7 @@
     "url": "git+https://github.com/angular/angular-cli.git"
   },
   "engines": {
-    "node": "^22.22.0 || ^24.13.1 || >=26.0.0",
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
     "npm": "^6.11.0 || ^7.5.6 || >=8.0.0",
     "yarn": ">= 1.13.0"
   },
