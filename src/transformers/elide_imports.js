@@ -79,6 +79,14 @@ function elideImports(sourceFile, removedNodes, getTypeChecker, compilerOptions)
         if (ts.isTypeReferenceNode(node) && !compilerOptions.emitDecoratorMetadata) {
             return;
         }
+        // Pure type declarations and type-only exports are erased at runtime.
+        if (ts.isInterfaceDeclaration(node) ||
+            ts.isTypeAliasDeclaration(node) ||
+            ts.isTypeParameterDeclaration(node) ||
+            (ts.isExportDeclaration(node) && node.isTypeOnly) ||
+            (ts.isExportSpecifier(node) && node.isTypeOnly)) {
+            return;
+        }
         let symbol;
         switch (node.kind) {
             case ts.SyntaxKind.Identifier:
