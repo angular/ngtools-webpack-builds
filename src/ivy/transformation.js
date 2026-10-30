@@ -123,7 +123,16 @@ function replaceBootstrap(getTypeChecker) {
                 // Remove any unused platform browser dynamic imports
                 const removals = (0, elide_imports_1.elideImports)(updatedSourceFile, replacedNodes, getTypeChecker, context.getCompilerOptions());
                 if (removals.size > 0) {
-                    updatedSourceFile = ts.visitEachChild(updatedSourceFile, (node) => (removals.has(node) ? undefined : node), context);
+                    updatedSourceFile = ts.visitEachChild(updatedSourceFile, function visitForRemoval(node) {
+                        if (removals.has(node)) {
+                            return undefined;
+                        }
+                        return ts.isImportDeclaration(node) ||
+                            ts.isImportClause(node) ||
+                            ts.isNamedImports(node)
+                            ? ts.visitEachChild(node, visitForRemoval, context)
+                            : node;
+                    }, context);
                 }
                 // Add new platform browser import
                 return nodeFactory.updateSourceFile(updatedSourceFile, ts.setTextRange(nodeFactory.createNodeArray([bootstrapImport, ...updatedSourceFile.statements]), sourceFile.statements));
